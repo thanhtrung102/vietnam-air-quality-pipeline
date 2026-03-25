@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json; sys.stdout.write(json.load(sys.stdin)['tool_input']['file_path'])\" | { read -r f; if echo \"$f\" | grep -q '\\.sql$'; then model=$(basename \"$f\" .sql); cd /d/vietnam-air-quality-pipeline && .venv/Scripts/dbt test --select \"$model\"; fi; } 2>/dev/null || true",
+            "statusMessage": "Running dbt test on SQL model..."
+          },
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json; sys.stdout.write(json.load(sys.stdin)['tool_input']['file_path'])\" | { read -r f; if echo \"$f\" | grep -q '\\.tf$'; then cd /d/vietnam-air-quality-pipeline/terraform && terraform validate; fi; } 2>/dev/null || true",
+            "statusMessage": "Validating Terraform syntax..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'source /d/vietnam-air-quality-pipeline/.env 2>/dev/null && export PATH=\"/c/Program Files/Amazon/AWSCLIV2:$PATH\" && if [ -n \"$S3_BUCKET_NAME\" ]; then count=$(aws s3 ls s3://$S3_BUCKET_NAME/raw/batch/ --recursive 2>/dev/null | wc -l); echo \"{\\\"systemMessage\\\": \\\"S3 raw/batch/ file count: $count\\\"}\"; fi'",
+            "statusMessage": "Checking S3 file count..."
+          }
+        ]
+      }
+    ]
+  }
+}
