@@ -2,7 +2,7 @@
 
 ## AWS Configuration
 - **Region:** ap-southeast-1
-- **S3 bucket name:** openaq-pipeline-tt *(fill in after Terraform apply)*
+- **S3 bucket name:** openaq-pipeline-thanhtrung102
 - **Athena workgroup:** openaq_workgroup
 - **Glue database:** openaq_raw
 - **Kinesis stream name:** openaq_stream
