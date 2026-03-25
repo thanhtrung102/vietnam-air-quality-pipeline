@@ -9,3 +9,7 @@ The pipeline ingests historical and streaming air quality data from the OpenAQ A
 ## Architecture
 
 ![Architecture](docs/architecture.png)
+
+<!-- PENDING SECTIONS: Dataset, Architecture prose, Tech Stack, Why Two Sources,
+     Warehouse Optimisation, Dashboard, Reproduction Steps, ADR Summary,
+     Lessons Learned, Demo. Problem Statement and Architecture image already present. -->

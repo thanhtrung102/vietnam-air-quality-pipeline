@@ -21,3 +21,10 @@ logs/
 
 # Virtual environment
 .venv/
+
+# Lambda build artifacts
+lambda/*.zip
+lambda/streaming/package/
+
+# Terraform secret vars
+terraform/terraform.tfvars

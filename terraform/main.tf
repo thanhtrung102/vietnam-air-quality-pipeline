@@ -295,3 +295,12 @@ resource "aws_iam_role_policy" "pipeline_inline" {
   role   = aws_iam_role.pipeline.id
   policy = data.aws_iam_policy_document.pipeline_inline.json
 }
+
+# ── Provider alias: us-east-1 ─────────────────────────────────────────────────
+# Billing CloudWatch metrics are only available in us-east-1.
+# Declared here (main.tf) to avoid provider conflict when lambda.tf is added.
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}

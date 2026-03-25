@@ -69,9 +69,7 @@ def _load_config() -> dict:
     """Read and validate required environment variables."""
     missing = [k for k in _REQUIRED_ENV if not os.environ.get(k)]
     if missing:
-        for key in missing:
-            log.error("Missing required environment variable: %s", key)
-        sys.exit(1)
+        raise ValueError(f"Missing required environment variables: {missing}")
 
     raw_ids = os.environ.get("STATION_IDS", "")
     if raw_ids.strip():

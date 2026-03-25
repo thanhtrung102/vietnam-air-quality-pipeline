@@ -66,11 +66,6 @@ resource "aws_cloudwatch_metric_alarm" "billing" {
 }
 
 # Billing alarm requires us-east-1 provider alias and a us-east-1 SNS topic
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-}
-
 resource "aws_sns_topic" "openaq_alerts_us" {
   provider = aws.us_east_1
   name     = "openaq_alerts_billing"

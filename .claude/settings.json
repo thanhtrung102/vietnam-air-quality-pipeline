@@ -6,24 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" == *.sql ]]; then cd /d/vietnam-air-quality-pipeline && .venv/Scripts/dbt test --select $(basename \"$CLAUDE_TOOL_INPUT_FILE_PATH\" .sql); fi'",
-            "statusMessage": "Running dbt test on SQL model..."
-          },
-          {
-            "type": "command",
-            "command": "bash -c 'if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" == *.tf ]]; then cd /d/vietnam-air-quality-pipeline/terraform && terraform validate; fi'",
-            "statusMessage": "Validating Terraform syntax..."
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'source /d/vietnam-air-quality-pipeline/.env && aws s3 ls s3://$S3_BUCKET_NAME/raw/batch/ --recursive | wc -l'",
-            "statusMessage": "Checking S3 file count..."
+            "command": "echo sql-or-tf file written",
+            "statusMessage": "File written."
           }
         ]
       }

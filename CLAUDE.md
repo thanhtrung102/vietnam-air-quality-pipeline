@@ -47,7 +47,8 @@
 | 2161323 | Hanoi | Xuân Mai | to 2025-03 |
 | 4946812 | Hanoi | Công viên Nhân Chính | **active** |
 | 4946813 | Hanoi | Số 1 Giải Phóng - Bạch Mai | **active** |
-| 6123215 | Hanoi area | OceanPark | **active** |
+| 4946811 | Hanoi | 556 Nguyễn Văn Cừ | **active** (2025–) |
+| 6123215 | Hanoi area | OceanPark (20.9933°N, 105.9441°E, Hanoi-adjacent) | **active** since 2025-11-08 |
 | 7440 | Ho Chi Minh City | US Diplomatic Post HCMC | to 2025-03 |
 | 2446 | Ho Chi Minh City | US Diplomatic Post HCMC (predecessor) | 2016 only |
 | 6068138 | Ho Chi Minh City | Care Centre | to 2025-12 |
@@ -57,6 +58,7 @@
 
 ## IAM
 - **Local dev user:** terraform-admin (pre-existing, not managed by Terraform)
+- **Orchestration:** EventBridge Scheduler + Lambda (terraform/lambda.tf) — Kestra Docker not available on build machine
 
 ## Rules
 - **Never hardcode API keys** — always read from environment variables
