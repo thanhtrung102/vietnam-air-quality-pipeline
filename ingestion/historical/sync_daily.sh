@@ -1,32 +1,37 @@
 #!/usr/bin/env bash
-# sync_historical.sh — Sync OpenAQ archive data for Vietnamese stations to S3
+# sync_daily.sh — Incremental sync for the current month across all Vietnamese stations.
 #
-# For each station ID in station_ids.txt and each year 2023-2026, runs:
-#   aws s3 sync s3://openaq-data-archive/records/csv.gz/locationid={id}/year={year}/
-#              s3://${S3_BUCKET_NAME}/raw/batch/locationid={id}/year={year}/
+# Designed to run daily (e.g. via cron or Kestra). Syncs only:
+#   s3://openaq-data-archive/records/csv.gz/locationid={id}/year={YYYY}/month={MM}/
+# for the current year and month, making it fast and cheap — aws s3 sync is
+# idempotent so re-running when all files already exist produces no copies.
 #
 # Usage:
-#   source ../../.env && bash sync_historical.sh
-#   bash sync_historical.sh --dry-run          # print commands, no sync
-#   bash sync_historical.sh --year 2024        # single year only
-#   bash sync_historical.sh --station 7441     # single station only
+#   source ../../.env && bash sync_daily.sh
+#   bash sync_daily.sh --dry-run           # print commands, no sync
+#   bash sync_daily.sh --year 2025 --month 11   # override date (backfill use)
 
 set -euo pipefail
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
 DRY_RUN=false
-FILTER_YEAR=""
-FILTER_STATION=""
+OVERRIDE_YEAR=""
+OVERRIDE_MONTH=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --dry-run)       DRY_RUN=true;          shift ;;
-    --year)          FILTER_YEAR="$2";      shift 2 ;;
-    --station)       FILTER_STATION="$2";   shift 2 ;;
+    --dry-run) DRY_RUN=true;             shift ;;
+    --year)    OVERRIDE_YEAR="$2";       shift 2 ;;
+    --month)   OVERRIDE_MONTH="$2";      shift 2 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
+
+# ── Resolve target year / month ───────────────────────────────────────────────
+
+YEAR="${OVERRIDE_YEAR:-$(date +%Y)}"
+MONTH="${OVERRIDE_MONTH:-$(date +%m)}"   # zero-padded: 01..12
 
 # ── Validation ────────────────────────────────────────────────────────────────
 
@@ -35,7 +40,7 @@ STATION_FILE="${SCRIPT_DIR}/station_ids.txt"
 
 if [[ -z "${S3_BUCKET_NAME:-}" ]]; then
   echo "ERROR: S3_BUCKET_NAME environment variable is not set." >&2
-  echo "       Run: source .env && bash sync_historical.sh" >&2
+  echo "       Run: source .env && bash sync_daily.sh" >&2
   exit 1
 fi
 
@@ -44,70 +49,50 @@ if [[ ! -f "$STATION_FILE" ]]; then
   exit 1
 fi
 
-# Read station IDs: strip comments (#...) and blank lines, trim whitespace
 mapfile -t STATION_IDS < <(sed 's/#.*//' "$STATION_FILE" | tr -d ' \t' | grep -v '^$')
 
 if [[ ${#STATION_IDS[@]} -eq 0 ]]; then
-  echo "ERROR: station_ids.txt contains no valid station IDs (all lines are comments or blank)." >&2
+  echo "ERROR: station_ids.txt contains no valid station IDs." >&2
   exit 1
 fi
-
-YEARS=(2023 2024 2025 2026)
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 echo "=================================================="
-echo " OpenAQ historical sync"
+echo " OpenAQ daily incremental sync"
 echo "=================================================="
 echo " Bucket    : s3://${S3_BUCKET_NAME}"
+echo " Period    : ${YEAR}-${MONTH}"
 echo " Stations  : ${#STATION_IDS[@]}"
-echo " Years     : ${YEARS[*]}"
-echo " Filter    : year=${FILTER_YEAR:-all}  station=${FILTER_STATION:-all}"
 echo " Dry-run   : ${DRY_RUN}"
 echo "=================================================="
 
 # ── Sync loop ─────────────────────────────────────────────────────────────────
 
 SUCCESS=0
-SKIPPED=0
 FAILED=0
 FAILED_LIST=()
 
 for id in "${STATION_IDS[@]}"; do
 
-  # Apply --station filter if set
-  if [[ -n "$FILTER_STATION" && "$id" != "$FILTER_STATION" ]]; then
+  src="s3://openaq-data-archive/records/csv.gz/locationid=${id}/year=${YEAR}/month=${MONTH}/"
+  dst="s3://${S3_BUCKET_NAME}/raw/batch/locationid=${id}/year=${YEAR}/month=${MONTH}/"
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[dry-run] aws s3 sync ${src} ${dst} --request-payer requester --only-show-errors"
     continue
   fi
 
-  for year in "${YEARS[@]}"; do
+  if aws s3 sync "${src}" "${dst}" \
+      --request-payer requester \
+      --only-show-errors; then
+    SUCCESS=$((SUCCESS + 1))
+  else
+    echo "  WARNING: sync failed for locationid=${id} year=${YEAR} month=${MONTH}" >&2
+    FAILED=$((FAILED + 1))
+    FAILED_LIST+=("locationid=${id}/year=${YEAR}/month=${MONTH}")
+  fi
 
-    # Apply --year filter if set
-    if [[ -n "$FILTER_YEAR" && "$year" != "$FILTER_YEAR" ]]; then
-      continue
-    fi
-
-    src="s3://openaq-data-archive/records/csv.gz/locationid=${id}/year=${year}/"
-    dst="s3://${S3_BUCKET_NAME}/raw/batch/locationid=${id}/year=${year}/"
-
-    if [[ "$DRY_RUN" == "true" ]]; then
-      echo "[dry-run] aws s3 sync ${src} ${dst} --request-payer requester --only-show-errors"
-      SKIPPED=$((SKIPPED + 1))
-      continue
-    fi
-
-    echo "syncing  locationid=${id}  year=${year} ..."
-    if aws s3 sync "${src}" "${dst}" \
-        --request-payer requester \
-        --only-show-errors; then
-      SUCCESS=$((SUCCESS + 1))
-    else
-      echo "  WARNING: sync failed for locationid=${id} year=${year}" >&2
-      FAILED=$((FAILED + 1))
-      FAILED_LIST+=("locationid=${id}/year=${year}")
-    fi
-
-  done
 done
 
 # ── Report ────────────────────────────────────────────────────────────────────
@@ -115,9 +100,9 @@ done
 echo ""
 echo "=================================================="
 if [[ "$DRY_RUN" == "true" ]]; then
-  echo " Dry-run complete — ${SKIPPED} sync(s) would run"
+  echo " Dry-run complete — ${#STATION_IDS[@]} sync(s) would run for ${YEAR}-${MONTH}"
 else
-  echo " Done — success=${SUCCESS}  failed=${FAILED}"
+  echo " Done — success=${SUCCESS}  failed=${FAILED}  period=${YEAR}-${MONTH}"
   if [[ ${#FAILED_LIST[@]} -gt 0 ]]; then
     echo " Failed paths:"
     for p in "${FAILED_LIST[@]}"; do
@@ -127,4 +112,4 @@ else
 fi
 echo "=================================================="
 
-[[ $FAILED -eq 0 ]]   # exit 1 if any sync failed
+[[ $FAILED -eq 0 ]]
