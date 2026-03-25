@@ -1,0 +1,26 @@
+# Vietnamese station IDs selected for historical batch sync
+# Source: docs/stations.md — 20 stations confirmed in openaq-data-archive
+
+# Hanoi — core set
+7441        # US Embassy Hanoi — 8yr record (2016-2025)
+2539        # US Diplomatic Post Hanoi predecessor (2016)
+1285357     # SPARTAN research station (2019-2020)
+2161290     # An Khánh (2024-2025)
+2161291     # Cầu Diễn (2024)
+2161292     # Lưu Quang Vũ — active to present (2024-2026)
+2161316     # Thành Công (Jan-Feb 2024)
+2161317     # Thanh Xuân - Sóc Sơn (2024)
+2161318     # Tứ Liên (2024)
+2161319     # Vân Đình (2024-2025)
+2161320     # Vân Hà (2024-2025)
+2161321     # Văn Quán (2024)
+2161323     # Xuân Mai (2024-2025)
+4946812     # Công viên Nhân Chính — active 2025-present
+4946813     # Số 1 Giải Phóng — active 2025-present
+6123215     # OceanPark — active 2025-present
+
+# Ho Chi Minh City — core set
+7440        # US Diplomatic Post HCMC — 8yr record (2016-2025)
+2446        # US Diplomatic Post HCMC predecessor (2016)
+6068138     # Care Centre (Oct-Dec 2025)
+6273386     # VNUHCMUS Campus 1 — active Mar 2026
