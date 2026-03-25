@@ -1,0 +1,54 @@
+# ── S3 ────────────────────────────────────────────────────────────────────────
+
+output "s3_bucket_name" {
+  description = "Name of the project S3 bucket"
+  value       = aws_s3_bucket.main.bucket
+}
+
+output "s3_bucket_arn" {
+  description = "ARN of the project S3 bucket"
+  value       = aws_s3_bucket.main.arn
+}
+
+# ── Glue ──────────────────────────────────────────────────────────────────────
+
+output "glue_database_name" {
+  description = "Name of the Glue Data Catalog database"
+  value       = aws_glue_catalog_database.openaq_raw.name
+}
+
+# ── Athena ────────────────────────────────────────────────────────────────────
+
+output "athena_workgroup_name" {
+  description = "Name of the Athena workgroup"
+  value       = aws_athena_workgroup.openaq.name
+}
+
+# ── Kinesis ───────────────────────────────────────────────────────────────────
+
+output "kinesis_stream_name" {
+  description = "Name of the Kinesis Data Stream"
+  value       = aws_kinesis_stream.openaq.name
+}
+
+output "kinesis_stream_arn" {
+  description = "ARN of the Kinesis Data Stream"
+  value       = aws_kinesis_stream.openaq.arn
+}
+
+output "kinesis_firehose_arn" {
+  description = "ARN of the Kinesis Firehose delivery stream"
+  value       = aws_kinesis_firehose_delivery_stream.openaq.arn
+}
+
+# ── IAM ───────────────────────────────────────────────────────────────────────
+
+output "pipeline_role_arn" {
+  description = "ARN of the openaq_pipeline_role IAM role (assumed by EC2/Lambda at runtime)"
+  value       = aws_iam_role.pipeline.arn
+}
+
+output "firehose_role_arn" {
+  description = "ARN of the openaq_firehose_role IAM role (assumed by Kinesis Firehose)"
+  value       = aws_iam_role.firehose.arn
+}
