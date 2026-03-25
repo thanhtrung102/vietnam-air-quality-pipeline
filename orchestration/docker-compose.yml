@@ -1,3 +1,9 @@
+# NOTE: Kestra via Docker Compose is documented here as the originally intended orchestrator.
+# Docker is unavailable on the build machine (Windows, no Docker Desktop).
+# Orchestration is therefore implemented via AWS EventBridge Scheduler + Lambda.
+# See terraform/lambda.tf for the live implementation.
+# This file is retained as reference documentation for the Kestra design intent.
+
 volumes:
   postgres-data:
     driver: local
