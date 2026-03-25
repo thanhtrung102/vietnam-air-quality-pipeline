@@ -19,3 +19,9 @@ variable "alert_email" {
   description = "Email address to receive CloudWatch alarm notifications via SNS"
   type        = string
 }
+
+variable "openaq_api_key" {
+  description = "OpenAQ v3 API key for the Lambda producer (set in terraform.tfvars — gitignored)"
+  type        = string
+  sensitive   = true
+}
