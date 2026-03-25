@@ -1,0 +1,26 @@
+name: openaq_transform
+version: "1.0.0"
+config-version: 2
+
+profile: openaq_transform
+
+model-paths:  ["models"]
+test-paths:   ["tests"]
+seed-paths:   ["seeds"]
+macro-paths:  ["macros"]
+
+target-path:  "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  openaq_transform:
+    staging:
+      +materialized: view
+      +schema: openaq_processed
+
+    marts:
+      +materialized: table
+      +schema: openaq_processed
+      +partitioned_by: ["measurement_date"]
+      +bucketed_by: ["parameter", "location_id"]
+      +bucket_count: 1

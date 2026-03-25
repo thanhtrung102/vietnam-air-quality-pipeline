@@ -1,0 +1,60 @@
+version: 2
+
+sources:
+  - name: openaq_raw
+    description: Raw OpenAQ measurements catalogued in the openaq_raw Glue database
+    database: openaq_raw
+    schema: openaq_raw
+
+    tables:
+      - name: batch
+        description: >
+          Historical and daily-incremental CSV.GZ files synced from the
+          openaq-data-archive S3 bucket into raw/batch/. Hive-partitioned by
+          locationid / year / month. Partition Projection enabled in Glue.
+        columns:
+          - name: location_id
+            description: OpenAQ internal location ID
+          - name: sensors_id
+            description: Sensor ID (one location may have multiple sensors / parameters)
+          - name: location
+            description: Station name as recorded in the archive
+          - name: datetime
+            description: ISO-8601 timestamp with +07:00 timezone offset
+          - name: lat
+            description: WGS-84 latitude
+          - name: lon
+            description: WGS-84 longitude (may have floating-point noise)
+          - name: parameter
+            description: "Pollutant code: pm25, pm10, no2, o3, co, so2, bc"
+          - name: units
+            description: "Measurement units: µg/m³, ppm, or ppb"
+          - name: value
+            description: Measured concentration; sentinel -999.0 means missing
+
+      - name: stream
+        description: >
+          Near-real-time NDJSON records written by Kinesis Firehose from the
+          openaq_stream Kinesis Data Stream into raw/stream/. Partitioned by
+          year / month / day / hour. Partition Projection enabled in Glue.
+        columns:
+          - name: location_id
+            description: OpenAQ internal location ID
+          - name: sensors_id
+            description: Sensor ID
+          - name: location
+            description: Station name (enriched from sensor cache at ingest time)
+          - name: datetime
+            description: Measurement timestamp from the OpenAQ API (UTC ISO-8601 string)
+          - name: lat
+            description: WGS-84 latitude
+          - name: lon
+            description: WGS-84 longitude
+          - name: parameter
+            description: "Pollutant code: pm25, pm10, no2, o3, co, so2, bc"
+          - name: units
+            description: Measurement units
+          - name: value
+            description: Measured concentration; sentinel -999.0 means missing
+          - name: ingested_at
+            description: ISO-8601 UTC timestamp when the record was written to Kinesis
