@@ -20,5 +20,4 @@ models:
     marts:
       +materialized: table
       +partitioned_by: ["measurement_date"]
-      +bucketed_by: ["parameter", "location_id"]
-      +bucket_count: 1
+

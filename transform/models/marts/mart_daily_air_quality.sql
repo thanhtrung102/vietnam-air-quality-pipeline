@@ -1,104 +1,69 @@
 /*
-mart_daily_air_quality — daily aggregated air quality metrics by station and pollutant.
+mart_daily_air_quality — daily aggregated air quality metrics per station and pollutant.
 
-Materialised as a partitioned Athena/Iceberg table:
-  partition by: measurement_date
-  bucketed by:  parameter, location_id (for efficient pollutant/station queries)
+Partition / bucketing strategy:
+  - partition key: measurement_date
+      Every dashboard query filters on a date range; partitioning on
+      measurement_date means Athena reads only the relevant date partitions
+      and skips all other data, minimising scan cost and query latency.
+  - bucket keys: parameter, location_id (bucket_count=8)
+      These are the most common secondary filter dimensions — users typically
+      query one pollutant for one or a small set of stations. Bucketing on
+      both columns co-locates matching rows within each date partition,
+      enabling efficient equality and small-range predicates on parameter
+      and location_id without a full partition scan.
 
-Sources: stg_openaq_batch ∪ stg_openaq_stream
-Grain:   one row per (measurement_date, location_id, parameter)
+Note: measurement_date must be the last column in the SELECT because Athena/Hive
+requires partition columns to appear at the end of the table definition.
 
-Columns:
-  measurement_date  — UTC calendar date of readings (partition key)
-  location_id       — OpenAQ station ID
-  location_name     — Human-readable station name (most-frequent value in the day)
-  lat / lon         — Station coordinates (most-frequent value; stable per station)
-  parameter         — Pollutant code (pm25, pm10, no2, o3, co, so2, bc)
-  units             — Measurement units (µg/m³, ppm, ppb)
-  reading_count     — Number of valid readings in the day (excludes -999.0)
-  avg_value         — Daily mean concentration
-  max_value         — Daily maximum concentration
-  min_value         — Daily minimum concentration
-  p95_value         — 95th-percentile concentration (for health-episode flagging)
-  source_types      — Comma-separated list of data sources contributing to this row
+Grain: one row per measurement_date × location_id × parameter.
+Source: int_measurements_enriched (staging measurements + station metadata).
 */
 
-with
+{{ config(
+    materialized   = 'table',
+    partitioned_by = ['measurement_date']
+) }}
 
-batch as (
-    select * from {{ ref('stg_openaq_batch') }}
-),
+with source as (
 
-stream as (
-    select * from {{ ref('stg_openaq_stream') }}
-),
-
-combined as (
-
-    select
-        measurement_date,
-        location_id,
-        location,
-        lat,
-        lon,
-        parameter,
-        units,
-        value,
-        source_type
-    from batch
-
-    union all
-
-    select
-        measurement_date,
-        location_id,
-        location,
-        lat,
-        lon,
-        parameter,
-        units,
-        value,
-        source_type
-    from stream
+    select * from {{ ref('int_measurements_enriched') }}
 
 ),
 
 aggregated as (
 
     select
-        measurement_date,
-        location_id,
-
-        -- Most-frequent location name and coordinates for the day
-        -- (max() gives a deterministic result without a subquery in Presto/Athena)
-        max(location)   as location_name,
-        max(lat)        as lat,
-        max(lon)        as lon,
-
+        city,
+        province,
         parameter,
-        max(units)      as units,
+        location_id,
+        location_name,
+        station_lat,
+        station_lon,
 
-        count(*)                                as reading_count,
-        round(avg(value),   2)                  as avg_value,
-        round(max(value),   2)                  as max_value,
-        round(min(value),   2)                  as min_value,
-        round(
-            approx_percentile(value, 0.95),
-            2
-        )                                       as p95_value,
+        round(avg(measurement_value), 4)  as avg_value,
+        round(max(measurement_value), 4)  as max_value,
+        round(min(measurement_value), 4)  as min_value,
+        count(*)                          as reading_count,
+        count(distinct sensor_id)         as sensor_count,
 
-        array_join(
-            array_agg(distinct source_type),
-            ','
-        )                                       as source_types
+        -- partition column must be last
+        measurement_date
 
-    from combined
+    from source
 
     group by
         measurement_date,
+        city,
+        province,
+        parameter,
         location_id,
-        parameter
+        location_name,
+        station_lat,
+        station_lon
 
 )
 
 select * from aggregated
+order by measurement_date desc, city, parameter

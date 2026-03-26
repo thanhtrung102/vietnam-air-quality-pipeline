@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: mart_daily_air_quality
+    description: >
+      Daily average air quality per station and pollutant.
+      Grain: one row per measurement_date × location_id × parameter.
+      Partitioned by measurement_date; bucketed by parameter and location_id
+      (8 buckets) for efficient dashboard queries.
+
+    columns:
+      - name: measurement_date
+        description: Calendar date of the aggregated readings (partition key)
+        tests:
+          - not_null
+
+      - name: city
+        description: City where the station is located (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: parameter
+        description: Pollutant code (pm25, pm10, o3, no2, so2, co, bc, etc.)
+        tests:
+          - not_null
+
+      - name: location_id
+        description: OpenAQ internal location identifier
+
+      - name: location_name
+        description: Canonical station name from vn_stations seed
+
+      - name: station_lat
+        description: Canonical WGS-84 latitude from vn_stations seed
+
+      - name: station_lon
+        description: Canonical WGS-84 longitude from vn_stations seed
+
+      - name: avg_value
+        description: Daily mean concentration (rounded to 4 dp)
+        tests:
+          - not_null
+
+      - name: max_value
+        description: Daily maximum concentration (rounded to 4 dp)
+
+      - name: min_value
+        description: Daily minimum concentration (rounded to 4 dp)
+
+      - name: reading_count
+        description: Number of valid readings contributing to the daily aggregate
+        tests:
+          - not_null
+
+      - name: sensor_count
+        description: Number of distinct sensors contributing to the daily aggregate

@@ -168,6 +168,49 @@ Filtering (nulls, sentinel -999.0, negative values) removed **12,907 rows** (1.4
 
 ---
 
+## dbt Mart Model — mart_daily_air_quality
+
+**Date:** 2026-03-26
+**Model:** `transform/models/marts/mart_daily_air_quality.sql`
+**Target:** `openaq_mart.mart_daily_air_quality` (Athena table, Parquet, partitioned by measurement_date)
+**S3 location:** `s3://openaq-pipeline-thanhtrung102/athena-results/tables/ee62f697-ea27-4024-b221-15b3ddd963ad/`
+**dbt build:** 6/6 PASS (1 table + 5 data tests)
+
+```sql
+SELECT COUNT(*) FROM openaq_mart.mart_daily_air_quality
+```
+
+| Metric | Value |
+|--------|-------|
+| Mart row count | **15,734** |
+
+Grain: one row per measurement_date × location_id × parameter (daily aggregates).
+
+### Sanity Check — Three-year average by city and pollutant
+
+```sql
+SELECT city, parameter, ROUND(AVG(avg_value), 2) AS three_year_avg
+FROM openaq_mart.mart_daily_air_quality
+GROUP BY city, parameter ORDER BY city, parameter
+```
+
+| City | Parameter | Three-year avg |
+|------|-----------|----------------|
+| Hanoi | co | 1005.39 ppb |
+| Hanoi | no2 | 31.95 µg/m³ |
+| Hanoi | o3 | 24.67 µg/m³ |
+| Hanoi | pm1 | 43.26 µg/m³ |
+| Hanoi | pm10 | 61.39 µg/m³ |
+| **Hanoi** | **pm25** | **40.23 µg/m³** ✅ (expected 20–60) |
+| Hanoi | so2 | 4.84 µg/m³ |
+| Ho Chi Minh City | pm25 | 291.68 µg/m³ |
+| Ho Chi Minh City | relativehumidity | 51.68 % |
+| Ho Chi Minh City | temperature | 30.42 °C |
+
+Hanoi PM2.5 = 40.23 µg/m³, well within the expected 20–60 µg/m³ range. Sentinel filter confirmed working.
+
+---
+
 ## Sample Data
 
 **Station 7441 (US Embassy Hanoi), 2023-01-01:**
