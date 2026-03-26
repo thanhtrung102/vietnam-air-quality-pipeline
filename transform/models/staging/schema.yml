@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: stg_measurements
+    description: >
+      Staging view over openaq_raw.raw_measurements. Casts and renames columns,
+      filters sentinel values and nulls, and derives measurement_date for
+      downstream mart partitioning.
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier (cast to INT)
+        tests:
+          - not_null
+
+      - name: sensor_id
+        description: OpenAQ sensor identifier (renamed from sensors_id in archive)
+        tests:
+          - not_null
+
+      - name: location
+        description: Station name string as stored in the archive
+
+      - name: measured_at
+        description: >
+          Measurement timestamp cast to TIMESTAMP from the ISO-8601 datetime
+          string (timezone offset +07:00 normalised by from_iso8601_timestamp).
+        tests:
+          - not_null
+
+      - name: measurement_date
+        description: Calendar date derived from measured_at (for mart partitioning)
+
+      - name: lat
+        description: WGS-84 latitude rounded to 6 decimal places
+
+      - name: lon
+        description: WGS-84 longitude rounded to 6 decimal places (eliminates floating-point noise)
+
+      - name: parameter
+        description: Pollutant code (lower-cased)
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['pm25', 'pm10', 'o3', 'no2', 'so2', 'co', 'bc',
+                         'relativehumidity', 'temperature', 'um003', 'pm1']
+
+      - name: units
+        description: Measurement unit string (µg/m³, ppm, ppb)
+
+      - name: measurement_value
+        description: Measured concentration as DOUBLE (renamed from value; sentinel -999.0 excluded)
+        tests:
+          - not_null

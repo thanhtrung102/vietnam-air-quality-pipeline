@@ -16,11 +16,9 @@ models:
   openaq_transform:
     staging:
       +materialized: view
-      +schema: openaq_processed
 
     marts:
       +materialized: table
-      +schema: openaq_processed
       +partitioned_by: ["measurement_date"]
       +bucketed_by: ["parameter", "location_id"]
       +bucket_count: 1

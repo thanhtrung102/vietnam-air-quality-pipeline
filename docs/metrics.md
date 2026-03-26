@@ -149,6 +149,25 @@ Multi-parameter coverage confirmed across all active stations.
 
 ---
 
+## dbt Staging Model — stg_measurements
+
+**Date:** 2026-03-26
+**Model:** `transform/models/staging/stg_measurements.sql`
+**Target:** `openaq_mart.stg_measurements` (Athena view)
+**dbt build:** 7/7 PASS (1 view + 6 data tests)
+
+```sql
+SELECT COUNT(*) FROM openaq_mart.stg_measurements
+```
+
+| Metric | Value |
+|--------|-------|
+| Row count | **885,339** |
+
+Filtering (nulls, sentinel -999.0, negative values) removed **12,907 rows** (1.4%) from the 898,246-row raw table.
+
+---
+
 ## Sample Data
 
 **Station 7441 (US Embassy Hanoi), 2023-01-01:**
