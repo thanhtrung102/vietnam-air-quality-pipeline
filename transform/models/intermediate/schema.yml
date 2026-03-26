@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: int_measurements_enriched
+    description: >
+      Staging measurements enriched with station metadata from the vn_stations seed.
+      Left-joins on location_id to add city, province, canonical station coordinates,
+      and location_name. Rows without a city mapping (station IDs absent from the seed)
+      are excluded.
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+
+      - name: sensor_id
+        description: OpenAQ sensor identifier
+
+      - name: location
+        description: Station name string as stored in the archive
+
+      - name: measured_at
+        description: Measurement timestamp (TIMESTAMP, timezone-normalised)
+
+      - name: measurement_date
+        description: Calendar date derived from measured_at (for mart partitioning)
+
+      - name: lat
+        description: WGS-84 latitude from the raw archive (rounded to 6 dp)
+
+      - name: lon
+        description: WGS-84 longitude from the raw archive (rounded to 6 dp)
+
+      - name: parameter
+        description: Pollutant code (lower-cased)
+
+      - name: units
+        description: Measurement unit string (µg/m³, ppm, ppb)
+
+      - name: measurement_value
+        description: Measured concentration as DOUBLE
+
+      - name: location_name
+        description: Canonical station name from vn_stations seed
+
+      - name: city
+        description: City where the station is located (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division from vn_stations seed
+
+      - name: station_lat
+        description: Canonical WGS-84 latitude from vn_stations seed
+
+      - name: station_lon
+        description: Canonical WGS-84 longitude from vn_stations seed
