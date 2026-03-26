@@ -6,13 +6,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q \"\\.tf$\"; then cd /d/vietnam-air-quality-pipeline/terraform && terraform validate; fi'",
+            "command": "bash -c 'if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q \"\\.tf$\"; then cd terraform && terraform validate; fi'",
             "statusMessage": "Validating Terraform syntax..."
           },
           {
             "type": "command",
-            "command": "echo sql file written",
-            "statusMessage": "File written."
+            "command": "bash -c 'if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q \"\\.sql$\"; then MODEL=$(basename \"$CLAUDE_TOOL_INPUT_FILE_PATH\" .sql) && cd transform && dbt test --select $MODEL; fi'",
+            "statusMessage": "Running dbt test on SQL model..."
           }
         ]
       }
