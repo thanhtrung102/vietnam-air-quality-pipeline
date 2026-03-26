@@ -21,7 +21,19 @@ variable "alert_email" {
 }
 
 variable "openaq_api_key" {
-  description = "OpenAQ v3 API key for the Lambda producer (set in terraform.tfvars — gitignored)"
+  description = "OpenAQ v3 API key for the streaming Lambda function"
   type        = string
   sensitive   = true
+}
+
+variable "lambda_batch_zip_path" {
+  description = "Path to the batch sync Lambda zip file, relative to the terraform/ directory"
+  type        = string
+  default     = "../lambda/batch_sync.zip"
+}
+
+variable "lambda_streaming_zip_path" {
+  description = "Path to the streaming producer Lambda zip file, relative to the terraform/ directory"
+  type        = string
+  default     = "../lambda/streaming.zip"
 }

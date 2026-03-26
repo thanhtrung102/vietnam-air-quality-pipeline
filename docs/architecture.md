@@ -22,11 +22,11 @@ The historical ingestion job runs as a Kestra scheduled flow. It executes an AWS
 
 ### 2.2 Streaming Bridge Path
 
-Because the OpenAQ public archive lags real time by approximately 72 hours, a lightweight Python ingestion script polls the OpenAQ v3 REST API on a 15-minute cadence to fill the gap. The script is triggered by a Kestra scheduled flow, filters responses to Vietnamese location IDs, normalises the JSON payload to match the archive's Parquet column schema, and writes one gzip-compressed Parquet file per execution into `raw/stream/{year}/{month}/{day}/{hour}/`. A separate Glue Crawler covers this prefix and runs after every write. Together the two ingest paths ensure that Athena always sees data that is at most ~15 minutes stale.
+Because the OpenAQ public archive lags real time by approximately 72 hours, a lightweight Python ingestion script polls the OpenAQ v3 REST API on a 15-minute cadence to fill the gap. The script runs as a Lambda function `openaq_streaming_producer` triggered by an EventBridge Scheduler rule every 30 minutes, filters responses to Vietnamese location IDs, normalises the JSON payload to match the archive's Parquet column schema, and writes one gzip-compressed Parquet file per execution into `raw/stream/{year}/{month}/{day}/{hour}/`. A separate Glue Crawler covers this prefix and runs after every write. Together the two ingest paths ensure that Athena always sees data that is at most ~15 minutes stale.
 
 ### 2.3 Kinesis Real-Time Path (Optional / Future)
 
-For use-cases that require sub-minute latency — operational alerting, for example — raw API payloads can be published to the Kinesis Data Stream `openaq_stream`. A Kinesis Data Firehose delivery stream can fan out to S3 under `raw/stream/` (replacing or supplementing the polling script) and forward records to OpenSearch or a Lambda for immediate alerting. This path is provisioned by Terraform but not activated in the initial deployment.
+For use-cases that require sub-minute latency — operational alerting, for example — raw API payloads can be published to the Kinesis Data Stream `openaq_stream`. A Kinesis Data Firehose delivery stream can fan out to S3 under `raw/stream/` (replacing or supplementing the polling script) and forward records to OpenSearch or a Lambda for immediate alerting. This path is provisioned by Terraform and active. The streaming Lambda publishes to `openaq_stream`; Firehose delivers to `raw/stream/` within 5 minutes of each invocation.
 
 ### 2.4 Transform Layer
 

@@ -59,6 +59,10 @@
 ## IAM
 - **Local dev user:** terraform-admin (pre-existing, not managed by Terraform)
 - **Orchestration:** EventBridge Scheduler + Lambda (terraform/lambda.tf) — Kestra Docker not available on build machine
+- **Lambda batch function:** openaq_batch_sync (900s timeout, daily at 01:00 UTC)
+- **Lambda streaming function:** openaq_streaming_producer (120s timeout, every 30 minutes)
+- **EventBridge schedule batch:** openaq_batch_daily
+- **EventBridge schedule streaming:** openaq_streaming_30min
 
 ## Rules
 - **Never hardcode API keys** — always read from environment variables

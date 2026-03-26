@@ -6,8 +6,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" == *.tf ]]; then cd /d/vietnam-air-quality-pipeline/terraform && terraform validate; fi'",
+            "command": "bash -c 'if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q \"\\.tf$\"; then cd /d/vietnam-air-quality-pipeline/terraform && terraform validate; fi'",
             "statusMessage": "Validating Terraform syntax..."
+          },
+          {
+            "type": "command",
+            "command": "echo sql file written",
+            "statusMessage": "File written."
           }
         ]
       }
