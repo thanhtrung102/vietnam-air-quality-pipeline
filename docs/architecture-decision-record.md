@@ -201,3 +201,35 @@ The Iceberg table format reinforces the CP choice: each dbt `run` produces an at
 - The Iceberg sort order is enforced at write time by dbt's `+sort` config; queries that do not filter on `parameter` will not benefit from row-group skipping.
 - Time-travel queries (`SELECT ... FOR SYSTEM_TIME AS OF ...`) are available through Iceberg but require careful snapshot retention management to avoid unbounded S3 growth.
 - If real-time queries (latency < 1 minute) become a requirement, the CP guarantee of Athena means accepting that availability drops during service disruptions; a separate HA alerting path (Lambda + SNS) would be needed for SLA-critical alerting.
+
+---
+
+## ADR-008: Orchestration — EventBridge Scheduler + Lambda over Kestra
+
+### Context
+Kestra requires Docker Compose to run. Docker Desktop is unavailable on the
+Windows build machine. Two alternatives were evaluated: (a) AWS EventBridge
+Scheduler + Lambda, and (b) deferring orchestration and triggering scripts
+manually.
+
+### Decision
+AWS EventBridge Scheduler + Lambda was selected.
+
+### Rationale
+EventBridge Scheduler provides cron-based invocation semantics identical to
+Kestra's scheduled flows, with zero local infrastructure dependency. Lambda
+cold start under 2 seconds is acceptable for a daily batch job and a
+30-minute streaming poll. Both are fully managed, monitored via CloudWatch
+Logs, and provisioned by the existing Terraform configuration. Manual
+triggering was rejected because it would break the reproducibility criterion
+— the pipeline would not be self-sustaining without human intervention.
+
+### Consequences
+- No Kestra UI for flow visualisation; execution history is in CloudWatch Logs.
+- Lambda has a 15-minute maximum timeout; the batch sync must complete within
+  this window. At current data volumes (21 stations, monthly delta) this is
+  comfortable. If the station list grows significantly, the batch job will
+  need to be restructured as parallel Lambda invocations.
+- The Kestra docker-compose.yml is retained in the repository as reference
+  documentation for the original design intent.
+
