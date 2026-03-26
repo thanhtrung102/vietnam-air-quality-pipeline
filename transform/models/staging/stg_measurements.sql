@@ -12,7 +12,10 @@ Transformations:
   - measurement_date derived from measured_at for mart partitioning
   - location_id cast to INT
   - lon rounded to 6 dp (floating-point noise observed in station 4946812)
-  - Filters: nulls, sentinel -999.0, negative values, null parameter
+  - Filters: nulls, sentinel -999.0, negative values, null parameter,
+             values >= 500 (station 7440 emits 985.0 as a fill/error code;
+             500 µg/m³ is the US EPA AQI ceiling and physically implausible
+             as a sustained PM2.5 concentration)
 */
 
 with source as (
@@ -34,6 +37,7 @@ with source as (
       and value           is not null
       and value           != -999.0
       and value           >= 0
+      and value           < 500    -- filter fill/error code 985.0 from station 7440
       and parameter       is not null
       and location_id     is not null
 
