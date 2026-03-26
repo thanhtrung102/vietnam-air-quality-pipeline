@@ -62,3 +62,27 @@ models:
         description: >
           Instrument type: 'reference' for FEM monitors, 'low_cost' for AirGradient
           optical sensors. Enables dashboard filtering by instrument quality.
+
+      - name: aqi_value
+        description: >
+          US EPA 2024 AQI (0–500) computed from avg_value via piecewise linear
+          interpolation. NULL for non-PM2.5 parameters. Breakpoints: Good 0–50
+          (0–9 µg/m³), Moderate 51–100 (9.1–35.4), USG 101–150 (35.5–55.4),
+          Unhealthy 151–200 (55.5–125.4), Very Unhealthy 201–300 (125.5–225.4),
+          Hazardous 301–500 (225.5–325.4).
+
+      - name: aqi_category
+        description: >
+          AQI category label corresponding to aqi_value. One of: Good, Moderate,
+          Unhealthy for Sensitive Groups, Unhealthy, Very Unhealthy, Hazardous.
+          NULL for non-PM2.5 parameters.
+
+      - name: exceeds_who_24h
+        description: >
+          TRUE when avg_value > 15 µg/m³ (WHO AQG 2021 24-hour guideline).
+          NULL for non-PM2.5 parameters.
+
+      - name: exceeds_qcvn
+        description: >
+          TRUE when avg_value > 50 µg/m³ (QCVN 05:2023 Vietnam 24-hour standard).
+          NULL for non-PM2.5 parameters.
