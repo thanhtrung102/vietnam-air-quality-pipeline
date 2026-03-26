@@ -53,8 +53,16 @@ data "aws_iam_policy_document" "lambda_inline" {
     condition {
       test     = "StringLike"
       variable = "s3:prefix"
-      values   = ["raw/*", "processed/*", "athena-results/*"]
+      values   = ["raw/*", "processed/*", "athena-results/*", "dbt-staging/*"]
     }
+  }
+
+  # Athena requires GetBucketLocation to verify the query output bucket
+  statement {
+    sid     = "ProjectBucketLocation"
+    effect  = "Allow"
+    actions = ["s3:GetBucketLocation"]
+    resources = [aws_s3_bucket.main.arn]
   }
 
   # S3 — OpenAQ public archive (read-only, requester-pays)
@@ -93,6 +101,8 @@ data "aws_iam_policy_document" "lambda_inline" {
       "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
       "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_raw",
       "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_raw/*",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_mart",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_mart/*",
     ]
   }
 

@@ -18,7 +18,7 @@ Use in dashboard:
   - Heatmap combined with mart_diurnal_profile: hour × month colour map
 */
 
-{{ config(materialized = 'table') }}
+{{ config(materialized = 'table', partitioned_by = []) }}
 
 select
     location_id,

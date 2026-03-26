@@ -72,14 +72,13 @@ AQI_COLOURS = {
 }
 
 
-def _run_athena_query(sql: str, database: str, workgroup: str, output_location: str) -> list[dict]:
+def _run_athena_query(sql: str, database: str, workgroup: str) -> list[dict]:
     client = boto3.client("athena", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
 
     response = client.start_query_execution(
         QueryString=sql,
         QueryExecutionContext={"Database": database},
         WorkGroup=workgroup,
-        ResultConfiguration={"OutputLocation": output_location},
     )
     qid = response["QueryExecutionId"]
 
@@ -110,13 +109,11 @@ def _run_athena_query(sql: str, database: str, workgroup: str, output_location: 
 
 
 def handler(event, context):
-    bucket = os.environ["S3_BUCKET_NAME"]
     database = os.environ.get("ATHENA_DATABASE", "openaq_mart")
     workgroup = os.environ.get("ATHENA_WORKGROUP", "openaq_workgroup")
-    output = f"s3://{bucket}/aqi-api-results/"
 
     try:
-        rows = _run_athena_query(QUERY, database, workgroup, output)
+        rows = _run_athena_query(QUERY, database, workgroup)
     except Exception as exc:
         return {
             "statusCode": 500,
