@@ -302,3 +302,135 @@ resource "aws_scheduler_schedule" "streaming_30min" {
     input    = jsonencode({})
   }
 }
+
+# ── SNS event-driven batch sync (Improvement 3) ───────────────────────────────
+#
+# OpenAQ publishes an SNS notification to:
+#   arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created
+# for every new CSV.GZ written to the archive bucket.
+#
+# Architecture:
+#   SNS (us-east-1) → SQS (us-east-1) → Lambda (ap-southeast-1, cross-region trigger)
+#
+# This replaces the cron-based daily batch for files that arrive during the day;
+# the cron schedule is retained as a catch-all for any missed events.
+#
+# NOTE: The SNS topic is owned by OpenAQ (account 817926761842) and is in
+# us-east-1. Resources below are ap-southeast-1 except where noted.
+
+# SQS queue in us-east-1 to buffer SNS notifications
+resource "aws_sqs_queue" "openaq_events" {
+  provider = aws.us_east_1
+  name     = "openaq-archive-events"
+
+  # Keep messages for 4 hours — Lambda will drain quickly under normal load
+  message_retention_seconds  = 14400
+  visibility_timeout_seconds = 960   # > Lambda timeout (900s) to prevent double-processing
+
+  tags = local.common_tags
+}
+
+# Allow the OpenAQ SNS topic to send messages to our queue
+resource "aws_sqs_queue_policy" "openaq_events" {
+  provider  = aws.us_east_1
+  queue_url = aws_sqs_queue.openaq_events.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AllowOpenAQSNS"
+      Effect    = "Allow"
+      Principal = { Service = "sns.amazonaws.com" }
+      Action    = "sqs:SendMessage"
+      Resource  = aws_sqs_queue.openaq_events.arn
+      Condition = {
+        ArnEquals = {
+          "aws:SourceArn" = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"
+        }
+      }
+    }]
+  })
+}
+
+# Subscribe our SQS queue to the OpenAQ SNS topic
+resource "aws_sns_topic_subscription" "openaq_events" {
+  provider  = aws.us_east_1
+  topic_arn = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.openaq_events.arn
+
+  # Only forward notifications for Vietnamese station files to reduce noise.
+  # The SNS message subject contains the S3 key; filter on the locationid prefix.
+  filter_policy = jsonencode({
+    # OpenAQ SNS messages do not expose the S3 key in message attributes,
+    # so we cannot filter here — the Lambda handler filters by location_id instead.
+  })
+}
+
+# Grant Lambda permission to read from the SQS queue (cross-region)
+resource "aws_iam_role_policy" "lambda_sqs" {
+  name = "openaq_lambda_sqs_policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "SQSReceive"
+      Effect   = "Allow"
+      Action   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+      Resource = aws_sqs_queue.openaq_events.arn
+    }]
+  })
+}
+
+# Wire the SQS queue as a trigger for the batch_sync Lambda
+# batch_sync.handler already handles individual file paths from the SNS/SQS event body
+resource "aws_lambda_event_source_mapping" "sqs_to_batch" {
+  event_source_arn = aws_sqs_queue.openaq_events.arn
+  function_name    = aws_lambda_function.batch_sync.arn
+  batch_size       = 10
+  enabled          = true
+}
+
+# ── Lambda: openaq_aqi_api ─────────────────────────────────────────────────────
+# HTTP API returning latest composite AQI per station as GeoJSON.
+# Consumed by dashboard/index.html Leaflet map.
+
+resource "aws_cloudwatch_log_group" "aqi_api" {
+  name              = "/aws/lambda/openaq_aqi_api"
+  retention_in_days = 14
+  tags              = local.common_tags
+}
+
+resource "aws_lambda_function" "aqi_api" {
+  function_name = "openaq_aqi_api"
+  role          = aws_iam_role.lambda_exec.arn
+  runtime       = "python3.12"
+  handler       = "handler.handler"
+  filename      = var.lambda_aqi_api_zip_path
+  timeout       = 60
+  memory_size   = 256
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME    = local.bucket_name
+      ATHENA_DATABASE   = "openaq_mart"
+      ATHENA_WORKGROUP  = "openaq_workgroup"
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.aqi_api]
+  tags       = local.common_tags
+}
+
+# Lambda Function URL — public HTTPS endpoint, no API Gateway needed
+resource "aws_lambda_function_url" "aqi_api" {
+  function_name      = aws_lambda_function.aqi_api.function_name
+  authorization_type = "NONE"   # public read-only endpoint; AQI data is not sensitive
+
+  cors {
+    allow_origins = ["*"]
+    allow_methods = ["GET"]
+    max_age       = 3600
+  }
+}

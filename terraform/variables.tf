@@ -37,3 +37,9 @@ variable "lambda_streaming_zip_path" {
   type        = string
   default     = "../lambda/streaming.zip"
 }
+
+variable "lambda_aqi_api_zip_path" {
+  description = "Path to the AQI API Lambda zip file, relative to the terraform/ directory"
+  type        = string
+  default     = "../lambda/aqi_api.zip"
+}

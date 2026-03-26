@@ -52,3 +52,10 @@ output "firehose_role_arn" {
   description = "ARN of the openaq_firehose_role IAM role (assumed by Kinesis Firehose)"
   value       = aws_iam_role.firehose.arn
 }
+
+# ── AQI API ───────────────────────────────────────────────────────────────────
+
+output "aqi_api_function_url" {
+  description = "Lambda Function URL for the AQI GeoJSON API (consumed by Leaflet map)"
+  value       = aws_lambda_function_url.aqi_api.function_url
+}

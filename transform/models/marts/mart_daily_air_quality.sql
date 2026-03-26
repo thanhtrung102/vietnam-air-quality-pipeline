@@ -85,27 +85,58 @@ select
     reading_count,
     sensor_count,
 
-    -- US EPA 2024 PM2.5 AQI (piecewise linear, NULL for non-PM2.5 rows)
+    -- US EPA 2024 AQI (piecewise linear interpolation).
+    -- PM2.5: 24-hour breakpoints (µg/m³), updated May 2024 (annual NAAQS 12→9 µg/m³).
+    -- PM10:  24-hour breakpoints (µg/m³).
+    -- O3/NO2/SO2/CO require unit conversion (µg/m³ → ppm/ppb) and sub-daily
+    -- averaging windows — excluded pending normalisation of units in staging.
     case
-        when parameter != 'pm25' then null
-        when avg_value <=   9.0  then cast(round(( 50 -  0) / (  9.0 -  0.0) * (avg_value -   0.0) +   0) as int)
-        when avg_value <=  35.4  then cast(round((100 - 51) / ( 35.4 -  9.1) * (avg_value -   9.1) +  51) as int)
-        when avg_value <=  55.4  then cast(round((150 -101) / ( 55.4 - 35.5) * (avg_value -  35.5) + 101) as int)
-        when avg_value <= 125.4  then cast(round((200 -151) / (125.4 - 55.5) * (avg_value -  55.5) + 151) as int)
-        when avg_value <= 225.4  then cast(round((300 -201) / (225.4 -125.5) * (avg_value - 125.5) + 201) as int)
-        when avg_value <= 325.4  then cast(round((500 -301) / (325.4 -225.5) * (avg_value - 225.5) + 301) as int)
-        else 500
+        when parameter = 'pm25' then
+            case
+                when avg_value <=   9.0  then cast(round(( 50 -  0) / (  9.0 -  0.0) * (avg_value -   0.0) +   0) as int)
+                when avg_value <=  35.4  then cast(round((100 - 51) / ( 35.4 -  9.1) * (avg_value -   9.1) +  51) as int)
+                when avg_value <=  55.4  then cast(round((150 -101) / ( 55.4 - 35.5) * (avg_value -  35.5) + 101) as int)
+                when avg_value <= 125.4  then cast(round((200 -151) / (125.4 - 55.5) * (avg_value -  55.5) + 151) as int)
+                when avg_value <= 225.4  then cast(round((300 -201) / (225.4 -125.5) * (avg_value - 125.5) + 201) as int)
+                when avg_value <= 325.4  then cast(round((500 -301) / (325.4 -225.5) * (avg_value - 225.5) + 301) as int)
+                else 500
+            end
+        when parameter = 'pm10' then
+            case
+                when avg_value <=  54.0  then cast(round(( 50 -  0) / ( 54.0 -  0.0) * (avg_value -   0.0) +   0) as int)
+                when avg_value <= 154.0  then cast(round((100 - 51) / (154.0 - 55.0) * (avg_value -  55.0) +  51) as int)
+                when avg_value <= 254.0  then cast(round((150 -101) / (254.0 -155.0) * (avg_value - 155.0) + 101) as int)
+                when avg_value <= 354.0  then cast(round((200 -151) / (354.0 -255.0) * (avg_value - 255.0) + 151) as int)
+                when avg_value <= 424.0  then cast(round((300 -201) / (424.0 -355.0) * (avg_value - 355.0) + 201) as int)
+                when avg_value <= 604.0  then cast(round((500 -301) / (604.0 -425.0) * (avg_value - 425.0) + 301) as int)
+                else 500
+            end
+        else null
     end as aqi_value,
 
-    -- AQI category label (EPA 2024)
+    -- AQI health category label derived from aqi_value breakpoints
     case
-        when parameter != 'pm25'  then null
-        when avg_value <=   9.0   then 'Good'
-        when avg_value <=  35.4   then 'Moderate'
-        when avg_value <=  55.4   then 'Unhealthy for Sensitive Groups'
-        when avg_value <= 125.4   then 'Unhealthy'
-        when avg_value <= 225.4   then 'Very Unhealthy'
-        else                           'Hazardous'
+        when parameter not in ('pm25', 'pm10') then null
+        when avg_value is null                 then null
+        -- re-derive from the same breakpoints to avoid a self-reference
+        when parameter = 'pm25' then
+            case
+                when avg_value <=   9.0  then 'Good'
+                when avg_value <=  35.4  then 'Moderate'
+                when avg_value <=  55.4  then 'Unhealthy for Sensitive Groups'
+                when avg_value <= 125.4  then 'Unhealthy'
+                when avg_value <= 225.4  then 'Very Unhealthy'
+                else                          'Hazardous'
+            end
+        when parameter = 'pm10' then
+            case
+                when avg_value <=  54.0  then 'Good'
+                when avg_value <= 154.0  then 'Moderate'
+                when avg_value <= 254.0  then 'Unhealthy for Sensitive Groups'
+                when avg_value <= 354.0  then 'Unhealthy'
+                when avg_value <= 424.0  then 'Very Unhealthy'
+                else                          'Hazardous'
+            end
     end as aqi_category,
 
     -- Exceedance flags (NULL for non-PM2.5 parameters)
