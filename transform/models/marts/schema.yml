@@ -57,3 +57,8 @@ models:
 
       - name: sensor_count
         description: Number of distinct sensors contributing to the daily aggregate
+
+      - name: sensor_type
+        description: >
+          Instrument type: 'reference' for FEM monitors, 'low_cost' for AirGradient
+          optical sensors. Enables dashboard filtering by instrument quality.

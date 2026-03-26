@@ -57,3 +57,10 @@ models:
 
       - name: station_lon
         description: Canonical WGS-84 longitude from vn_stations seed
+
+      - name: sensor_type
+        description: >
+          Instrument type from vn_stations seed: 'reference' for government FEM
+          monitors; 'low_cost' for AirGradient optical sensors (stations 6123215,
+          6068138, 6273386). Used for downstream filtering; EPA humidity correction
+          pending RH self-join implementation.
