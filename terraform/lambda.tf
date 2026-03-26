@@ -69,6 +69,15 @@ data "aws_iam_policy_document" "lambda_inline" {
     ]
   }
 
+  statement {
+    sid    = "OpenAQArchiveList"
+    effect = "Allow"
+
+    actions = ["s3:ListBucket"]
+
+    resources = ["arn:aws:s3:::openaq-data-archive"]
+  }
+
   # Glue — catalogue read
   statement {
     sid    = "GlueCatalogueRead"
