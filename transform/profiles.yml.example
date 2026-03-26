@@ -4,7 +4,7 @@ openaq_transform:
     dev:
       type: athena
       s3_staging_dir: s3://openaq-pipeline-thanhtrung102/dbt-staging/
-      database: openaq_raw
+      database: AwsDataCatalog
       schema: openaq_mart
       region_name: ap-southeast-1
       work_group: openaq_workgroup
