@@ -46,6 +46,109 @@ Verified 9 columns present and consistent across all years for stations 7441, 74
 
 ---
 
+## Athena External Table Validation
+
+**Date:** 2026-03-26
+**Table:** `openaq_raw.raw_measurements`
+**Workgroup:** `openaq_workgroup`
+**DDL:** `transform/setup/create_external_table.sql`
+
+### Query 1 — Full table scan baseline
+
+```sql
+SELECT COUNT(*) FROM openaq_raw.raw_measurements
+```
+
+| Metric | Value |
+|--------|-------|
+| Row count | **898,246** |
+| Data scanned | **6.848 MB** |
+
+### Query 2 — Partition-filtered scan
+
+```sql
+SELECT COUNT(*) FROM openaq_raw.raw_measurements
+WHERE locationid='7441' AND year='2025' AND month='01'
+```
+
+| Metric | Value |
+|--------|-------|
+| Row count | **744** |
+| Data scanned | **0.010 MB** |
+
+### Scan reduction
+
+```
+(6.848 - 0.010) / 6.848 * 100 = 99.85%
+```
+
+Partition projection pruned **99.85%** of data for a single station/year/month query.
+
+### Query 3 — Parameter distribution
+
+```sql
+SELECT parameter, COUNT(*) as cnt
+FROM openaq_raw.raw_measurements
+GROUP BY parameter ORDER BY cnt DESC
+```
+
+| Parameter | Count |
+|-----------|-------|
+| pm25 | 206,761 |
+| pm10 | 166,325 |
+| no2 | 157,326 |
+| co | 134,379 |
+| o3 | 109,056 |
+| so2 | 105,687 |
+| relativehumidity | 4,678 |
+| um003 | 4,678 |
+| pm1 | 4,678 |
+| temperature | 4,678 |
+
+All six core pollutants (pm25, pm10, no2, o3, co, so2) confirmed present.
+
+### Query 4 — Date range
+
+```sql
+SELECT MIN(datetime), MAX(datetime) FROM openaq_raw.raw_measurements
+```
+
+| Metric | Value |
+|--------|-------|
+| Earliest reading | `2023-01-01T01:00:00+07:00` |
+| Latest reading | `2026-03-23T00:00:00+07:00` |
+
+Date range spans 2023–2026 as expected.
+
+### Query 5 — Parameters per station
+
+```sql
+SELECT location, COUNT(DISTINCT parameter) as params
+FROM openaq_raw.raw_measurements
+GROUP BY location ORDER BY location
+```
+
+| Station | Distinct Parameters |
+|---------|-------------------|
+| 556 Nguyễn Văn Cừ-4916744 | 5 |
+| An Khánh-2131266 | 4 |
+| Care Centre-6038073 | 5 |
+| Chi cục Bảo vệ Môi trường-2131268 | 6 |
+| Công viên Nhân Chính-4916745 | 6 |
+| Cầu Diễn-2131267 | 4 |
+| Hanoi-7441 | 1 |
+| Ho Chi Minh City-7440 | 1 |
+| OceanPark-6093148 | 5 |
+| Số 1 đường Giải Phóng-4916746 | 5 |
+| Số 46, phố Lưu Quang Vũ-2131268 | 6 |
+| Thanh Xuân - Sóc Sơn-2131293 | 4 |
+| VNUHCMUS CAMPUS 1-6243328 | 5 |
+| _(+9 more stations)_ | 4–6 |
+
+Multi-parameter coverage confirmed across all active stations.
+
+---
+
 ## Sample Data
 
 **Station 7441 (US Embassy Hanoi), 2023-01-01:**
