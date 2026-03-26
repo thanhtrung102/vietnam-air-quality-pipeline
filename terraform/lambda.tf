@@ -352,44 +352,25 @@ resource "aws_sqs_queue_policy" "openaq_events" {
   })
 }
 
-# Subscribe our SQS queue to the OpenAQ SNS topic
+# Subscribe batch_sync Lambda directly to the OpenAQ SNS topic.
+# SNS cross-region Lambda invocation is supported (Lambda endpoint may be in
+# a different region from the SNS topic since 2021).
+# The SQS queue is retained for buffering but not wired as a Lambda trigger —
+# Lambda is invoked directly by SNS, which retries 3 times on failure.
 resource "aws_sns_topic_subscription" "openaq_events" {
   provider  = aws.us_east_1
   topic_arn = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"
-  protocol  = "sqs"
-  endpoint  = aws_sqs_queue.openaq_events.arn
-
-  # Only forward notifications for Vietnamese station files to reduce noise.
-  # The SNS message subject contains the S3 key; filter on the locationid prefix.
-  filter_policy = jsonencode({
-    # OpenAQ SNS messages do not expose the S3 key in message attributes,
-    # so we cannot filter here — the Lambda handler filters by location_id instead.
-  })
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.batch_sync.arn
 }
 
-# Grant Lambda permission to read from the SQS queue (cross-region)
-resource "aws_iam_role_policy" "lambda_sqs" {
-  name = "openaq_lambda_sqs_policy"
-  role = aws_iam_role.lambda_exec.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid      = "SQSReceive"
-      Effect   = "Allow"
-      Action   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
-      Resource = aws_sqs_queue.openaq_events.arn
-    }]
-  })
-}
-
-# Wire the SQS queue as a trigger for the batch_sync Lambda
-# batch_sync.handler already handles individual file paths from the SNS/SQS event body
-resource "aws_lambda_event_source_mapping" "sqs_to_batch" {
-  event_source_arn = aws_sqs_queue.openaq_events.arn
-  function_name    = aws_lambda_function.batch_sync.arn
-  batch_size       = 10
-  enabled          = true
+# Allow the OpenAQ SNS topic to invoke the batch_sync Lambda
+resource "aws_lambda_permission" "sns_invoke_batch" {
+  statement_id  = "AllowOpenAQSNSInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.batch_sync.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"
 }
 
 # ── Lambda: openaq_aqi_api ─────────────────────────────────────────────────────
