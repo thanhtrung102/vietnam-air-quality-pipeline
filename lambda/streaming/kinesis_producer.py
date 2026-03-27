@@ -18,7 +18,7 @@ Environment variables (required):
     KINESIS_STREAM_NAME   Kinesis stream name (e.g. openaq_stream)
 
 Optional:
-    STATION_IDS           Comma-separated location IDs; defaults to all 20 VN stations.
+    STATION_IDS           Comma-separated location IDs; defaults to all 21 VN stations.
 
 Usage:
     python kinesis_producer.py            # run once
@@ -50,12 +50,12 @@ log = logging.getLogger(__name__)
 
 _REQUIRED_ENV = ("OPENAQ_API_KEY", "AWS_REGION", "KINESIS_STREAM_NAME")
 
-# 20 confirmed Vietnamese station IDs — overridable via STATION_IDS env var
+# 21 confirmed Vietnamese station IDs — overridable via STATION_IDS env var
 _DEFAULT_STATION_IDS = [
     7441, 2539, 1285357,
     2161290, 2161291, 2161292, 2161316, 2161317, 2161318,
     2161319, 2161320, 2161321, 2161323,
-    4946812, 4946813, 6123215,
+    4946811, 4946812, 4946813, 6123215,
     7440, 2446, 6068138, 6273386,
 ]
 
@@ -166,7 +166,7 @@ def fetch_latest_measurements(
         for reading in data["results"]:
             try:
                 value = float(reading.get("value", -999.0))
-                if value == -999.0:
+                if value == -999.0 or value < 0 or value >= 500:
                     continue
 
                 sensor_id = reading.get("sensorsId")

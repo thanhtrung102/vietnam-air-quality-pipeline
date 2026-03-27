@@ -28,6 +28,10 @@ health_category follows the US EPA 2024 AQI breakpoints:
     partitioned_by = ['measurement_date']
 ) }}
 
+-- Single scan of mart_daily_air_quality. The former pm25_daily CTE was a
+-- redundant second full-table scan. PM2.5 context (pm25_avg, cigarette_equivalent)
+-- is now extracted in the composite CTE using conditional aggregation, which
+-- correctly handles both cases: PM2.5-dominant and PM10-dominant stations.
 with per_pollutant as (
 
     select
@@ -50,20 +54,9 @@ with per_pollutant as (
 
 ),
 
--- PM2.5 daily average per station per day (for cigarette equivalent in output)
-pm25_daily as (
-
-    select
-        measurement_date,
-        location_id,
-        avg_value        as pm25_avg,
-        cigarette_equivalent
-    from {{ ref('mart_daily_air_quality') }}
-    where parameter = 'pm25'
-
-),
-
--- Composite AQI = max individual AQI for this station on this date
+-- Composite AQI = max individual AQI for this station on this date.
+-- PM2.5 context columns extracted here via conditional aggregation so no
+-- second scan is needed regardless of which pollutant drives the composite.
 composite as (
 
     select
@@ -75,7 +68,9 @@ composite as (
         station_lat,
         station_lon,
         sensor_type,
-        max(aqi_value) as composite_aqi
+        max(aqi_value)                                              as composite_aqi,
+        max(case when parameter = 'pm25' then avg_value end)        as pm25_avg,
+        max(case when parameter = 'pm25' then cigarette_equivalent end) as cigarette_equivalent
 
     from per_pollutant
     group by
@@ -103,8 +98,10 @@ with_dominant as (
         c.station_lon,
         c.sensor_type,
         c.composite_aqi,
+        c.pm25_avg,
+        c.cigarette_equivalent,
         -- If two pollutants tie, PM2.5 takes precedence (stricter health relevance)
-        max_by(p.parameter, p.aqi_value)  as dominant_pollutant,
+        max_by(p.parameter, p.aqi_value)    as dominant_pollutant,
         max_by(p.aqi_category, p.aqi_value) as health_category
 
     from composite c
@@ -122,28 +119,26 @@ with_dominant as (
         c.station_lat,
         c.station_lon,
         c.sensor_type,
-        c.composite_aqi
+        c.composite_aqi,
+        c.pm25_avg,
+        c.cigarette_equivalent
 
 )
 
 select
-    d.city,
-    d.province,
-    d.location_id,
-    d.location_name,
-    d.station_lat,
-    d.station_lon,
-    d.sensor_type,
-    d.composite_aqi,
-    d.dominant_pollutant,
-    d.health_category,
-    p.pm25_avg,
-    p.cigarette_equivalent,
+    city,
+    province,
+    location_id,
+    location_name,
+    station_lat,
+    station_lon,
+    sensor_type,
+    composite_aqi,
+    dominant_pollutant,
+    health_category,
+    pm25_avg,
+    cigarette_equivalent,
     -- partition column last
-    d.measurement_date
+    measurement_date
 
-from with_dominant d
-left join pm25_daily p
-    on  d.location_id      = p.location_id
-    and d.measurement_date = p.measurement_date
-order by d.measurement_date desc, d.city
+from with_dominant

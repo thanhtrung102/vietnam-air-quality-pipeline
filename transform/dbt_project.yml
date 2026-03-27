@@ -17,6 +17,11 @@ models:
     staging:
       +materialized: view
 
+    intermediate:
+      # Materialized as table so the raw scan + seed join runs once per dbt
+      # invocation rather than being re-executed for every mart that refs it.
+      +materialized: table
+
     marts:
       +materialized: table
       +partitioned_by: ["measurement_date"]

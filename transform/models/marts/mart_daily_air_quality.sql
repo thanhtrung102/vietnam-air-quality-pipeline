@@ -158,4 +158,3 @@ select
     measurement_date
 
 from aggregated
-order by measurement_date desc, city, parameter

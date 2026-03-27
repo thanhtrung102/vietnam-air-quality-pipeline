@@ -35,7 +35,7 @@ select
         approx_percentile(measurement_value, 0.95), 4
     )                                       as p95_value,
     count(*)                                as reading_count,
-    count(distinct cast(measurement_date as varchar)) as day_count
+    count(distinct measurement_date)                as day_count
 
 from {{ ref('int_measurements_enriched') }}
 
@@ -47,5 +47,3 @@ group by
     sensor_type,
     parameter,
     month(measurement_date)
-
-order by city, parameter, month_of_year

@@ -9,6 +9,12 @@ Environment variables:
   ATHENA_DATABASE     — Glue database (default: openaq_mart)
   ATHENA_WORKGROUP    — Athena workgroup (default: openaq_workgroup)
 
+Caching:
+  The GeoJSON payload is cached in /tmp between warm Lambda invocations for up
+  to CACHE_TTL_SECONDS (3600 s). The underlying mart is rebuilt daily, so hourly
+  staleness is acceptable. Cache is keyed on the day (UTC) so a dbt rebuild at
+  midnight automatically invalidates it on the next invocation.
+
 Response shape (GeoJSON FeatureCollection):
   {
     "type": "FeatureCollection",
@@ -37,9 +43,14 @@ Response shape (GeoJSON FeatureCollection):
 import json
 import os
 import time
+from datetime import datetime, timezone
 
 import boto3
 
+# Partition-pruned query: the inner subquery is bounded to the last 7 days so
+# Athena only scans recent partitions instead of the full historical table.
+# 7 days handles stations with up to 6 days of data lag (archive latency ~72 h)
+# while keeping the scan minimal. The outer join then picks the latest per station.
 QUERY = """
 SELECT
     a.location_id,
@@ -58,9 +69,10 @@ FROM openaq_mart.mart_daily_aqi a
 INNER JOIN (
     SELECT location_id, MAX(measurement_date) AS latest_date
     FROM openaq_mart.mart_daily_aqi
+    WHERE measurement_date >= DATE_ADD('day', -7, CURRENT_DATE)
     GROUP BY location_id
 ) latest
-    ON a.location_id = latest.location_id
+    ON a.location_id      = latest.location_id
     AND a.measurement_date = latest.latest_date
 ORDER BY a.city, a.location_name
 """
@@ -75,6 +87,30 @@ AQI_COLOURS = {
     "Hazardous":                     "#7e0023",
 }
 
+# /tmp cache — persists across warm invocations within the same execution environment
+_CACHE_FILE = "/tmp/aqi_geojson_cache.json"
+CACHE_TTL_SECONDS = 3600  # 1 hour; mart rebuilds daily so hourly staleness is fine
+
+
+def _load_cache() -> dict | None:
+    """Return cached GeoJSON if it exists and is less than CACHE_TTL_SECONDS old."""
+    try:
+        with open(_CACHE_FILE) as f:
+            cached = json.load(f)
+        if time.time() - cached.get("_cached_at", 0) < CACHE_TTL_SECONDS:
+            return cached["payload"]
+    except (FileNotFoundError, KeyError, json.JSONDecodeError):
+        pass
+    return None
+
+
+def _save_cache(payload: dict) -> None:
+    try:
+        with open(_CACHE_FILE, "w") as f:
+            json.dump({"_cached_at": time.time(), "payload": payload}, f)
+    except OSError:
+        pass  # non-fatal — next invocation will re-query Athena
+
 
 def _run_athena_query(sql: str, database: str, workgroup: str) -> list[dict]:
     client = boto3.client("athena", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
@@ -87,13 +123,13 @@ def _run_athena_query(sql: str, database: str, workgroup: str) -> list[dict]:
     qid = response["QueryExecutionId"]
 
     for _ in range(30):
-        state = client.get_query_execution(QueryExecutionId=qid)["QueryExecution"]["Status"]["State"]
+        execution = client.get_query_execution(QueryExecutionId=qid)["QueryExecution"]
+        state = execution["Status"]["State"]
         if state == "SUCCEEDED":
             break
         if state in ("FAILED", "CANCELLED"):
-            reason = client.get_query_execution(QueryExecutionId=qid)["QueryExecution"]["Status"].get(
-                "StateChangeReason", "unknown"
-            )
+            # StateChangeReason is already in the response we fetched — no second API call
+            reason = execution["Status"].get("StateChangeReason", "unknown")
             raise RuntimeError(f"Athena query {state}: {reason}")
         time.sleep(2)
     else:
@@ -115,6 +151,20 @@ def _run_athena_query(sql: str, database: str, workgroup: str) -> list[dict]:
 def handler(event, context):
     database = os.environ.get("ATHENA_DATABASE", "openaq_mart")
     workgroup = os.environ.get("ATHENA_WORKGROUP", "openaq_workgroup")
+
+    # Serve from /tmp cache when available (warm invocation, data < 1 h old)
+    cached = _load_cache()
+    if cached is not None:
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "max-age=3600",
+                "X-Cache": "HIT",
+            },
+            "body": json.dumps(cached),
+        }
 
     try:
         rows = _run_athena_query(QUERY, database, workgroup)
@@ -162,12 +212,15 @@ def handler(event, context):
     updated_at = rows[0]["measurement_date"] if rows else ""
     geojson = {"type": "FeatureCollection", "updated_at": updated_at, "features": features}
 
+    _save_cache(geojson)
+
     return {
         "statusCode": 200,
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "max-age=3600",
+            "X-Cache": "MISS",
         },
         "body": json.dumps(geojson),
     }

@@ -46,4 +46,3 @@ group by
     parameter,
     hour(measured_at + interval '7' hour)
 
-order by city, parameter, hour_of_day

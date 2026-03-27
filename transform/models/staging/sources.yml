@@ -57,6 +57,10 @@ sources:
           Near-real-time NDJSON records written by Kinesis Firehose from the
           openaq_stream Kinesis Data Stream into raw/stream/. Partitioned by
           year / month / day / hour. Partition Projection enabled in Glue.
+        freshness:
+          warn_after: {count: 2, period: hour}
+          error_after: {count: 6, period: hour}
+        loaded_at_field: ingested_at
         columns:
           - name: location_id
           - name: sensors_id

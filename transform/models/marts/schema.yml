@@ -8,6 +8,13 @@ models:
       Partitioned by measurement_date; bucketed by parameter and location_id
       (8 buckets) for efficient dashboard queries.
 
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - measurement_date
+            - location_id
+            - parameter
+
     columns:
       - name: measurement_date
         description: Calendar date of the aggregated readings (partition key)
@@ -29,6 +36,11 @@ models:
 
       - name: location_id
         description: OpenAQ internal location identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('vn_stations')
+              field: location_id
 
       - name: location_name
         description: Canonical station name from vn_stations seed
@@ -86,3 +98,289 @@ models:
         description: >
           TRUE when avg_value > 50 µg/m³ (QCVN 05:2023 Vietnam 24-hour standard).
           NULL for non-PM2.5 parameters.
+
+      - name: who_compliant_day
+        description: >
+          1 if PM2.5 daily avg ≤ 15 µg/m³ (WHO AQG compliant), 0 otherwise.
+          NULL for non-PM2.5 parameters. Summed in mart_health_summary.
+
+      - name: cigarette_equivalent
+        description: >
+          PM2.5 daily avg / 22.0 µg/m³ — cigarettes per day equivalent exposure
+          (Berkeley Earth / aqi.in standard). NULL for non-PM2.5 parameters.
+
+  - name: mart_daily_aqi
+    description: >
+      Composite AQI per station per day — the maximum individual-pollutant AQI
+      across all parameters reported for that station.
+      Grain: one row per measurement_date × location_id.
+      Partitioned by measurement_date.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - measurement_date
+            - location_id
+
+    columns:
+      - name: measurement_date
+        description: Calendar date (partition key)
+        tests:
+          - not_null
+
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('vn_stations')
+              field: location_id
+
+      - name: location_name
+        description: Canonical station name from vn_stations seed
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: station_lat
+        description: Canonical WGS-84 latitude
+
+      - name: station_lon
+        description: Canonical WGS-84 longitude
+
+      - name: sensor_type
+        description: Instrument type — 'reference' or 'low_cost'
+
+      - name: composite_aqi
+        description: Maximum individual-pollutant AQI for this station on this date
+        tests:
+          - not_null
+
+      - name: dominant_pollutant
+        description: Parameter (pm25, pm10) that produced the composite AQI
+        tests:
+          - not_null
+
+      - name: health_category
+        description: >
+          AQI health category label for the composite AQI. One of: Good, Moderate,
+          Unhealthy for Sensitive Groups, Unhealthy, Very Unhealthy, Hazardous.
+        tests:
+          - not_null
+
+      - name: pm25_avg
+        description: >
+          PM2.5 daily average (µg/m³) for context. NULL if the station reported
+          no PM2.5 measurements on that date.
+
+      - name: cigarette_equivalent
+        description: >
+          pm25_avg / 22.0 — cigarettes per day equivalent (Berkeley Earth standard).
+          NULL if pm25_avg is NULL.
+
+  - name: mart_health_summary
+    description: >
+      Annual health day counts and WHO compliance per city.
+      Grain: one row per city × year.
+      Aggregates mart_daily_air_quality at the city level (mean across all reference
+      stations) to avoid double-counting multi-station cities like Hanoi (16 stations).
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - city
+            - year
+
+    columns:
+      - name: city
+        description: City name
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: year
+        description: Calendar year (integer)
+        tests:
+          - not_null
+
+      - name: total_days
+        description: Number of days with at least one PM2.5 measurement in this city/year
+        tests:
+          - not_null
+
+      - name: good_days
+        description: Days where city-level PM2.5 AQI category was Good (avg ≤ 9.0 µg/m³)
+
+      - name: moderate_days
+        description: Days where city-level AQI category was Moderate
+
+      - name: usg_days
+        description: Days where city-level AQI category was Unhealthy for Sensitive Groups
+
+      - name: unhealthy_days
+        description: Days where city-level AQI category was Unhealthy
+
+      - name: very_unhealthy_days
+        description: Days where city-level AQI category was Very Unhealthy
+
+      - name: hazardous_days
+        description: Days where city-level AQI category was Hazardous
+
+      - name: who_compliant_days
+        description: Days where city-level PM2.5 avg ≤ 15 µg/m³ (WHO AQG 2021)
+
+      - name: who_compliance_pct
+        description: who_compliant_days / total_days × 100 (rounded to 1 dp)
+        tests:
+          - not_null
+
+      - name: avg_pm25
+        description: Mean daily PM2.5 city average across the year (µg/m³, 1 dp)
+
+      - name: avg_cigarette_equivalent
+        description: Mean daily cigarette equivalent across the year (2 dp)
+
+      - name: max_pm25
+        description: Peak daily PM2.5 city average in the year (µg/m³, 1 dp)
+
+      - name: risk_label
+        description: >
+          WHO compliance risk tier: Low (≥80%), Moderate (50–79%), High (20–49%),
+          Extreme (<20%). Used as a headline KPI in the dashboard.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Low', 'Moderate', 'High', 'Extreme']
+
+  - name: mart_diurnal_profile
+    description: >
+      Average pollutant concentration by hour of day (Vietnam local time, UTC+7).
+      Grain: one row per location_id × parameter × hour_of_day (0–23).
+      Drives the rush-hour line chart and hour × month heatmap in the dashboard.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - location_id
+            - parameter
+            - hour_of_day
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('vn_stations')
+              field: location_id
+
+      - name: location_name
+        description: Canonical station name
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: sensor_type
+        description: Instrument type — 'reference' or 'low_cost'
+
+      - name: parameter
+        description: Pollutant code
+        tests:
+          - not_null
+
+      - name: hour_of_day
+        description: Local hour (0–23, UTC+7, no DST)
+        tests:
+          - not_null
+
+      - name: avg_value
+        description: Mean concentration for this station/parameter/hour across all dates
+        tests:
+          - not_null
+
+      - name: max_value
+        description: Maximum concentration recorded in this hour bucket
+
+      - name: min_value
+        description: Minimum concentration recorded in this hour bucket
+
+      - name: reading_count
+        description: Number of individual measurements in this hour bucket
+
+  - name: mart_monthly_profile
+    description: >
+      Average pollutant concentration by month of year.
+      Grain: one row per location_id × parameter × month_of_year (1–12).
+      Drives the seasonal bar/line chart and hour × month heatmap in the dashboard.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - location_id
+            - parameter
+            - month_of_year
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('vn_stations')
+              field: location_id
+
+      - name: location_name
+        description: Canonical station name
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: sensor_type
+        description: Instrument type — 'reference' or 'low_cost'
+
+      - name: parameter
+        description: Pollutant code
+        tests:
+          - not_null
+
+      - name: month_of_year
+        description: Calendar month (1 = January, 12 = December)
+        tests:
+          - not_null
+
+      - name: avg_value
+        description: Mean concentration for this station/parameter/month across all years
+        tests:
+          - not_null
+
+      - name: max_value
+        description: Maximum concentration recorded in this month bucket
+
+      - name: min_value
+        description: Minimum concentration recorded in this month bucket
+
+      - name: p95_value
+        description: 95th-percentile concentration (approx) for this month bucket
+
+      - name: reading_count
+        description: Number of individual measurements in this month bucket
+
+      - name: day_count
+        description: Number of distinct calendar dates contributing to this month bucket

@@ -52,40 +52,64 @@ with city_daily as (
 
 )
 
+-- Aggregate into a subquery so risk_label can reference who_compliance_pct
+-- without repeating the count_if expression three times in the CASE branches.
+aggregated as (
+
+    select
+        city,
+        province,
+        year,
+
+        count(*)                                            as total_days,
+
+        -- Health day counts
+        count_if(aqi_category = 'Good')                     as good_days,
+        count_if(aqi_category = 'Moderate')                 as moderate_days,
+        count_if(aqi_category = 'Unhealthy for Sensitive Groups') as usg_days,
+        count_if(aqi_category = 'Unhealthy')                as unhealthy_days,
+        count_if(aqi_category = 'Very Unhealthy')           as very_unhealthy_days,
+        count_if(aqi_category = 'Hazardous')                as hazardous_days,
+
+        -- WHO compliance
+        count_if(who_compliant_day = 1)                     as who_compliant_days,
+        round(
+            100.0 * count_if(who_compliant_day = 1) / count(*), 1
+        )                                                   as who_compliance_pct,
+
+        -- Health exposure
+        round(avg(pm25_city_avg), 1)                        as avg_pm25,
+        round(avg(cigarette_equivalent), 2)                 as avg_cigarette_equivalent,
+        round(max(pm25_city_avg), 1)                        as max_pm25
+
+    from city_daily
+    group by city, province, year
+
+)
+
 select
     city,
     province,
     year,
+    total_days,
+    good_days,
+    moderate_days,
+    usg_days,
+    unhealthy_days,
+    very_unhealthy_days,
+    hazardous_days,
+    who_compliant_days,
+    who_compliance_pct,
+    avg_pm25,
+    avg_cigarette_equivalent,
+    max_pm25,
 
-    count(*)                                            as total_days,
-
-    -- Health day counts
-    count_if(aqi_category = 'Good')                     as good_days,
-    count_if(aqi_category = 'Moderate')                 as moderate_days,
-    count_if(aqi_category = 'Unhealthy for Sensitive Groups') as usg_days,
-    count_if(aqi_category = 'Unhealthy')                as unhealthy_days,
-    count_if(aqi_category = 'Very Unhealthy')           as very_unhealthy_days,
-    count_if(aqi_category = 'Hazardous')                as hazardous_days,
-
-    -- WHO compliance
-    count_if(who_compliant_day = 1)                     as who_compliant_days,
-    round(
-        100.0 * count_if(who_compliant_day = 1) / count(*), 1
-    )                                                   as who_compliance_pct,
-
-    -- Health exposure
-    round(avg(pm25_city_avg), 1)                        as avg_pm25,
-    round(avg(cigarette_equivalent), 2)                 as avg_cigarette_equivalent,
-    round(max(pm25_city_avg), 1)                        as max_pm25,
-
-    -- Risk label (mirrors aqi.in nomenclature)
+    -- Risk label references who_compliance_pct alias — single evaluation
     case
-        when round(100.0 * count_if(who_compliant_day = 1) / count(*), 1) >= 80 then 'Low'
-        when round(100.0 * count_if(who_compliant_day = 1) / count(*), 1) >= 50 then 'Moderate'
-        when round(100.0 * count_if(who_compliant_day = 1) / count(*), 1) >= 20 then 'High'
+        when who_compliance_pct >= 80 then 'Low'
+        when who_compliance_pct >= 50 then 'Moderate'
+        when who_compliance_pct >= 20 then 'High'
         else 'Extreme'
     end as risk_label
 
-from city_daily
-group by city, province, year
-order by city, year
+from aggregated
