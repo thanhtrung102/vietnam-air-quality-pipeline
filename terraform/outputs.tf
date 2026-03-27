@@ -55,7 +55,7 @@ output "firehose_role_arn" {
 
 # ── AQI API ───────────────────────────────────────────────────────────────────
 
-output "aqi_api_function_url" {
-  description = "Lambda Function URL for the AQI GeoJSON API (consumed by Leaflet map)"
-  value       = aws_lambda_function_url.aqi_api.function_url
+output "aqi_api_url" {
+  description = "HTTP API Gateway URL for the AQI GeoJSON API (consumed by Leaflet map)"
+  value       = aws_apigatewayv2_stage.aqi_api.invoke_url
 }

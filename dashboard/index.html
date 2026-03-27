@@ -107,6 +107,12 @@
 
     .popup-meta span { color: #cbd5e1; }
 
+    .popup-cig {
+      font-size: 0.72rem;
+      color: #fbbf24;
+      margin: 4px 0 2px;
+    }
+
     .sensor-badge {
       display: inline-block;
       font-size: 0.65rem;
@@ -135,7 +141,7 @@
   // ── Configuration ────────────────────────────────────────────────────────────
   // Replace with your API Gateway URL after deploying lambda/aqi_api.
   // For local dev, set to the path of a static geojson file.
-  const API_URL = window.AQI_API_URL || "https://tgum3jmwl56vkm3el5qqbr3jzu0hhinx.lambda-url.ap-southeast-1.on.aws/";
+  const API_URL = window.AQI_API_URL || "https://hewunk5h75.execute-api.ap-southeast-1.amazonaws.com/";
 
   const AQI_COLOURS = {
     "Good":                           "#00e400",
@@ -161,9 +167,10 @@
     zoomControl: true,
   });
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> | Data: <a href="https://openaq.org">OpenAQ</a>',
-    maxZoom: 18,
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> © <a href="https://carto.com">CARTO</a> | Data: <a href="https://openaq.org">OpenAQ</a>',
+    subdomains: "abcd",
+    maxZoom: 19,
   }).addTo(map);
 
   // ── Legend ───────────────────────────────────────────────────────────────────
@@ -202,15 +209,23 @@
   function buildPopup(p) {
     const col = AQI_COLOURS[p.health_category] || "#cccccc";
     const pollutantLabel = (p.dominant_pollutant || "").replace("pm25","PM2.5").replace("pm10","PM10");
+    const pm25Line = p.pm25_avg != null
+      ? `PM2.5: <span>${p.pm25_avg} µg/m³</span><br/>`
+      : "";
+    const cigLine = p.cigarette_equivalent != null
+      ? `<div class="popup-cig" title="1 cigarette ≈ 22 µg/m³ PM2.5/day (Berkeley Earth)">🚬 ${p.cigarette_equivalent} cigarette${p.cigarette_equivalent === 1 ? "" : "s"}/day</div>`
+      : "";
     return `
       <div class="popup-title">${p.location_name}</div>
       <div class="popup-aqi" style="color:${col}">${p.composite_aqi ?? "N/A"}</div>
       <div class="popup-category" style="background:${col}">${p.health_category || "Unknown"}</div>
       <div class="popup-meta">
+        ${pm25Line}
         Dominant pollutant: <span>${pollutantLabel || "—"}</span><br/>
         City: <span>${p.city}</span><br/>
         Date: <span>${p.measurement_date}</span>
       </div>
+      ${cigLine}
       <div class="sensor-badge">${p.sensor_type === "reference" ? "🔬 Reference-grade" : "📡 Low-cost sensor"}</div>
     `;
   }

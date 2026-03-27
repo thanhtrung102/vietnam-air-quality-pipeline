@@ -16,9 +16,11 @@ AQI calculation:
   - Piecewise linear interpolation: AQI = ((I_HI-I_LO)/(BP_HI-BP_LO))*(C-BP_LO)+I_LO
   - NULL for all non-PM2.5 parameters.
 
-Exceedance flags (PM2.5 only):
-  - exceeds_who_24h: avg_value > 15  µg/m³ (WHO AQG 2021 24-hour guideline)
-  - exceeds_qcvn:    avg_value > 50  µg/m³ (QCVN 05:2023 24-hour standard)
+Exceedance flags and health metrics (PM2.5 only):
+  - exceeds_who_24h:      avg_value > 15  µg/m³ (WHO AQG 2021 24-hour guideline)
+  - exceeds_qcvn:         avg_value > 50  µg/m³ (QCVN 05:2023 24-hour standard)
+  - who_compliant_day:    1 if avg_value ≤ 15 µg/m³, else 0 (use for WHO compliance % in health_summary)
+  - cigarette_equivalent: avg_value / 22.0  (1 cigarette ≈ 22 µg/m³ PM2.5/day, Berkeley Earth standard)
 
 Grain: one row per measurement_date × location_id × parameter.
 Source: int_measurements_enriched (staging measurements + station metadata).
@@ -142,6 +144,15 @@ select
     -- Exceedance flags (NULL for non-PM2.5 parameters)
     case when parameter = 'pm25' then (avg_value > 15) end as exceeds_who_24h,
     case when parameter = 'pm25' then (avg_value > 50) end as exceeds_qcvn,
+
+    -- WHO compliance flag: 1 if this day's PM2.5 avg meets the WHO 24-hour guideline (≤15 µg/m³)
+    -- NULL for non-PM2.5 parameters; use in health_summary aggregation
+    case when parameter = 'pm25' then cast(avg_value <= 15 as int) end as who_compliant_day,
+
+    -- Cigarette equivalent: how many cigarettes/day of PM2.5 exposure this reading represents.
+    -- Methodology: 1 cigarette ≈ 22 µg/m³ PM2.5 over 24 hours (Berkeley Earth / aqi.in standard).
+    -- NULL for non-PM2.5 parameters.
+    case when parameter = 'pm25' then round(avg_value / 22.0, 2) end as cigarette_equivalent,
 
     -- partition column must be last
     measurement_date

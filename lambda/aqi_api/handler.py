@@ -25,6 +25,8 @@ Response shape (GeoJSON FeatureCollection):
           "health_category": "Moderate",
           "dominant_pollutant": "pm25",
           "sensor_type": "reference",
+          "pm25_avg": 27.3,
+          "cigarette_equivalent": 1.2,
           "measurement_date": "2026-03-26"
         }
       }
@@ -49,6 +51,8 @@ SELECT
     a.composite_aqi,
     a.health_category,
     a.dominant_pollutant,
+    a.pm25_avg,
+    a.cigarette_equivalent,
     CAST(a.measurement_date AS VARCHAR) AS measurement_date
 FROM openaq_mart.mart_daily_aqi a
 INNER JOIN (
@@ -131,6 +135,12 @@ def handler(event, context):
             continue
 
         category = row.get("health_category", "")
+        raw_cig = row.get("cigarette_equivalent", "")
+        cig = round(float(raw_cig), 1) if raw_cig else None
+
+        raw_pm25 = row.get("pm25_avg", "")
+        pm25 = round(float(raw_pm25), 1) if raw_pm25 else None
+
         features.append({
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": [lon, lat]},
@@ -142,6 +152,8 @@ def handler(event, context):
                 "health_category": category,
                 "dominant_pollutant": row.get("dominant_pollutant", ""),
                 "sensor_type": row.get("sensor_type", ""),
+                "pm25_avg": pm25,
+                "cigarette_equivalent": cig,
                 "measurement_date": row.get("measurement_date", ""),
                 "colour": AQI_COLOURS.get(category, "#cccccc"),
             },

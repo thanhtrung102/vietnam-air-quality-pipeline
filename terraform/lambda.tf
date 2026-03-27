@@ -414,14 +414,50 @@ resource "aws_lambda_function" "aqi_api" {
   tags       = local.common_tags
 }
 
-# Lambda Function URL — public HTTPS endpoint, no API Gateway needed
-resource "aws_lambda_function_url" "aqi_api" {
-  function_name      = aws_lambda_function.aqi_api.function_name
-  authorization_type = "NONE"   # public read-only endpoint; AQI data is not sensitive
+# ── HTTP API Gateway: public endpoint for openaq_aqi_api ──────────────────────
+# Lambda Function URLs with AuthType=NONE are blocked by AWS account-level
+# Block Public Access (default-on for accounts created after Nov 2024).
+# HTTP API Gateway bypasses this restriction and provides the same public HTTPS
+# endpoint with CORS — no auth, read-only AQI data.
 
-  cors {
+resource "aws_apigatewayv2_api" "aqi_api" {
+  name          = "openaq-aqi-api"
+  protocol_type = "HTTP"
+
+  cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["GET"]
     max_age       = 3600
   }
+
+  tags = local.common_tags
+}
+
+resource "aws_apigatewayv2_integration" "aqi_api" {
+  api_id                 = aws_apigatewayv2_api.aqi_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.aqi_api.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "aqi_api" {
+  api_id    = aws_apigatewayv2_api.aqi_api.id
+  route_key = "GET /"
+  target    = "integrations/${aws_apigatewayv2_integration.aqi_api.id}"
+}
+
+resource "aws_apigatewayv2_stage" "aqi_api" {
+  api_id      = aws_apigatewayv2_api.aqi_api.id
+  name        = "$default"
+  auto_deploy = true
+
+  tags = local.common_tags
+}
+
+resource "aws_lambda_permission" "aqi_api_apigw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.aqi_api.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.aqi_api.execution_arn}/*"
 }

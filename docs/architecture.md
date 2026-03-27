@@ -38,12 +38,46 @@ Once raw data lands in S3 and is catalogued by Glue, dbt materialises the mart. 
 
 ### 2.5 Dashboard
 
-Amazon QuickSight connects to Athena via the `openaq_workgroup` workgroup. Two SPICE datasets are scheduled for daily refresh — one for the historical trend view (three-year rolling window) and one for the last-30-days AQI heatmap. The QuickSight analyses expose:
+The project ships two complementary dashboard surfaces with a clear division of purpose: the Leaflet map answers **where and now**; QuickSight answers **when and why**.
 
-- **City trend lines** — daily average PM2.5 / PM10 per city, filterable by year and season.
-- **Pollutant breakdown** — stacked bar showing proportion of days in each AQI band per city.
-- **Seasonal heatmap** — calendar heat map correlating AQI with month and meteorological season.
-- **Station map** — geospatial scatter plot of stations coloured by latest AQI reading.
+#### Leaflet Station Map (public, operational)
+
+`dashboard/index.html` — a single-page app hosted as an S3 static website. Fetches the latest composite AQI per station from `openaq_aqi_api` Lambda via HTTP API Gateway and renders colour-coded circle markers on a CartoDB Dark Matter basemap.
+
+- **Live URL:** `http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html`
+- **API endpoint:** `https://hewunk5h75.execute-api.ap-southeast-1.amazonaws.com/` (HTTP API Gateway → `openaq_aqi_api` Lambda → Athena `mart_daily_aqi`)
+- **Tile provider:** CartoDB Dark Matter (`basemaps.cartocdn.com`) — OSM tile servers require a `Referer` header absent from S3 static website origins
+- **Auth note:** Lambda Function URLs with `AuthType=NONE` are blocked by AWS account-level Block Public Access (default-on for accounts created after November 2024); HTTP API Gateway bypasses this
+
+Popup per station: composite AQI, health category badge, dominant pollutant, sensor type (reference / low-cost), city, measurement date. Markers sized proportionally to AQI severity. Legend includes EPA colour scale and WHO/QCVN PM2.5 reference lines.
+
+#### QuickSight (internal, analytical)
+
+Two sheets; no station map (covered by Leaflet). Datasets refreshed daily via SPICE.
+
+**Sheet 1 — Historical Trends** · source: `mart_daily_air_quality`
+
+| Visual | Type | Key insight delivered |
+|---|---|---|
+| Annual AQI by city | Multi-line overlay (one line per year, x = month) | Hanoi trend: AQI 78 (2023) → 87 (2025) → 106 (2026 YTD); HCMC: 26 (2023) → 57 (2026) — diverging trajectories |
+| Calendar heatmap | 365-cell grid per year, colour = health category | Signature view from aqi.in; three side-by-side year tiles show winter inversion season at a glance |
+| Health day counts | Stacked bar per city per year | Good / Moderate / Unhealthy / Hazardous day breakdown; WHO compliance % annotation (Hanoi ≈2%, HCMC ≈37%) |
+| Daily PM2.5 time series | Line chart with reference lines | WHO 24h guideline (15 µg/m³), QCVN 05:2023 (25 µg/m³), WHO IT-1 (35 µg/m³) |
+
+Calculated fields required:
+- `who_compliant_day`: `ifelse(pm25_avg <= 15, 1, 0)`
+- `cigarette_equivalent`: `pm25_avg / 22.0` — follows aqi.in's methodology (22 µg/m³ PM2.5 ≈ 1 cigarette/day); surfaces health impact in relatable units
+
+**Sheet 2 — Seasonal & Diurnal Patterns** · sources: `mart_monthly_profile`, `mart_diurnal_profile`
+
+| Visual | Type | Key insight delivered |
+|---|---|---|
+| Monthly PM2.5 profile | Bar/line, series = city | Hanoi: Nov–Mar worst (NE monsoon inversion + long-range transport from southern China); Jun–Sep cleanest (SW monsoon washout). HCMC: weaker seasonality |
+| Hour-of-day PM2.5 profile | Line chart (0–23 UTC+7), series = city | Hanoi peaks at ~06:00 (morning inversion + rush hour); HCMC peaks at ~04:00 (inverted pattern, likely industrial overnight) — contrast not published by any public platform |
+| Sensor type comparison | Side-by-side bar, reference vs low-cost | Unique differentiator: shows whether AirGradient low-cost sensors systematically read higher or lower than co-located FEM reference monitors |
+| Hanoi vs HCMC paired overlay | Dual-axis line, same x-axis | Direct city comparison on monthly and diurnal axes — not available on aqi.in, AQICN, or IQAir for Vietnam |
+
+**Design references:** aqi.in (`/dashboard/vietnam/ha-noi/hanoi/historical-analysis`) for calendar heatmap and health day counts; IQAir World Air Quality Report for annual PM2.5 city comparison; AQICN for diurnal chart layout. No forecast component — forecasting requires ensemble meteorological modelling outside the scope of historical dbt marts.
 
 ---
 
