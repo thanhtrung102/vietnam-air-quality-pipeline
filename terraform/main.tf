@@ -74,6 +74,34 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
       days = 7
     }
   }
+
+  # Expire raw stream NDJSON after 60 days — data is consumed into mart tables
+  # by dbt within 24 hours of ingestion; 60-day window provides replay capacity.
+  rule {
+    id     = "expire-raw-stream"
+    status = "Enabled"
+
+    filter {
+      prefix = "raw/stream/"
+    }
+
+    expiration {
+      days = 60
+    }
+  }
+
+  # Prevent S3 versioning from accumulating stale object versions indefinitely.
+  # Applies to all prefixes: raw/, processed/, dbt-staging/.
+  rule {
+    id     = "expire-noncurrent-versions"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 7
+    }
+  }
 }
 
 # ── Glue Data Catalog ─────────────────────────────────────────────────────────
@@ -104,6 +132,15 @@ resource "aws_athena_workgroup" "openaq" {
     }
 
     bytes_scanned_cutoff_per_query = 10737418240 # 10 GB safety limit per query
+
+    # Reuse query results for up to 60 minutes (Athena Engine v3).
+    # Reduces cost and latency for repeated dbt runs and ad-hoc queries.
+    result_reuse_configuration {
+      result_reuse_by_age_configuration {
+        enabled            = true
+        max_age_in_minutes = 60
+      }
+    }
   }
 
   tags = local.common_tags
@@ -231,9 +268,9 @@ data "aws_iam_policy_document" "pipeline_inline" {
     resources = [
       "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
       "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_raw",
-      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_processed",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_mart",
       "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_raw/*",
-      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_processed/*",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_mart/*",
     ]
   }
 

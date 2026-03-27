@@ -6,10 +6,12 @@
 # Stream table : date-partitioned NDJSON  (year / month / day / hour)
 #                Uses Partition Projection so no MSCK REPAIR TABLE is needed.
 
-# ── openaq_processed database (dbt output schema) ─────────────────────────────
+# ── openaq_mart database (dbt output schema) ──────────────────────────────────
+# dbt writes staging views and mart tables here (schema: openaq_mart in profiles.yml).
+# Previously declared as openaq_processed — renamed to match actual usage.
 
-resource "aws_glue_catalog_database" "openaq_processed" {
-  name        = "openaq_processed"
+resource "aws_glue_catalog_database" "openaq_mart" {
+  name        = "openaq_mart"
   description = "dbt staging views and mart tables produced by the transform layer"
 
   tags = local.common_tags

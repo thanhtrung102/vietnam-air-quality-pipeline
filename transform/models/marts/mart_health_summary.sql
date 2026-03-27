@@ -22,7 +22,7 @@ One representative daily avg per city per day is derived as the mean of all
 station avg_values for that parameter and date.
 */
 
-{{ config(materialized = 'table', partitioned_by = []) }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
 
 with city_daily as (
 

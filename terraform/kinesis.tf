@@ -2,11 +2,13 @@
 
 resource "aws_kinesis_stream" "openaq" {
   name             = "openaq_stream"
-  shard_count      = 1
-  retention_period = 24
+  retention_period = 168 # 7 days — allows replay if Firehose delivery fails
 
+  # ON_DEMAND scales automatically and is significantly cheaper than PROVISIONED
+  # for sparse workloads (21 stations × 30-min polling ≈ a few KB/hour).
+  # shard_count must be omitted in ON_DEMAND mode.
   stream_mode_details {
-    stream_mode = "PROVISIONED"
+    stream_mode = "ON_DEMAND"
   }
 
   tags = local.common_tags
@@ -128,7 +130,7 @@ resource "aws_kinesis_firehose_delivery_stream" "openaq" {
 
     buffering_size     = 128
     buffering_interval = 300
-    compression_format = "UNCOMPRESSED"
+    compression_format = "GZIP" # ~70% storage reduction; JsonSerDe reads GZIP transparently
 
     s3_backup_mode = "Disabled"
 

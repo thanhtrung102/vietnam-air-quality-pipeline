@@ -27,8 +27,10 @@ Source: int_measurements_enriched (staging measurements + station metadata).
 */
 
 {{ config(
-    materialized   = 'table',
-    partitioned_by = ['measurement_date']
+    materialized      = 'table',
+    partitioned_by    = ['measurement_date'],
+    format            = 'parquet',
+    write_compression = 'snappy'
 ) }}
 
 with source as (

@@ -24,8 +24,10 @@ health_category follows the US EPA 2024 AQI breakpoints:
 */
 
 {{ config(
-    materialized   = 'table',
-    partitioned_by = ['measurement_date']
+    materialized      = 'table',
+    partitioned_by    = ['measurement_date'],
+    format            = 'parquet',
+    write_compression = 'snappy'
 ) }}
 
 -- Single scan of mart_daily_air_quality. The former pm25_daily CTE was a

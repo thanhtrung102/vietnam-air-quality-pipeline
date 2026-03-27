@@ -19,7 +19,7 @@ Use in dashboard:
     → shows rush-hour peaks (07–09, 17–19) vs. overnight lows
 */
 
-{{ config(materialized = 'table', partitioned_by = []) }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
 
 select
     location_id,
