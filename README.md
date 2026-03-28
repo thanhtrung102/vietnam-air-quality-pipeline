@@ -10,6 +10,8 @@ The pipeline ingests historical and near-real-time air quality data from the Ope
 
 ![Architecture](docs/architecture.png)
 
+> Editable source: [`docs/architecture.excalidraw`](docs/architecture.excalidraw) (open at [excalidraw.com](https://excalidraw.com))
+
 ### Data Flow
 
 ```
@@ -43,7 +45,7 @@ Historical data drives dbt mart tables; streaming data feeds the live map dashbo
 ## Dataset
 
 - **Source:** [OpenAQ](https://openaq.org/) — open air quality data platform
-- **Stations:** 21 reference-grade and low-cost sensors across Hanoi and Ho Chi Minh City
+- **Stations:** 21 sensors across Hanoi (17) and Ho Chi Minh City (4) — 16 reference-grade FEM monitors, 5 AirGradient low-cost sensors
 - **Parameters:** PM2.5, PM10, NO₂, O₃, CO, SO₂, BC, temperature, relative humidity
 - **Coverage:** January 2023 – present (~14,000 daily aggregates per dbt run)
 - **Raw row count:** ~900,000 hourly readings in `openaq_raw.raw_measurements`
@@ -169,7 +171,7 @@ aws s3 cp dashboard/index.html s3://openaq-pipeline-thanhtrung102/dashboard/inde
 ### Ongoing Operation
 
 EventBridge Scheduler runs automatically:
-- **Daily at 02:00 UTC** — batch sync Lambda syncs the previous day's CSV.GZ files
+- **Daily at 01:00 UTC** — batch sync Lambda syncs the previous day's CSV.GZ files
 - **Every 30 minutes** — streaming producer Lambda polls OpenAQ API and writes to Kinesis
 
 Run dbt incrementally after batch sync:
@@ -190,7 +192,7 @@ See [`docs/architecture-decision-record.md`](docs/architecture-decision-record.m
 
 | Metric | Value |
 |--------|-------|
-| Stations | 21 (16 Hanoi, 5 HCMC) |
+| Stations | 21 (17 Hanoi, 4 HCMC) |
 | Raw rows | ~900,000 hourly readings |
 | Date range | 2023-01-01 – present |
 | Hanoi 3-year avg PM2.5 | 40.2 µg/m³ (WHO 24h limit: 15 µg/m³) |

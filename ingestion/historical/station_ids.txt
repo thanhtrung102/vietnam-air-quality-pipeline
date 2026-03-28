@@ -1,5 +1,5 @@
 # Vietnamese station IDs selected for historical batch sync
-# Source: docs/stations.md — 20 stations confirmed in openaq-data-archive
+# Source: transform/seeds/vn_stations.csv — 21 stations (17 Hanoi, 4 HCMC)
 
 # Hanoi — core set
 7441        # US Embassy Hanoi — 8yr record (2016-2025)
@@ -15,6 +15,7 @@
 2161320     # Vân Hà (2024-2025)
 2161321     # Văn Quán (2024)
 2161323     # Xuân Mai (2024-2025)
+4946811     # 556 Nguyễn Văn Cừ — active 2025-present
 4946812     # Công viên Nhân Chính — active 2025-present
 4946813     # Số 1 Giải Phóng — active 2025-present
 6123215     # OceanPark — active 2025-present
