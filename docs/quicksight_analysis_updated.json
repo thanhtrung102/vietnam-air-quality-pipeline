@@ -1,0 +1,408 @@
+{
+  "DataSetIdentifierDeclarations": [
+    {
+      "Identifier": "mart_daily_air_quality",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/2fbfed5e-20d1-4c3f-9a53-91b70e7672d5"
+    }
+  ],
+  "Sheets": [
+    {
+      "SheetId": "e84c5a39-08bb-4bb0-abec-6ed5493a301c",
+      "Name": "Sheet 1",
+      "Visuals": [
+        {
+          "BarChartVisual": {
+            "VisualId": "72c5618c-f7ec-4a4b-812d-aea8dba838c7",
+            "Title": {
+              "Visibility": "VISIBLE"
+            },
+            "Subtitle": {
+              "Visibility": "VISIBLE"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "mart_dail-city-b9d4d0.0.1774508953797",
+                        "Column": {
+                          "DataSetIdentifier": "mart_daily_air_quality",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "mart_dail-avg_value-b3145b.1.1774508981219",
+                        "Column": {
+                          "DataSetIdentifier": "mart_daily_air_quality",
+                          "ColumnName": "avg_value"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": []
+                }
+              },
+              "SortConfiguration": {
+                "CategorySort": [
+                  {
+                    "FieldSort": {
+                      "FieldId": "mart_dail-avg_value-b3145b.1.1774508981219",
+                      "Direction": "DESC"
+                    }
+                  }
+                ],
+                "CategoryItemsLimit": {
+                  "OtherCategories": "INCLUDE"
+                },
+                "ColorItemsLimit": {
+                  "OtherCategories": "INCLUDE"
+                },
+                "SmallMultiplesLimitConfiguration": {
+                  "OtherCategories": "INCLUDE"
+                }
+              },
+              "Orientation": "HORIZONTAL",
+              "BarsArrangement": "CLUSTERED",
+              "DataLabels": {
+                "Visibility": "HIDDEN",
+                "Overlap": "DISABLE_OVERLAP"
+              },
+              "Tooltip": {
+                "TooltipVisibility": "VISIBLE",
+                "SelectedTooltipType": "DETAILED",
+                "FieldBasedTooltip": {
+                  "AggregationVisibility": "HIDDEN",
+                  "TooltipTitleType": "PRIMARY_VALUE",
+                  "TooltipFields": [
+                    {
+                      "FieldTooltipItem": {
+                        "FieldId": "mart_dail-city-b9d4d0.0.1774508953797",
+                        "Visibility": "VISIBLE"
+                      }
+                    },
+                    {
+                      "FieldTooltipItem": {
+                        "FieldId": "mart_dail-avg_value-b3145b.1.1774508981219",
+                        "Visibility": "VISIBLE"
+                      }
+                    }
+                  ]
+                }
+              },
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 15.0
+                    },
+                    "SeriesType": "BAR"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL"
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "WHO 24h (15 µg/m³)"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "FontColor": "#DE3B00",
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "ABOVE"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "33f9b578-c36e-40fa-b3d7-9b9091bf2914",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "RichText": "<visual-title>\n  <inline color=\"#000000\">Monthly Average PM2.5 in Hanoi (April 2025 � March 2026)</inline>\n</visual-title>"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "VISIBLE"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "mart_dail-measureme-df9a29.0.1774509918923",
+                        "Column": {
+                          "DataSetIdentifier": "mart_daily_air_quality",
+                          "ColumnName": "measurement_date"
+                        },
+                        "DateGranularity": "MONTH",
+                        "HierarchyId": "mart_dail-measureme-df9a29.0.1774509918923"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "mart_dail-avg_value-b3145b.1.1774509964907",
+                        "Column": {
+                          "DataSetIdentifier": "mart_daily_air_quality",
+                          "ColumnName": "avg_value"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": []
+                }
+              },
+              "SortConfiguration": {
+                "CategorySort": [
+                  {
+                    "FieldSort": {
+                      "FieldId": "mart_dail-measureme-df9a29.0.1774509918923",
+                      "Direction": "DESC"
+                    }
+                  }
+                ],
+                "CategoryItemsLimitConfiguration": {
+                  "OtherCategories": "INCLUDE"
+                },
+                "ColorItemsLimitConfiguration": {
+                  "OtherCategories": "INCLUDE"
+                },
+                "SmallMultiplesLimitConfiguration": {
+                  "OtherCategories": "INCLUDE"
+                }
+              },
+              "Type": "LINE",
+              "DataLabels": {
+                "Visibility": "HIDDEN",
+                "Overlap": "DISABLE_OVERLAP"
+              },
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 15.0
+                    },
+                    "SeriesType": "LINE"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL"
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "WHO Guideline (15 �g/m�)"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "FontColor": "#DE3B00",
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "ABOVE"
+                  }
+                }
+              ],
+              "Tooltip": {
+                "TooltipVisibility": "VISIBLE",
+                "SelectedTooltipType": "DETAILED",
+                "FieldBasedTooltip": {
+                  "AggregationVisibility": "HIDDEN",
+                  "TooltipTitleType": "PRIMARY_VALUE",
+                  "TooltipFields": [
+                    {
+                      "FieldTooltipItem": {
+                        "FieldId": "mart_dail-measureme-df9a29.0.1774509918923",
+                        "Visibility": "VISIBLE"
+                      }
+                    },
+                    {
+                      "FieldTooltipItem": {
+                        "FieldId": "mart_dail-avg_value-b3145b.1.1774509964907",
+                        "Visibility": "VISIBLE"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "mart_dail-measureme-df9a29.0.1774509918923"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "Layouts": [
+        {
+          "Configuration": {
+            "GridLayout": {
+              "Elements": [
+                {
+                  "ElementId": "72c5618c-f7ec-4a4b-812d-aea8dba838c7",
+                  "ElementType": "VISUAL",
+                  "ColumnSpan": 18,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "33f9b578-c36e-40fa-b3d7-9b9091bf2914",
+                  "ElementType": "VISUAL",
+                  "ColumnSpan": 18,
+                  "RowSpan": 12
+                }
+              ],
+              "CanvasSizeOptions": {
+                "ScreenCanvasSizeOptions": {
+                  "ResizeOption": "FIXED",
+                  "OptimizedViewPortWidth": "1600px"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "ContentType": "INTERACTIVE",
+      "FilterControls": [
+        {
+          "List": {
+            "FilterControlId": "d137676b-1a75-4414-aa43-5334d4cb8393",
+            "Title": "Sensor Type",
+            "SourceFilterId": "bae1a47c-2f73-4389-aacd-19a3aa3b8729",
+            "Type": "MULTI_SELECT"
+          }
+        }
+      ]
+    }
+  ],
+  "CalculatedFields": [],
+  "ParameterDeclarations": [],
+  "FilterGroups": [
+    {
+      "FilterGroupId": "beed9bec-e30d-4d6f-936e-f97724c93a61",
+      "Filters": [
+        {
+          "RelativeDatesFilter": {
+            "FilterId": "e8ace9b8-c482-45dd-a432-77b97ae76e18",
+            "Column": {
+              "DataSetIdentifier": "mart_daily_air_quality",
+              "ColumnName": "measurement_date"
+            },
+            "AnchorDateConfiguration": {
+              "AnchorOption": "NOW"
+            },
+            "MinimumGranularity": "DAY",
+            "TimeGranularity": "MONTH",
+            "RelativeDateType": "LAST",
+            "RelativeDateValue": 12,
+            "NullOption": "NON_NULLS_ONLY"
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "e84c5a39-08bb-4bb0-abec-6ed5493a301c",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    },
+    {
+      "FilterGroupId": "aa6aa682-6028-4b05-a658-63a121ccc513",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "bae1a47c-2f73-4389-aacd-19a3aa3b8729",
+            "Column": {
+              "DataSetIdentifier": "mart_daily_air_quality",
+              "ColumnName": "sensor_type"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "NullOption": "ALL_VALUES",
+                "SelectAllOptions": "FILTER_ALL_VALUES"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "e84c5a39-08bb-4bb0-abec-6ed5493a301c",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    }
+  ],
+  "AnalysisDefaults": {
+    "DefaultNewSheetConfiguration": {
+      "InteractiveLayoutConfiguration": {
+        "Grid": {
+          "CanvasSizeOptions": {
+            "ScreenCanvasSizeOptions": {
+              "ResizeOption": "FIXED",
+              "OptimizedViewPortWidth": "1600px"
+            }
+          }
+        }
+      },
+      "SheetContentType": "INTERACTIVE"
+    }
+  },
+  "Options": {
+    "WeekStart": "SUNDAY",
+    "QBusinessInsightsStatus": "DISABLED",
+    "ExcludedDataSetArns": [],
+    "CustomActionDefaults": {
+      "highlightOperation": {
+        "Trigger": "DATA_POINT_CLICK"
+      }
+    }
+  },
+  "QueryExecutionOptions": {
+    "QueryExecutionMode": "AUTO"
+  }
+}

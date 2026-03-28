@@ -1,0 +1,73 @@
+{
+    "Status": 200,
+    "AnalysisId": "687c593a-92d5-4a9b-9a36-82c1dc0cb8c3",
+    "Name": "mart_daily_air_quality analysis",
+    "ResourceStatus": "CREATION_SUCCESSFUL",
+    "Definition": {
+        "DataSetIdentifierDeclarations": [
+            {
+                "Identifier": "mart_daily_air_quality",
+                "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/cc25f483-77de-4cf5-bf0b-4a5bbd4df889"
+            }
+        ],
+        "Sheets": [
+            {
+                "SheetId": "492db30a-15d6-453a-9e4d-008329213cc0",
+                "Name": "Sheet 1",
+                "Visuals": [
+                    {
+                        "EmptyVisual": {
+                            "VisualId": "7ee4c12a-4a73-4d51-a062-f8d72f065735",
+                            "DataSetIdentifier": "mart_daily_air_quality",
+                            "Actions": []
+                        }
+                    }
+                ],
+                "Layouts": [
+                    {
+                        "Configuration": {
+                            "GridLayout": {
+                                "Elements": [
+                                    {
+                                        "ElementId": "7ee4c12a-4a73-4d51-a062-f8d72f065735",
+                                        "ElementType": "VISUAL",
+                                        "ColumnSpan": 18,
+                                        "RowSpan": 12
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "ContentType": "INTERACTIVE"
+            }
+        ],
+        "CalculatedFields": [],
+        "ParameterDeclarations": [],
+        "FilterGroups": [],
+        "AnalysisDefaults": {
+            "DefaultNewSheetConfiguration": {
+                "InteractiveLayoutConfiguration": {
+                    "Grid": {
+                        "CanvasSizeOptions": {
+                            "ScreenCanvasSizeOptions": {
+                                "ResizeOption": "FIXED",
+                                "OptimizedViewPortWidth": "1600px"
+                            }
+                        }
+                    }
+                },
+                "SheetContentType": "INTERACTIVE"
+            }
+        },
+        "Options": {
+            "WeekStart": "SUNDAY",
+            "QBusinessInsightsStatus": "DISABLED",
+            "ExcludedDataSetArns": []
+        },
+        "QueryExecutionOptions": {
+            "QueryExecutionMode": "AUTO"
+        }
+    },
+    "RequestId": "a7cd324f-6c4a-4352-862f-7dd2556c5007"
+}
