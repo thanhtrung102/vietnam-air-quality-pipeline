@@ -86,6 +86,12 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 
 **API endpoint:** `https://7fv6swyuo5.execute-api.ap-southeast-1.amazonaws.com/` — GeoJSON of 7-day average AQI per station (cached 1h in `/tmp`).
 
+### QuickSight
+
+![QuickSight Sheet 1](docs/quicksight_sheet1.png)
+
+> Rendered from `mart_daily_air_quality` via `docs/generate_quicksight.py`. Chart 1: 3-year average PM2.5 by city vs WHO 24h limit. Chart 2: monthly PM2.5 trend in Hanoi showing winter spikes.
+
 See [`docs/architecture.md § 2.4`](docs/architecture.md#24-dashboard) for full dashboard design including QuickSight sheets and visual descriptions.
 
 ## Reproduction Steps
