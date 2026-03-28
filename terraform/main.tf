@@ -125,7 +125,7 @@ resource "aws_athena_workgroup" "openaq" {
   description = "Athena workgroup for OpenAQ pipeline queries and dbt runs"
 
   configuration {
-    enforce_workgroup_configuration    = true
+    enforce_workgroup_configuration    = false
     publish_cloudwatch_metrics_enabled = true
 
     result_configuration {

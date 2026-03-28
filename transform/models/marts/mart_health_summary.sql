@@ -50,7 +50,7 @@ with city_daily as (
     where parameter = 'pm25'
     group by city, province, measurement_date
 
-)
+),
 
 -- Aggregate into a subquery so risk_label can reference who_compliance_pct
 -- without repeating the count_if expression three times in the CASE branches.

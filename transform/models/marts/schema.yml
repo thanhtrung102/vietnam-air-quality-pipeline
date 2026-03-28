@@ -10,10 +10,11 @@ models:
 
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - measurement_date
-            - location_id
-            - parameter
+          arguments:
+            combination_of_columns:
+              - measurement_date
+              - location_id
+              - parameter
 
     columns:
       - name: measurement_date
@@ -39,8 +40,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('vn_stations')
-              field: location_id
+              arguments:
+                to: ref('vn_stations')
+                field: location_id
 
       - name: location_name
         description: Canonical station name from vn_stations seed
@@ -118,9 +120,10 @@ models:
 
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - measurement_date
-            - location_id
+          arguments:
+            combination_of_columns:
+              - measurement_date
+              - location_id
 
     columns:
       - name: measurement_date
@@ -133,8 +136,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('vn_stations')
-              field: location_id
+              arguments:
+                to: ref('vn_stations')
+                field: location_id
 
       - name: location_name
         description: Canonical station name from vn_stations seed
@@ -192,9 +196,10 @@ models:
 
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - city
-            - year
+          arguments:
+            combination_of_columns:
+              - city
+              - year
 
     columns:
       - name: city
@@ -257,7 +262,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['Low', 'Moderate', 'High', 'Extreme']
+              arguments:
+                values: ['Low', 'Moderate', 'High', 'Extreme']
 
   - name: mart_diurnal_profile
     description: >
@@ -267,10 +273,11 @@ models:
 
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - location_id
-            - parameter
-            - hour_of_day
+          arguments:
+            combination_of_columns:
+              - location_id
+              - parameter
+              - hour_of_day
 
     columns:
       - name: location_id
@@ -278,8 +285,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('vn_stations')
-              field: location_id
+              arguments:
+                to: ref('vn_stations')
+                field: location_id
 
       - name: location_name
         description: Canonical station name
@@ -327,10 +335,11 @@ models:
 
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - location_id
-            - parameter
-            - month_of_year
+          arguments:
+            combination_of_columns:
+              - location_id
+              - parameter
+              - month_of_year
 
     columns:
       - name: location_id
@@ -338,8 +347,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('vn_stations')
-              field: location_id
+              arguments:
+                to: ref('vn_stations')
+                field: location_id
 
       - name: location_name
         description: Canonical station name

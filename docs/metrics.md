@@ -173,7 +173,7 @@ Filtering (nulls, sentinel -999.0, negative values) removed **12,907 rows** (1.4
 **Date:** 2026-03-26
 **Model:** `transform/models/marts/mart_daily_air_quality.sql`
 **Target:** `openaq_mart.mart_daily_air_quality` (Athena table, Parquet, partitioned by measurement_date)
-**S3 location:** `s3://openaq-pipeline-thanhtrung102/athena-results/tables/ee62f697-ea27-4024-b221-15b3ddd963ad/`
+**S3 location:** `s3://openaq-pipeline-thanhtrung102/processed/openaq_mart/mart_daily_air_quality/`
 **dbt build:** 6/6 PASS (1 table + 5 data tests)
 
 ```sql
@@ -213,63 +213,72 @@ Hanoi PM2.5 = 40.23 µg/m³, well within the expected 20–60 µg/m³ range. Sen
 
 ## Warehouse Optimisation Proof — Mart Scan Sizes
 
-**Date:** 2026-03-26
-**Table:** `openaq_mart.mart_daily_air_quality` (Parquet, partitioned by `measurement_date`)
+**Date:** 2026-03-28
+**Table:** `openaq_mart.mart_daily_air_quality` (Parquet/Snappy, partitioned by `measurement_date`, in `processed/`)
+**Row count:** 14,662 | **Date range:** 2023-01-01 → 2026-03-25
 
 Three progressive queries demonstrate how partition pruning reduces scan cost:
 
-### Query A — Full table, pm25 only
+### Query A — Full table scan, no filter
 
 ```sql
-SELECT city, ROUND(AVG(avg_value), 2)
+SELECT COUNT(*), MIN(measurement_date), MAX(measurement_date)
 FROM openaq_mart.mart_daily_air_quality
-WHERE parameter = 'pm25'
-GROUP BY city
 ```
 
-| city | avg_pm25 | Data scanned |
-|------|----------|--------------|
-| Hanoi | 40.23 µg/m³ | **0.297 MB** |
-| Ho Chi Minh City | 291.68 µg/m³ | (same scan) |
+| Metric | Value |
+|--------|-------|
+| Rows returned | 14,662 |
+| Data scanned | **0 bytes** (Parquet footer metadata only) |
+| Execution time | 1,727 ms |
 
-### Query B — Date-range filter (Q1 2025), partition pruning
+### Query B — Date filter (2025-01-01 onwards), partition pruning
 
 ```sql
-SELECT city, ROUND(AVG(avg_value), 2)
+SELECT COUNT(*), AVG(avg_value)
 FROM openaq_mart.mart_daily_air_quality
-WHERE parameter = 'pm25'
-  AND measurement_date BETWEEN DATE '2025-01-01' AND DATE '2025-03-31'
-GROUP BY city
+WHERE measurement_date >= DATE '2025-01-01'
 ```
 
-| city | avg_pm25 | Data scanned |
-|------|----------|--------------|
-| Hanoi | 50.90 µg/m³ | **0.025 MB** |
+| Metric | Value |
+|--------|-------|
+| Rows returned | 6,698 |
+| Average value | 73.38 µg/m³ |
+| Data scanned | **63.6 KB** |
+| Execution time | 1,376 ms |
 
-### Query C — Date-range + location_id filter
+### Query C — Date + location + parameter filter
 
 ```sql
-SELECT city, ROUND(AVG(avg_value), 2)
+SELECT measurement_date, parameter, ROUND(avg_value,2)
 FROM openaq_mart.mart_daily_air_quality
-WHERE parameter = 'pm25'
-  AND measurement_date BETWEEN DATE '2025-01-01' AND DATE '2025-03-31'
-  AND location_id IN (7441, 2161292, 4946812, 4946813)
-GROUP BY city
+WHERE measurement_date >= DATE '2025-01-01'
+  AND location_id = 4946813
+  AND parameter = 'pm25'
+ORDER BY measurement_date DESC LIMIT 10
 ```
 
-| city | avg_pm25 | Data scanned |
-|------|----------|--------------|
-| Hanoi | 49.54 µg/m³ | **0.031 MB** |
+| measurement_date | parameter | avg_value |
+|-----------------|-----------|-----------|
+| 2026-03-25 | pm25 | 16.28 |
+| 2026-03-24 | pm25 | 25.13 |
+| 2026-03-23 | pm25 | 21.63 |
+| … | … | … |
+
+| Metric | Value |
+|--------|-------|
+| Data scanned | **102.4 KB** |
+| Execution time | 1,304 ms |
 
 ### Scan reduction summary
 
-| Step | Scan size | Reduction vs previous |
-|------|-----------|-----------------------|
-| A — full mart, pm25 | 0.297 MB | — |
-| B — + date range (Q1 2025) | 0.025 MB | **−91.7%** (partition pruning on `measurement_date`) |
-| C — + location_id IN (...) | 0.031 MB | ~0% (location_id is not a partition key; bucketing removed due to Athena INSERT limitation) |
+| Step | Scan size | Note |
+|------|-----------|------|
+| A — full table COUNT (metadata only) | **0 bytes** | Parquet footer read; no column data needed |
+| B — date filter ≥ 2025-01-01 | **63.6 KB** | Partition pruning on `measurement_date` |
+| C — + location_id + parameter | **102.4 KB** | location_id not a partition key; reads all date partitions matching |
 
-**Key finding:** partitioning by `measurement_date` achieves a **91.7% scan reduction** for typical date-filtered dashboard queries. Adding a `location_id` predicate does not further reduce scan because `location_id` is not a partition key — future work could add a secondary partition level or use Iceberg Z-ordering for multi-dimensional pruning.
+**Key finding:** Parquet footer statistics allow COUNT(*) with zero bytes scanned. Date-filtered queries hit only matching partition files. Adding non-partition predicates (location_id, parameter) increases scan slightly as column data must be read; future work could use Iceberg Z-ordering for multi-dimensional pruning.
 
 ---
 
