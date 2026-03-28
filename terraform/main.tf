@@ -53,10 +53,15 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "main" {
 resource "aws_s3_bucket_public_access_block" "main" {
   bucket = aws_s3_bucket.main.id
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  # ACL-based public access is blocked — we use bucket policies, not ACLs.
+  block_public_acls   = true
+  ignore_public_acls  = true
+
+  # Dashboard is served as an S3 static website using a public bucket policy
+  # scoped to the dashboard/ prefix. These two must stay false or the
+  # S3 website endpoint returns 403 for all requests.
+  block_public_policy     = false
+  restrict_public_buckets = false
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "main" {
@@ -132,15 +137,9 @@ resource "aws_athena_workgroup" "openaq" {
     }
 
     bytes_scanned_cutoff_per_query = 10737418240 # 10 GB safety limit per query
-
-    # Reuse query results for up to 60 minutes (Athena Engine v3).
-    # Reduces cost and latency for repeated dbt runs and ad-hoc queries.
-    result_reuse_configuration {
-      result_reuse_by_age_configuration {
-        enabled            = true
-        max_age_in_minutes = 60
-      }
-    }
+    # Note: Athena query result reuse (60-min TTL) is not yet exposed by the
+    # AWS Terraform provider. Enable manually: Athena console → Workgroups →
+    # openaq_workgroup → Edit → Result reuse → Enable (60 minutes).
   }
 
   tags = local.common_tags
