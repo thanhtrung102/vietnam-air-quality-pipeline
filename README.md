@@ -12,24 +12,6 @@ The pipeline ingests historical and near-real-time air quality data from the Ope
 
 > Editable source: [`docs/architecture.excalidraw`](docs/architecture.excalidraw) (open at [excalidraw.com](https://excalidraw.com))
 
-### Data Flow
-
-```
-OpenAQ S3 Archive ──aws s3 sync──► S3 raw/batch/       ─┐
-                                                          ├─► Glue Catalog (openaq_raw)
-OpenAQ API v3 ──Lambda──► Kinesis ──Firehose──► S3 raw/stream/ ─┘
-                                                          │
-                                          Athena (openaq_workgroup)
-                                                          │
-                                          dbt (dbt-athena-community)
-                                                          │
-                                     S3 processed/ (openaq_mart schema)
-                                                          │
-                              Lambda AQI API ◄── mart_daily_aqi
-                                     │
-                              Leaflet map dashboard (S3 static website)
-```
-
 ### Two-Source Design
 
 | Dimension | Batch (S3 archive) | Streaming (Kinesis) |
