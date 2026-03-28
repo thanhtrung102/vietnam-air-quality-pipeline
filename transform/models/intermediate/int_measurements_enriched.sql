@@ -66,3 +66,5 @@ enriched as (
     inner join stations s on m.location_id = s.location_id
 
 )
+
+select * from enriched
