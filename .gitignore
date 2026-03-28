@@ -24,7 +24,14 @@ logs/
 
 # Lambda build artifacts
 lambda/*.zip
-lambda/streaming/package/
+lambda/package/
+terraform/*.zip
+
+# Terraform plan files and build artifacts
+terraform/tfplan*
+
+# dbt user config (local overrides, not shared)
+transform/.user.yml
 
 # Terraform secret vars
 terraform/terraform.tfvars
