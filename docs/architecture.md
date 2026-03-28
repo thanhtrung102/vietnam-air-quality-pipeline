@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document describes the end-to-end architecture for ingesting, storing, transforming, and visualising air quality measurements for Vietnamese cities. The pipeline combines two complementary data sources — the OpenAQ public S3 archive for historical bulk loads and the OpenAQ v3 REST API for near-real-time bridging — and lands all data in a serverless Athena warehouse on AWS ap-southeast-1. Terraform manages all cloud infrastructure except the pre-existing IAM user `terraform-admin`.
+Full problem statement and tech stack in [README.md](../README.md). This document covers implementation detail: data flow mechanics, S3 layout, DDL schemas, IAM roles, and folder structure. Service-selection rationale with context and consequences is in [architecture-decision-record.md](architecture-decision-record.md).
 
 ---
 

@@ -40,7 +40,7 @@ OpenAQ API v3 ──Lambda──► Kinesis ──Firehose──► S3 raw/strea
 | Cost | ~$0.02/GB cross-region egress | Lambda + Kinesis + Firehose |
 | Purpose | Trend analysis, seasonality | Near-real-time dashboard |
 
-Historical data drives dbt mart tables; streaming data feeds the live map dashboard via the AQI API Lambda.
+See [`docs/architecture.md`](docs/architecture.md) for full data flow mechanics, DDL schemas, IAM roles, and folder structure.
 
 ## Dataset
 
@@ -100,11 +100,11 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 
 ## Dashboard
 
-A Leaflet map served from S3 (`dashboard/index.html`) shows each station as a circle marker coloured by current AQI category. Clicking a marker shows PM2.5 (µg/m³) and cigarette-equivalent exposure (Berkeley Earth standard: PM2.5 / 22 µg/m³/day).
+**Live map:** `http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html`
 
-**Live URL:** `http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html`
+**API endpoint:** `https://7fv6swyuo5.execute-api.ap-southeast-1.amazonaws.com/` — GeoJSON of 7-day average AQI per station (cached 1h in `/tmp`).
 
-**API endpoint:** `https://7fv6swyuo5.execute-api.ap-southeast-1.amazonaws.com/` — returns GeoJSON of the 7-day average AQI per station (cached 1h in `/tmp`).
+See [`docs/architecture.md § 2.4`](docs/architecture.md#24-dashboard) for full dashboard design including QuickSight sheets and visual descriptions.
 
 ## Reproduction Steps
 
@@ -182,11 +182,13 @@ PYTHONUTF8=1 dbt build --profiles-dir .   # incremental (no --full-refresh)
 ## Architecture Decisions
 
 See [`docs/architecture-decision-record.md`](docs/architecture-decision-record.md) for full ADRs covering:
-- ADR-001: AWS over GCP (S3 archive co-location)
-- ADR-002: S3 sync over API for batch ingestion
-- ADR-003: Athena + Glue over Redshift
-- ADR-004: dbt-athena-community for transformation
-- ADR-005: Kinesis + Firehose over direct S3 write
+- ADR-001: AWS over GCP (S3 archive co-location, ~4–6× egress cost saving)
+- ADR-002: S3 sync over API for batch ingestion (throughput + idempotency)
+- ADR-003: Two-source architecture (archive for history, API for recency window)
+- ADR-004: Athena over Redshift Serverless (~10× cheaper at this query volume)
+- ADR-005: Kinesis over Kafka/MSK (no broker ops, Firehose S3 delivery)
+- ADR-007: Partition key `measurement_date` (91.7% scan reduction proven)
+- ADR-008: EventBridge Scheduler over Kestra/MWAA (zero infrastructure)
 
 ## Key Metrics
 
