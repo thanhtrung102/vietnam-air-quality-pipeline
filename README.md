@@ -197,8 +197,8 @@ See [`docs/architecture-decision-record.md`](docs/architecture-decision-record.m
 | Stations | 21 (17 Hanoi, 4 HCMC) |
 | Raw rows | ~900,000 hourly readings |
 | Date range | 2023-01-01 – present |
-| Hanoi 3-year avg PM2.5 | 40.2 µg/m³ (WHO 24h limit: 15 µg/m³) |
-| HCMC 3-year avg PM2.5 | ~85 µg/m³ |
+| Hanoi 3-year avg PM2.5 | 40.2 µg/m³ — IQAir 2024 city avg 45.4 µg/m³ (pipeline lower: station subset) |
+| HCMC 3-year avg PM2.5 | ~21 µg/m³ (US Embassy station; IQAir 2024: 20.9 µg/m³) — pipeline Athena avg 291.68 µg/m³ is inflated by VNUHCMUS Campus 1 outlier readings (station started Mar 2026) |
 | Hanoi WHO compliance | ~2% of days |
 | HCMC WHO compliance | ~37% of days |
 | Athena workgroup scan limit | 10 GB/query |

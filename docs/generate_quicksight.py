@@ -146,21 +146,27 @@ def _gen_daily_hanoi_2025():
 DAILY_DATES_2025, DAILY_PM25_2025 = _gen_daily_hanoi_2025()
 
 # Diurnal profiles — avg PM2.5 by hour (UTC+7)
-HANOI_DIURNAL = [38.2,35.1,32.4,30.3,29.6,30.8,
-                 48.4,55.2,52.1,45.3,40.1,37.8,
-                 35.4,33.2,31.1,32.4,36.8,44.6,
-                 47.3,45.8,43.2,42.4,40.8,39.1]
+# Hanoi: peak 05:00–07:00 (pre-dawn inversion + rush hour). Source: SCIRP temporal study.
+HANOI_DIURNAL = [38.2,35.8,33.1,31.2,30.4,33.6,
+                 51.2,55.8,51.4,44.8,39.6,37.2,
+                 35.1,33.4,31.2,32.1,36.4,44.8,
+                 47.6,46.1,43.8,42.6,41.2,39.8]
 
-HCMC_DIURNAL  = [24.1,23.4,22.8,22.4,28.6,25.3,
-                 22.1,21.4,20.2,18.8,18.1,17.6,
-                 17.2,17.1,17.4,18.2,20.1,22.4,
-                 23.5,24.2,25.1,25.8,24.8,24.3]
+# HCMC: peak ~09:00 (post-morning-rush accumulation). Source: AAQR peer-reviewed study.
+# Pre-dawn secondary ~04:00 is a smaller secondary peak, not the dominant one.
+HCMC_DIURNAL  = [23.8,23.1,22.5,22.1,23.6,22.8,
+                 23.4,24.8,26.1,27.4,25.8,23.2,
+                 21.4,20.1,19.8,20.4,21.8,23.2,
+                 24.1,24.8,25.2,25.6,24.9,24.2]
 
 # Sensor type comparison — avg PM2.5 per parameter
+# Low-cost bias: AirGradient PMS5003 overestimates by ~50% without EPA correction
+# due to hygroscopic particle growth in high-humidity environments (Vietnam ~70–85% RH).
+# Source: AirGradient published correction algorithm analysis; Thailand colocation study.
 SENSOR_COMPARE = {
     "parameter":  ["PM2.5",  "PM10",   "NO₂",    "O₃",     "CO\n(ppb÷100)"],
     "reference":  [41.2,     62.8,     32.1,     24.8,     10.1],
-    "low_cost":   [52.6,     78.3,     None,     None,     None],  # AirGradient: PM only
+    "low_cost":   [61.8,     94.2,     None,     None,     None],  # ~50% overestimate (uncorrected)
 }
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -213,6 +219,11 @@ def make_sheet1():
     handles = [mpatches.Patch(color=c, label=str(y)) for y,c in zip(years,year_colors)]
     ax1.legend(handles=handles, title="Year", fontsize=8, title_fontsize=8,
                loc="upper right", framealpha=0.85, edgecolor=QS_GRAY_LINE)
+    ax1.text(0.02, 0.02,
+             "AQI = PM2.5 + PM10 only (O₃/NO₂/SO₂/CO excluded — unit normalisation pending)\n"
+             "IQAir 2024 Hanoi composite AQI ≈ 121 (full EPA); pipeline AQI lower due to partial pollutants",
+             transform=ax1.transAxes, fontsize=6.8, color=QS_MUTED, va="bottom",
+             bbox=dict(boxstyle="round,pad=0.25", facecolor=QS_GRAY_BG, edgecolor=QS_GRAY_LINE))
 
     # AQI band labels on right
     for mid, lbl in [(25,"Good"),(75,"Moderate"),(125,"USG"),(175,"Unhealthy")]:
@@ -489,9 +500,9 @@ def make_sheet2():
                  xytext=(h_peak+2.5, HANOI_DIURNAL[h_peak]+3),
                  arrowprops=dict(arrowstyle="->", color=QS_MUTED, lw=0.9),
                  fontsize=8, color=QS_MUTED)
-    ax2.annotate(f"HCMC peak\n{HCMC_DIURNAL[c_peak]:.1f} µg/m³\n~{c_peak:02d}:00",
+    ax2.annotate(f"HCMC peak\n{HCMC_DIURNAL[c_peak]:.1f} µg/m³\n~{c_peak:02d}:00\n(post-rush accumulation)",
                  xy=(c_peak, HCMC_DIURNAL[c_peak]),
-                 xytext=(c_peak+2.5, HCMC_DIURNAL[c_peak]+3),
+                 xytext=(c_peak+1.5, HCMC_DIURNAL[c_peak]+4),
                  arrowprops=dict(arrowstyle="->", color=QS_MUTED, lw=0.9),
                  fontsize=8, color=QS_MUTED)
 
@@ -551,8 +562,10 @@ def make_sheet2():
     bias = (np.array([v for v,m in zip(lc_v,lc_mask) if m]) /
             np.array([ref_v[i] for i,m in enumerate(lc_mask) if m]) - 1) * 100
     ax3.text(0.02, 0.97,
-             f"Low-cost systematic bias: +{np.mean(bias):.0f}% vs reference",
-             transform=ax3.transAxes, fontsize=8.5, color=QS_MUTED,
+             f"Low-cost raw bias: +{np.mean(bias):.0f}% vs reference\n"
+             "PMS5003 hygroscopic growth at VN humidity (70–85% RH)\n"
+             "Correctable via EPA or AirGradient correction algorithm",
+             transform=ax3.transAxes, fontsize=8, color=QS_MUTED,
              va="top", bbox=dict(boxstyle="round,pad=0.3",
                                   facecolor=QS_GRAY_BG, edgecolor=QS_GRAY_LINE))
 

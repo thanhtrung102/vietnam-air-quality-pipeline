@@ -203,11 +203,13 @@ GROUP BY city, parameter ORDER BY city, parameter
 | Hanoi | pm10 | 61.39 µg/m³ |
 | **Hanoi** | **pm25** | **40.23 µg/m³** ✅ (expected 20–60) |
 | Hanoi | so2 | 4.84 µg/m³ |
-| Ho Chi Minh City | pm25 | 291.68 µg/m³ |
+| Ho Chi Minh City | pm25 | 291.68 µg/m³ ⚠️ |
 | Ho Chi Minh City | relativehumidity | 51.68 % |
 | Ho Chi Minh City | temperature | 30.42 °C |
 
 Hanoi PM2.5 = 40.23 µg/m³, well within the expected 20–60 µg/m³ range. Sentinel filter confirmed working.
+
+> ⚠️ **HCMC PM2.5 data quality issue:** The 291.68 µg/m³ average is inflated by extreme readings from station 6273386 (VNUHCMUS Campus 1), which started in March 2026 and reports values up to ~2,000 µg/m³ — likely a calibration or sensor initialisation artefact. The representative HCMC PM2.5 average from the long-running US Embassy station (7440, 2016–2025) is approximately **21 µg/m³**, consistent with IQAir 2024 city-level data (20.9 µg/m³). Station 6273386 should be excluded from city-level aggregate queries until the outlier data is investigated.
 
 ---
 

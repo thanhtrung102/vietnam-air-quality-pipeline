@@ -65,7 +65,7 @@ Two sheets; no station map (covered by Leaflet). Datasets refreshed daily via SP
 | Visual | Type | Key insight delivered |
 |---|---|---|
 | Monthly PM2.5 profile | Bar/line, series = city | Hanoi: Nov–Mar worst (NE monsoon inversion + long-range transport from southern China); Jun–Sep cleanest (SW monsoon washout). HCMC: weaker seasonality |
-| Hour-of-day PM2.5 profile | Line chart (0–23 UTC+7), series = city | Hanoi peaks at ~06:00 (morning inversion + rush hour); HCMC peaks at ~04:00 |
+| Hour-of-day PM2.5 profile | Line chart (0–23 UTC+7), series = city | Hanoi peaks at ~06:00 (pre-dawn inversion + rush hour); HCMC peaks at ~09:00 (post-morning-rush accumulation) |
 | Sensor type comparison | Side-by-side bar, reference vs low-cost | Shows whether AirGradient low-cost sensors systematically read higher or lower than co-located FEM reference monitors |
 | Hanoi vs HCMC paired overlay | Dual-axis line, same x-axis | Direct city comparison on monthly and diurnal axes |
 
