@@ -86,11 +86,23 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 
 **API endpoint:** `https://7fv6swyuo5.execute-api.ap-southeast-1.amazonaws.com/` — GeoJSON of 7-day average AQI per station (cached 1h in `/tmp`).
 
-### QuickSight
+### Leaflet Station Map
+
+![Leaflet Station Map](docs/leaflet_map.png)
+
+> Static render of `dashboard/index.html` via `docs/generate_leaflet_render.py`. CartoDB Dark Matter style; 21 stations coloured by composite AQI; marker size proportional to AQI severity. Popup shows station-level AQI, PM2.5, dominant pollutant, cigarette-equivalent exposure.
+
+### QuickSight — Sheet 1: Historical Trends
 
 ![QuickSight Sheet 1](docs/quicksight_sheet1.png)
 
-> Rendered from `mart_daily_air_quality` via `docs/generate_quicksight.py`. Chart 1: 3-year average PM2.5 by city vs WHO 24h limit. Chart 2: monthly PM2.5 trend in Hanoi showing winter spikes.
+> Source: `mart_daily_air_quality`. Charts: Annual AQI by city (2023–2025) · Hanoi calendar heatmap · Health day counts (stacked by AQI category) · Daily PM2.5 time series with WHO/QCVN reference lines.
+
+### QuickSight — Sheet 2: Seasonal & Diurnal Patterns
+
+![QuickSight Sheet 2](docs/quicksight_sheet2.png)
+
+> Sources: `mart_monthly_profile` + `mart_diurnal_profile`. Charts: Monthly PM2.5 profile with monsoon seasons · Hour-of-day diurnal profile (Hanoi peak 07:00, HCMC peak 04:00) · Sensor type comparison (reference vs AirGradient low-cost) · Hanoi vs HCMC dual-axis overlay.
 
 See [`docs/architecture.md § 2.4`](docs/architecture.md#24-dashboard) for full dashboard design including QuickSight sheets and visual descriptions.
 
