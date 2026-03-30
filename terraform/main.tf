@@ -96,7 +96,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
   }
 
   # Prevent S3 versioning from accumulating stale object versions indefinitely.
-  # Applies to all prefixes: raw/, processed/, dbt-staging/.
+  # Applies to all prefixes: raw/, processed/.
   rule {
     id     = "expire-noncurrent-versions"
     status = "Enabled"

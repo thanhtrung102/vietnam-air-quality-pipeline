@@ -310,15 +310,20 @@ vietnam-air-quality-pipeline/
 │   └── index.html                # Leaflet map — S3 static website
 │
 ├── docs/
-│   ├── architecture.md           # This document
+│   ├── architecture.md                      # This document
 │   ├── architecture-decision-record.md
-│   ├── architecture.png          # Architecture diagram (PNG export)
-│   ├── architecture.excalidraw   # Architecture diagram (editable Excalidraw source)
-│   ├── dbt_lineage.png           # dbt DAG visualisation
-│   ├── generate_diagram.py       # Script to regenerate dbt_lineage.png
-│   ├── metrics.md                # Query scan sizes and pipeline run metrics
-│   ├── stations.md               # Station inventory notes
-│   └── quicksight_dashboard_definition.json  # Exported QuickSight definition
+│   ├── architecture.png                     # Pipeline diagram (Pillow render)
+│   ├── architecture.excalidraw              # Editable Excalidraw source
+│   ├── generate_architecture.py             # Script to regenerate architecture.png
+│   ├── dbt_lineage.png                      # dbt DAG visualisation
+│   ├── leaflet_map.png                      # Static render of Leaflet dashboard
+│   ├── generate_leaflet_render.py           # Script to regenerate leaflet_map.png
+│   ├── quicksight_sheet1.png                # QuickSight Sheet 1 render (Historical Trends)
+│   ├── quicksight_sheet2.png                # QuickSight Sheet 2 render (Seasonal & Diurnal)
+│   ├── generate_quicksight.py               # Script to regenerate QuickSight renders
+│   ├── quicksight_dashboard_definition.json # Exported live QuickSight dashboard definition
+│   ├── metrics.md                           # Query scan sizes and pipeline run metrics
+│   └── stations.md                          # Station inventory notes
 │
 ├── ingestion/
 │   ├── historical/

@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "lambda_inline" {
     condition {
       test     = "StringLike"
       variable = "s3:prefix"
-      values   = ["raw/*", "processed/*", "athena-results/*", "dbt-staging/*"]
+      values   = ["raw/*", "processed/*", "athena-results/*"]
     }
   }
 

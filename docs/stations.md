@@ -4,7 +4,7 @@
 **Source:** OpenAQ API v3 (`/v3/locations?iso=VN`) + S3 archive cross-reference
 **Total VN stations in API:** 54
 **Confirmed in S3 archive:** 22
-**Selected for pipeline:** 20 (active stations with meaningful coverage)
+**Selected for pipeline:** 21 (active stations with meaningful coverage)
 
 ---
 
