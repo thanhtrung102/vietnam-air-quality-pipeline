@@ -199,3 +199,98 @@ resource "aws_glue_catalog_table" "openaq_stream" {
     type = "string"
   }
 }
+
+# ── Weather table ─────────────────────────────────────────────────────────────
+# Open-Meteo ERA5 hourly weather written by weather_ingest Lambda.
+# Path: raw/weather/{location_id}/{yyyy}/{MM}/{dd}/weather.ndjson
+# Grain: one row per location_id × date × hour_utc (24 rows/station/day).
+# Partition Projection on location_id (enum) + year/month/day (integer).
+# Archive tier excluded from S3 IT lifecycle — Athena requires synchronous access.
+
+resource "aws_glue_catalog_table" "weather" {
+  name          = "weather"
+  database_name = aws_glue_catalog_database.openaq_raw.name
+  table_type    = "EXTERNAL_TABLE"
+
+  parameters = {
+    EXTERNAL                          = "TRUE"
+    "classification"                  = "json"
+    "projection.enabled"              = "true"
+    "projection.location_id.type"     = "enum"
+    "projection.location_id.values"   = "7441,2539,1285357,2161290,2161291,2161292,2161316,2161317,2161318,2161319,2161320,2161321,2161323,4946811,4946812,4946813,6123215,7440,2446,6068138,6273386"
+    "projection.year.type"            = "integer"
+    "projection.year.range"           = "2016,2030"
+    "projection.month.type"           = "integer"
+    "projection.month.range"          = "1,12"
+    "projection.month.digits"         = "2"
+    "projection.day.type"             = "integer"
+    "projection.day.range"            = "1,31"
+    "projection.day.digits"           = "2"
+    "storage.location.template"       = "s3://${aws_s3_bucket.main.bucket}/raw/weather/$${location_id}/$${year}/$${month}/$${day}/"
+  }
+
+  storage_descriptor {
+    location      = "s3://${aws_s3_bucket.main.bucket}/raw/weather/"
+    input_format  = "org.apache.hadoop.mapred.TextInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+
+    ser_de_info {
+      serialization_library = "org.openx.data.jsonserde.JsonSerDe"
+    }
+
+    columns {
+      name = "date"
+      type = "string"
+    }
+    columns {
+      name = "hour_utc"
+      type = "int"
+    }
+    columns {
+      name = "temperature_2m"
+      type = "double"
+    }
+    columns {
+      name = "rh_2m"
+      type = "double"
+    }
+    columns {
+      name = "wind_speed"
+      type = "double"
+    }
+    columns {
+      name = "wind_dir"
+      type = "double"
+    }
+    columns {
+      name = "precipitation_mm"
+      type = "double"
+    }
+    columns {
+      name = "surface_pressure_hpa"
+      type = "double"
+    }
+    columns {
+      name = "boundary_layer_height_m"
+      type = "double"
+    }
+  }
+
+  # Partition keys: location_id (enum string) + year/month/day (integer strings)
+  partition_keys {
+    name = "location_id"
+    type = "int"
+  }
+  partition_keys {
+    name = "year"
+    type = "string"
+  }
+  partition_keys {
+    name = "month"
+    type = "string"
+  }
+  partition_keys {
+    name = "day"
+    type = "string"
+  }
+}

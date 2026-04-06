@@ -656,3 +656,182 @@ models:
 
       - name: qcvn_exceedance_rate
         description: Percentage of days where city-level PM2.5 avg > 50 µg/m³ (%, 1 dp)
+
+  - name: mart_daily_weather
+    description: >
+      Daily ERA5 weather aggregates per station from Open-Meteo Historical Archive.
+      Grain: one row per location_id × measurement_date.
+      Source: int_weather_enriched (hourly ERA5 reanalysis data).
+      Includes derived inversion_risk and wet_scavenging flags used by mart_aq_weather_daily.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - location_id
+              - measurement_date
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+
+      - name: measurement_date
+        description: Calendar date (partition key)
+        tests:
+          - not_null
+
+      - name: location_name
+        description: Canonical station name from vn_stations seed
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: sensor_type
+        description: Instrument type from vn_stations seed
+
+      - name: avg_temperature_2m
+        description: Daily mean 2 m temperature (°C, 4 dp)
+
+      - name: max_temperature_2m
+        description: Daily maximum 2 m temperature (°C, 4 dp)
+
+      - name: min_temperature_2m
+        description: Daily minimum 2 m temperature (°C, 4 dp)
+
+      - name: avg_rh_2m
+        description: Daily mean 2 m relative humidity (%, 2 dp)
+
+      - name: max_rh_2m
+        description: Daily maximum 2 m relative humidity (%, 2 dp)
+
+      - name: min_rh_2m
+        description: Daily minimum 2 m relative humidity (%, 2 dp)
+
+      - name: avg_wind_speed
+        description: Daily mean wind speed at 10 m (m/s, 4 dp)
+
+      - name: avg_wind_dir
+        description: Simple arithmetic mean of hourly wind directions (degrees). Not a circular mean — use with caution for prevailing-wind analysis.
+
+      - name: calm_wind_hours
+        description: Count of UTC hours where wind_speed < 2.0 m/s (stagnant conditions)
+
+      - name: total_precipitation_mm
+        description: Daily total precipitation (mm, 4 dp)
+
+      - name: avg_surface_pressure_hpa
+        description: Daily mean surface pressure (hPa, 2 dp)
+
+      - name: avg_boundary_layer_height_m
+        description: Daily mean planetary boundary layer height (m, 1 dp)
+
+      - name: min_boundary_layer_height_m
+        description: Daily minimum BLH (m, 1 dp) — captures morning inversion peak
+
+      - name: reading_count_hours
+        description: Number of hourly records (should equal 24 under normal conditions)
+
+      - name: inversion_risk
+        description: >
+          1 if min_boundary_layer_height_m < 500 AND avg_wind_speed < 2.0 m/s,
+          else 0. Indicates conditions favourable for pollutant accumulation.
+
+      - name: wet_scavenging
+        description: >
+          1 if total_precipitation_mm > 5.0 mm/day, else 0.
+          Indicates likely below-cloud PM2.5 washout.
+
+  - name: mart_aq_weather_daily
+    description: >
+      Air quality (PM2.5) joined to ERA5 weather covariates, station × daily grain.
+      Source: mart_daily_air_quality (pm25, outlier station 6273386 excluded)
+      LEFT JOIN mart_daily_weather.
+      Weather columns are NULL when the weather Lambda failed or ERA5 lag applies.
+      Primary diagnostic mart for PM2.5 / meteorology correlation analysis.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - location_id
+              - measurement_date
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+
+      - name: measurement_date
+        description: Calendar date (partition key)
+        tests:
+          - not_null
+
+      - name: location_name
+        description: Canonical station name
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: sensor_type
+        description: Instrument type (reference or low_cost)
+
+      - name: avg_pm25
+        description: Daily mean PM2.5 from mart_daily_air_quality (µg/m³, 4 dp)
+
+      - name: max_pm25
+        description: Daily maximum PM2.5 (µg/m³, 4 dp)
+
+      - name: corrected_pm25
+        description: Bias-corrected PM2.5 for low-cost sensors (÷1.50); equals avg_pm25 for reference stations
+
+      - name: aqi_value
+        description: US EPA 2024 AQI for PM2.5 (integer)
+
+      - name: aqi_category
+        description: AQI health category label
+
+      - name: exceeds_who_24h
+        description: True if avg_pm25 > 15 µg/m³ (WHO AQG 2021 24-hour guideline)
+
+      - name: exceeds_qcvn
+        description: True if avg_pm25 > 50 µg/m³ (QCVN 05:2023)
+
+      - name: cigarette_equivalent
+        description: PM2.5 expressed as cigarette-equivalent exposure (avg_pm25 / 22.0)
+
+      - name: avg_temperature_2m
+        description: Daily mean 2 m temperature (°C); NULL if weather unavailable
+
+      - name: avg_rh_2m
+        description: Daily mean relative humidity (%); NULL if weather unavailable
+
+      - name: avg_wind_speed
+        description: Daily mean wind speed (m/s); NULL if weather unavailable
+
+      - name: total_precipitation_mm
+        description: Daily precipitation total (mm); NULL if weather unavailable
+
+      - name: avg_boundary_layer_height_m
+        description: Daily mean BLH (m); NULL if weather unavailable
+
+      - name: min_boundary_layer_height_m
+        description: Daily minimum BLH (m) — morning inversion indicator; NULL if weather unavailable
+
+      - name: inversion_risk
+        description: 1 = shallow BLH + calm winds (pollutant accumulation conditions); NULL if weather unavailable
+
+      - name: wet_scavenging
+        description: 1 = daily precipitation > 5 mm (PM2.5 washout conditions); NULL if weather unavailable

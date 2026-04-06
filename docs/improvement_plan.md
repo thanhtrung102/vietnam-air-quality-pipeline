@@ -12,8 +12,8 @@
 | 0 | Complete In-Progress Work | ✅ DONE | — |
 | 1 | Infrastructure Reliability (7 IoT Lens Gaps) | ✅ DONE | Phase 0 |
 | 2 | Diagnostic Analytics Completion | ✅ DONE | Phase 1 IAM |
-| 3 | Weather Data Ingestion | 🔄 NEXT | Phase 1 infra |
-| 4 | Predictive Feature Engineering | ⏳ Pending | Phase 3 data |
+| 3 | Weather Data Ingestion | ✅ DONE | Phase 1 infra |
+| 4 | Predictive Feature Engineering | 🔄 NEXT | Phase 3 data |
 | 5 | Predictive Modelling (SARIMA → Prophet) | ⏳ Pending | Phase 4 features |
 | 6 | Architecture Documentation & Case Study | ⏳ Pending | Phase 5 |
 
@@ -133,29 +133,43 @@ Priority ordering: Gap 1 and 2 first (highest risk), then 3 and 4 (code quality)
 
 ---
 
-## Phase 3 — Weather Data Ingestion
+## Phase 3 — Weather Data Ingestion ✅ DONE
 
 ### 3.1 Select weather data source
-- [ ] Use Open-Meteo API (`api.open-meteo.com`) — free, no API key, ERA5-backed hourly reanalysis
-- [ ] Add ADR-010 to `docs/architecture-decision-record.md`
+- [x] Use Open-Meteo API (`archive-api.open-meteo.com`) — free, no API key, ERA5-backed hourly reanalysis
+- [x] Add ADR-010 to `docs/architecture-decision-record.md`
 
 ### 3.2 Create `lambda/weather_ingest/handler.py`
-- [ ] Triggered daily at 02:00 UTC
-- [ ] Fetch previous day's hourly weather per station lat/lon from Open-Meteo
-- [ ] Output NDJSON to `s3://.../raw/weather/{location_id}/{yyyy}/{MM}/{dd}/weather.ndjson`
-- [ ] Schema: `location_id, date, hour_utc, temperature_2m, rh_2m, wind_speed, wind_dir, precipitation_mm, surface_pressure_hpa, boundary_layer_height_m`
-- [ ] Backfill mode: `BACKFILL_DAYS=N` env var
+- [x] Triggered daily at 02:00 UTC by EventBridge Scheduler
+- [x] Fetch previous day's hourly weather per station lat/lon from Open-Meteo ERA5 archive
+- [x] Output NDJSON to `s3://.../raw/weather/{location_id}/{yyyy}/{MM}/{dd}/weather.ndjson`
+- [x] Schema: `location_id, date, hour_utc, temperature_2m, rh_2m, wind_speed, wind_dir, precipitation_mm, surface_pressure_hpa, boundary_layer_height_m`
+- [x] Backfill mode: `BACKFILL_DAYS=N` env var (also overridable via event payload)
+- [x] Per-station exception handling (failures logged, run continues)
+- [x] `lambda/weather_ingest/requirements.txt` (requests==2.32.5)
 
 ### 3.3 Create Glue table for raw weather
-- [ ] Add `aws_glue_catalog_table.weather` to `terraform/glue_tables.tf`
+- [x] Add `aws_glue_catalog_table.weather` to `terraform/glue_tables.tf`
+  - Partition Projection: location_id (enum, 21 IDs) × year/month/day (integer)
+  - JsonSerDe, NDJSON, `raw/weather/` prefix
+- [x] Add `aws_lambda_function.weather_ingest` to `terraform/lambda.tf`
+- [x] Add `aws_scheduler_schedule.weather_daily` (02:00 UTC daily) to `terraform/lambda.tf`
+- [x] Add `aws_lambda_permission.weather_scheduler` and scheduler IAM policy
+- [x] Add `s3:PutObject` on `raw/weather/*` to `openaq_lambda_role` IAM policy
+- [x] Add `lambda_weather_zip_path` variable to `terraform/variables.tf`
 
 ### 3.4 Create dbt weather models
-- [ ] `stg_weather.sql`, `int_weather_enriched.sql`, `mart_daily_weather.sql`
-- [ ] Grain: `location_id × measurement_date`
+- [x] `transform/models/staging/stg_weather.sql` — cast types, derive measurement_date, filter nulls
+- [x] `transform/models/staging/sources.yml` — add weather source with freshness config
+- [x] `transform/models/intermediate/int_weather_enriched.sql` — JOIN stg_weather to vn_stations
+- [x] `transform/models/intermediate/schema.yml` — add int_weather_enriched entry
+- [x] `transform/models/marts/mart_daily_weather.sql` — daily aggregates with inversion_risk + wet_scavenging
+- [x] `transform/models/marts/schema.yml` — add mart_daily_weather entry
 
 ### 3.5 Join weather to air quality
-- [ ] `mart_aq_weather_daily.sql` — LEFT JOIN AQ to weather
-- [ ] Columns: all pm25 cols + weather cols + `inversion_risk`, `wet_scavenging`
+- [x] `mart_aq_weather_daily.sql` — LEFT JOIN mart_daily_air_quality (pm25, outlier excluded) to mart_daily_weather
+- [x] Columns: all pm25 cols + weather cols + `inversion_risk`, `wet_scavenging`
+- [x] `transform/models/marts/schema.yml` — add mart_aq_weather_daily entry
 
 **Acceptance criteria:** Open-Meteo fetch works for one station. `mart_daily_weather` ~23K rows. Correlation check: `avg_pm25` inversely correlated with `total_precip_mm`.
 

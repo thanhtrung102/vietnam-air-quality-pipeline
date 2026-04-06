@@ -42,6 +42,18 @@ data "aws_iam_policy_document" "lambda_inline" {
     ]
   }
 
+  # S3 — weather raw prefix write (weather_ingest Lambda)
+  # Scoped separately so future policy refactoring can restrict weather writes
+  # without affecting the broader raw/* grant above.
+  statement {
+    sid    = "WeatherRawWrite"
+    effect = "Allow"
+
+    actions = ["s3:PutObject"]
+
+    resources = ["${aws_s3_bucket.main.arn}/raw/weather/*"]
+  }
+
   statement {
     sid    = "ProjectBucketList"
     effect = "Allow"
@@ -621,4 +633,78 @@ resource "aws_cloudwatch_metric_alarm" "missing_stations" {
   alarm_actions = [aws_sns_topic.openaq_alerts.arn]
 
   tags = local.common_tags
+}
+
+# ── Lambda: openaq_weather_ingest (Phase 3 — Weather Data Ingestion) ──────────
+# Fetches previous day's hourly ERA5 weather from Open-Meteo for all 21 VN
+# station coordinates and writes NDJSON to raw/weather/.
+# Triggered daily at 02:00 UTC (after Open-Meteo ERA5 ~5-day lag allows
+# yesterday's data to be available and processed).
+# BACKFILL_DAYS env var enables retroactive catch-up; set via Lambda console.
+
+resource "aws_cloudwatch_log_group" "weather_ingest" {
+  name              = "/aws/lambda/openaq_weather_ingest"
+  retention_in_days = 14
+  tags              = local.common_tags
+}
+
+resource "aws_lambda_function" "weather_ingest" {
+  function_name = "openaq_weather_ingest"
+  role          = aws_iam_role.lambda_exec.arn
+  runtime       = "python3.12"
+  handler       = "handler.handler"
+  filename      = var.lambda_weather_zip_path
+  timeout       = 300   # 21 stations × ~2s/req + S3 writes; 5 min is comfortable
+  memory_size   = 256
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME = local.bucket_name
+      BACKFILL_DAYS  = "1"   # default: yesterday only; override via event payload
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.weather_ingest]
+  tags       = local.common_tags
+}
+
+resource "aws_scheduler_schedule" "weather_daily" {
+  name       = "openaq_weather_daily"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  # 02:00 UTC daily — after ERA5 reanalysis lag and well before dbt 03:00 run
+  schedule_expression = "cron(0 2 * * ? *)"
+
+  target {
+    arn      = aws_lambda_function.weather_ingest.arn
+    role_arn = aws_iam_role.scheduler.arn
+    input    = jsonencode({})
+  }
+}
+
+resource "aws_lambda_permission" "weather_scheduler" {
+  statement_id  = "AllowSchedulerInvokeWeather"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.weather_ingest.function_name
+  principal     = "scheduler.amazonaws.com"
+  source_arn    = aws_scheduler_schedule.weather_daily.arn
+}
+
+resource "aws_iam_role_policy" "scheduler_invoke_weather" {
+  name = "openaq_scheduler_invoke_weather"
+  role = aws_iam_role.scheduler.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "InvokeWeather"
+      Effect   = "Allow"
+      Action   = "lambda:InvokeFunction"
+      Resource = aws_lambda_function.weather_ingest.arn
+    }]
+  })
 }

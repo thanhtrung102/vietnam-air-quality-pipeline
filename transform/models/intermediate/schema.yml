@@ -64,3 +64,58 @@ models:
           monitors; 'low_cost' for AirGradient optical sensors (stations 6123215,
           6068138, 6273386). Used for downstream filtering; EPA humidity correction
           pending RH self-join implementation.
+
+  - name: int_weather_enriched
+    description: >
+      Hourly ERA5 weather from stg_weather enriched with station metadata
+      from vn_stations. Inner join excludes any unexpected location_ids not
+      present in the seed. Preserves hourly grain for flexible aggregation.
+
+    columns:
+      - name: location_id
+        description: OpenAQ location identifier
+        tests:
+          - not_null
+
+      - name: measurement_date
+        description: Calendar date of the weather observation (DATE)
+        tests:
+          - not_null
+
+      - name: hour_utc
+        description: Hour of the observation in UTC (0–23)
+
+      - name: temperature_2m
+        description: Air temperature at 2 m (°C, rounded to 4 dp)
+
+      - name: rh_2m
+        description: Relative humidity at 2 m (%, rounded to 2 dp)
+
+      - name: wind_speed
+        description: Wind speed at 10 m (m/s, rounded to 4 dp)
+
+      - name: wind_dir
+        description: Wind direction at 10 m (degrees 0–360, rounded to 2 dp)
+
+      - name: precipitation_mm
+        description: Hourly precipitation (mm, rounded to 4 dp)
+
+      - name: surface_pressure_hpa
+        description: Surface pressure (hPa, rounded to 2 dp)
+
+      - name: boundary_layer_height_m
+        description: Planetary boundary layer height (m, rounded to 1 dp)
+
+      - name: location_name
+        description: Canonical station name from vn_stations seed
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: sensor_type
+        description: Instrument type from vn_stations seed (reference or low_cost)

@@ -49,3 +49,9 @@ variable "lambda_completeness_zip_path" {
   type        = string
   default     = "../lambda/completeness_check.zip"
 }
+
+variable "lambda_weather_zip_path" {
+  description = "Path to the weather ingest Lambda zip file, relative to the terraform/ directory"
+  type        = string
+  default     = "../lambda/weather_ingest.zip"
+}

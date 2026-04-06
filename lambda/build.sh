@@ -9,6 +9,7 @@
 #   lambda/streaming.zip           — referenced by terraform var.lambda_streaming_zip_path
 #   lambda/aqi_api.zip             — referenced by terraform var.lambda_aqi_api_zip_path
 #   lambda/completeness_check.zip  — referenced by terraform var.lambda_completeness_zip_path
+#   lambda/weather_ingest.zip      — referenced by terraform var.lambda_weather_zip_path
 #
 # Run before every `terraform apply` that touches any aws_lambda_function.
 # Terraform uses each zip's SHA-256 hash to detect changes and force updates.
@@ -85,6 +86,18 @@ echo "==> completeness_check.zip"
 rm -rf "$PACKAGE_DIR" && mkdir -p "$PACKAGE_DIR"
 cp "$LAMBDA_DIR/completeness_check/handler.py" "$PACKAGE_DIR/"
 zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/completeness_check.zip"
+
+# ── 5. weather_ingest.zip ─────────────────────────────────────────────────────
+# Bundles requests (boto3 from runtime). Same dep set as streaming.
+
+echo "==> weather_ingest.zip"
+rm -rf "$PACKAGE_DIR" && mkdir -p "$PACKAGE_DIR"
+"$PIP" install \
+  requests==2.32.5 \
+  -t "$PACKAGE_DIR/" \
+  --quiet
+cp "$LAMBDA_DIR/weather_ingest/handler.py" "$PACKAGE_DIR/"
+zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/weather_ingest.zip"
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 

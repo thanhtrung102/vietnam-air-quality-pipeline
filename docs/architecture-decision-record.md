@@ -249,4 +249,62 @@ As of April 2026, the AWS Terraform provider (`hashicorp/aws ~> 5.0`) does not e
 - QuickSight SPICE refreshes (daily) will benefit from result reuse when multiple users trigger the same underlying Athena query within the 60-minute window.
 - When the Terraform provider adds support for `result_reuse_configuration`, migrate this setting to `terraform/main.tf` in the `aws_athena_workgroup.openaq` resource and remove from the manual post-deploy checklist.
 
+---
+
+## ADR-010: Weather Data Source — Open-Meteo over NOAA ISD / ERA5-CDS
+
+### Context
+
+Phase 3 of the analytics improvement plan adds historical weather variables
+(temperature, humidity, wind, precipitation, boundary layer height) as
+contextual covariates for diagnostic and predictive air quality models.
+Three candidate data sources were evaluated: Open-Meteo Historical Archive,
+NOAA Integrated Surface Database (ISD), and the Copernicus Climate Data Store
+(CDS) ERA5-hourly dataset.
+
+### Decision
+
+Open-Meteo Historical Archive (`archive-api.open-meteo.com`) was selected.
+
+### Rationale
+
+**Open-Meteo:** Free, no API key, no usage quota, JSON response, ERA5-backed
+reanalysis at hourly resolution. Fetch by latitude/longitude — no station
+matching required. Data available from 1940 to present (ERA5 reanalysis lag
+~5 days). Variables include `temperature_2m`, `relative_humidity_2m`,
+`wind_speed_10m`, `wind_direction_10m`, `precipitation`, `surface_pressure`,
+and `boundary_layer_height`, which are all required for the inversion risk
+and wet-scavenging derived columns in Phase 3.5.
+
+**NOAA ISD:** Contains actual station observations, not reanalysis. Nearest
+ISD stations to Vietnamese cities may be tens of kilometres from monitoring
+sites. Fetching requires either bulk S3 download (NOAA GHCN in us-east-1,
+requester-pays) or NCDC REST API with a data access agreement. Variable
+coverage varies by station; `boundary_layer_height` is absent entirely.
+Processing ISD fixed-width format files adds engineering complexity.
+
+**ERA5-CDS (Copernicus):** Highest-quality ERA5 data but requires creating a
+CDS account, accepting licence terms, installing the `cdsapi` Python client,
+and queuing GRIB download jobs that may take minutes to hours. Output is
+multi-file GRIB/NetCDF requiring additional parsing. Not viable for a daily
+Lambda function with a 15-minute timeout.
+
+Open-Meteo wraps the same ERA5 reanalysis dataset as CDS but exposes it via a
+lightweight REST API that returns JSON in < 2 seconds per station request.
+For 21 stations it completes in under 60 seconds — well within the Lambda
+timeout.
+
+### Consequences
+
+- Weather data is ERA5 reanalysis, not direct surface observations; spatial
+  resolution is 0.25° (~28 km). Sub-grid variability within Hanoi's urban
+  heat island is not captured.
+- Open-Meteo is a community-operated service without SLA guarantees. The Lambda
+  includes per-station exception handling; individual failures are logged and
+  counted but do not abort the run.
+- `boundary_layer_height` from ERA5 is the ECMWF BLH diagnostic. Non-midnight
+  hours are linearly interpolated by Open-Meteo; interpret with care for
+  sub-daily inversion analysis.
+- If Open-Meteo is unavailable, the `BACKFILL_DAYS` env var allows retroactive
+  catch-up once the service resumes.
 

@@ -73,3 +73,38 @@ sources:
           - name: value
           - name: ingested_at
             description: ISO-8601 UTC timestamp when the record was written to Kinesis
+
+      - name: weather
+        description: >
+          Hourly ERA5 reanalysis weather written by the weather_ingest Lambda
+          to raw/weather/{location_id}/{yyyy}/{MM}/{dd}/weather.ndjson.
+          Partitioned by location_id / year / month / day.
+          Partition Projection enabled in Glue. One row per station per UTC hour.
+        freshness:
+          warn_after: {count: 30, period: hour}   # 1.25 days — ERA5 lag ~5 days
+          error_after: {count: 54, period: hour}  # 2.25 days
+        loaded_at_field: date
+        columns:
+          - name: location_id
+            description: OpenAQ location ID (Glue partition key, int)
+          - name: date
+            description: Calendar date string (YYYY-MM-DD) for the observation
+          - name: hour_utc
+            description: Hour of the day in UTC (0–23)
+          - name: temperature_2m
+            description: Air temperature at 2 m above ground (°C)
+          - name: rh_2m
+            description: Relative humidity at 2 m above ground (%)
+          - name: wind_speed
+            description: Wind speed at 10 m above ground (m/s)
+          - name: wind_dir
+            description: Wind direction at 10 m above ground (degrees, 0=N)
+          - name: precipitation_mm
+            description: Precipitation in the hour (mm)
+          - name: surface_pressure_hpa
+            description: Surface atmospheric pressure (hPa)
+          - name: boundary_layer_height_m
+            description: >
+              Planetary boundary layer height (m). ERA5 BLH diagnostic;
+              hours between model steps are linearly interpolated by Open-Meteo.
+              Low values (< 500 m) indicate temperature inversion / pollutant trapping.
