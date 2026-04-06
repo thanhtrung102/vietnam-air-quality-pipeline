@@ -535,3 +535,124 @@ models:
           'mixed' (0.4–0.7) — mixture of combustion and resuspended dust;
           'crustal/dust' (< 0.4) — road dust, construction, soil resuspension.
           NULL when ratio cannot be computed.
+
+  - name: mart_daily_meteorology
+    description: >
+      Daily temperature and relative humidity per AirGradient station.
+      Grain: one row per location_id × measurement_date.
+      Source: int_measurements_enriched (temperature + relativehumidity parameters only).
+      Station 6273386 excluded. Only stations 6123215 (OceanPark, Hanoi) and
+      6068138 (Care Centre, HCMC) currently report T/RH via OpenAQ.
+      Used for humidity-correction validation and T/PM2.5 correlation diagnostics.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - location_id
+              - measurement_date
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+
+      - name: measurement_date
+        description: Calendar date (partition key)
+        tests:
+          - not_null
+
+      - name: location_name
+        description: Canonical station name
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: sensor_type
+        description: Instrument type — 'low_cost' (AirGradient PMS5003 + SHT30)
+
+      - name: avg_temperature
+        description: Daily mean ambient temperature (°C, 4 dp); NULL if no readings
+
+      - name: max_temperature
+        description: Daily maximum temperature (°C, 4 dp)
+
+      - name: min_temperature
+        description: Daily minimum temperature (°C, 4 dp)
+
+      - name: reading_count_temperature
+        description: Number of valid temperature readings contributing to the daily aggregate
+
+      - name: avg_rh
+        description: Daily mean relative humidity (%, 4 dp); NULL if no readings
+
+      - name: max_rh
+        description: Daily maximum relative humidity (%, 4 dp)
+
+      - name: min_rh
+        description: Daily minimum relative humidity (%, 4 dp)
+
+      - name: reading_count_rh
+        description: Number of valid relative humidity readings contributing to the daily aggregate
+
+  - name: mart_annual_monthly_trend
+    description: >
+      City-level PM2.5 aggregated by year × month of year.
+      Grain: one row per city × year × month_of_year.
+      Source: mart_daily_air_quality (pm25, outlier station 6273386 excluded).
+      City-level daily average (mean of all stations) computed first — same
+      methodology as mart_health_summary — to avoid double-counting.
+      Enables year-over-year comparison: "Is Jan 2025 worse than Jan 2024?"
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - city
+              - year
+              - month_of_year
+
+    columns:
+      - name: city
+        description: City name (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: year
+        description: Calendar year (integer)
+        tests:
+          - not_null
+
+      - name: month_of_year
+        description: Calendar month (1–12)
+        tests:
+          - not_null
+
+      - name: total_days
+        description: Number of days with PM2.5 data in this city/year/month
+        tests:
+          - not_null
+
+      - name: avg_pm25
+        description: Mean city-level PM2.5 daily average across the month (µg/m³, 2 dp)
+
+      - name: max_pm25
+        description: Peak daily city-level PM2.5 average in the month (µg/m³, 2 dp)
+
+      - name: p95_pm25
+        description: 95th-percentile daily city-level PM2.5 in the month (µg/m³, 2 dp)
+
+      - name: who_exceedance_rate
+        description: Percentage of days where city-level PM2.5 avg > 15 µg/m³ (%, 1 dp)
+
+      - name: qcvn_exceedance_rate
+        description: Percentage of days where city-level PM2.5 avg > 50 µg/m³ (%, 1 dp)

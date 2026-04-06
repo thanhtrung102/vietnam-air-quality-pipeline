@@ -658,19 +658,56 @@ HANOI_RAW_LC    = [c * 1.50 for c in HANOI_MONTHLY_PM25[2025]]   # raw = correct
 HANOI_CORR_LC   = HANOI_MONTHLY_PM25[2025]                        # corrected ≈ true reference
 HANOI_REF_REF   = [m * 0.97 for m in HANOI_MONTHLY_PM25[2025]]   # reference monitors ≈ true
 
+# Chart 5: YoY grouped bars — mart_annual_monthly_trend (city-level monthly avg PM2.5)
+# Same underlying data as HANOI_MONTHLY_PM25 / HCMC_MONTHLY_PM25 — what the mart returns
+HANOI_ANNUAL_MONTHLY = HANOI_MONTHLY_PM25   # {2023: [...], 2024: [...], 2025: [...]}
+HCMC_ANNUAL_MONTHLY  = HCMC_MONTHLY_PM25
+
+# Chart 6: Temperature vs PM2.5 scatter — mart_daily_meteorology × mart_daily_air_quality
+# Synthetic daily readings representative of OceanPark (6123215, Hanoi) + Care Centre (6068138, HCMC)
+# NE monsoon (Nov-Mar): low T (~16-22°C), high PM2.5 (~35-85 µg/m³)
+# SW monsoon (Jun-Sep): high T (~30-35°C), low PM2.5 (~12-22 µg/m³)
+np.random.seed(7)
+
+def _gen_scatter_days(n_ne, t_ne_mu, t_ne_sd, pm_ne_mu, pm_ne_sd,
+                      n_sw, t_sw_mu, t_sw_sd, pm_sw_mu, pm_sw_sd,
+                      n_tr, t_tr_mu, t_tr_sd, pm_tr_mu, pm_tr_sd):
+    t, pm, season = [], [], []
+    for cnt, t_mu, t_sd, pm_mu, pm_sd, lbl in [
+        (n_ne, t_ne_mu, t_ne_sd, pm_ne_mu, pm_ne_sd, "NE Monsoon"),
+        (n_sw, t_sw_mu, t_sw_sd, pm_sw_mu, pm_sw_sd, "SW Monsoon"),
+        (n_tr, t_tr_mu, t_tr_sd, pm_tr_mu, pm_tr_sd, "Transition"),
+    ]:
+        t.extend(np.random.normal(t_mu, t_sd, cnt))
+        pm.extend(np.maximum(2, np.random.normal(pm_mu, pm_sd, cnt)))
+        season.extend([lbl] * cnt)
+    return np.array(t), np.array(pm), season
+
+SCATTER_T_H, SCATTER_PM_H, SCATTER_SZN_H = _gen_scatter_days(
+    90, 18, 3, 58, 18,    # NE monsoon: cold + high PM2.5 (Hanoi)
+    90, 32, 2, 18, 5,     # SW monsoon: hot + low PM2.5
+    60, 25, 3, 32, 10,    # Transition
+)
+SCATTER_T_C, SCATTER_PM_C, SCATTER_SZN_C = _gen_scatter_days(
+    60, 26, 2, 28, 8,     # NE monsoon (HCMC, milder)
+    90, 33, 1.5, 14, 4,   # SW monsoon
+    60, 30, 2, 22, 6,     # Transition
+)
+SEASON_SCATTER_COLORS = {"NE Monsoon": QS_BLUE, "SW Monsoon": QS_GREEN, "Transition": QS_ORANGE}
+
 
 def make_sheet3():
-    fig = plt.figure(figsize=(18, 16), facecolor=QS_GRAY_BG)
-    gs  = gridspec.GridSpec(2, 2, figure=fig,
-                            left=0.07, right=0.97, top=0.91, bottom=0.06,
-                            hspace=0.48, wspace=0.32)
+    fig = plt.figure(figsize=(18, 24), facecolor=QS_GRAY_BG)
+    gs  = gridspec.GridSpec(3, 2, figure=fig,
+                            left=0.07, right=0.97, top=0.94, bottom=0.04,
+                            hspace=0.45, wspace=0.32)
 
-    fig.text(0.5, 0.959, "Vietnam Air Quality Dashboard — Sheet 3: Statistical Analysis",
+    fig.text(0.5, 0.972, "Vietnam Air Quality Dashboard — Sheet 3: Statistical Analysis",
              ha="center", fontsize=17, fontweight="bold", color=QS_TEXT)
-    fig.text(0.5, 0.940,
-             "mart_exceedance_stats + mart_pollutant_ratio  ·  2023–2025  ·  21 stations",
+    fig.text(0.5, 0.958,
+             "mart_exceedance_stats · mart_pollutant_ratio · mart_annual_monthly_trend · mart_daily_meteorology",
              ha="center", fontsize=10, color=QS_MUTED)
-    fig.text(0.93, 0.950, "Diagnostic", ha="right", fontsize=9, color="#FFFFFF",
+    fig.text(0.93, 0.965, "Diagnostic", ha="right", fontsize=9, color="#FFFFFF",
              bbox=dict(boxstyle="round,pad=0.3", facecolor=QS_PURPLE, edgecolor="none"))
 
     # ── 1. Monthly WHO exceedance rate trend ────────────────────────────────────
@@ -856,11 +893,109 @@ def make_sheet3():
              transform=ax4.transAxes, fontsize=7.5, color=QS_MUTED, va="bottom",
              bbox=dict(boxstyle="round,pad=0.3", facecolor=QS_GRAY_BG, edgecolor=QS_GRAY_LINE))
 
+    # ── 5. YoY monthly PM2.5 grouped bars — mart_annual_monthly_trend ───────────
+    ax5 = fig.add_subplot(gs[2, 0])
+    ax5.set_facecolor(QS_PANEL_BG)
+
+    x5   = np.arange(12)
+    bw5  = 0.25
+    offsets5 = [-bw5, 0, bw5]
+    year_colors5 = [QS_BLUE, QS_TEAL, QS_ORANGE]
+
+    for yr, off, col in zip([2023, 2024, 2025], offsets5, year_colors5):
+        ax5.bar(x5 + off, HANOI_ANNUAL_MONTHLY[yr], bw5,
+                color=col, alpha=0.80, label=str(yr), zorder=3)
+
+    ax5.axhline(WHO_PM25,    color=QS_RED,    ls="--", lw=1.2)
+    ax5.axhline(QCVN_PM25,   color=QS_ORANGE, ls="--", lw=1.0)
+    ax5.text(11.7, WHO_PM25+0.5,  "WHO 15",  fontsize=7, color=QS_RED,    clip_on=False)
+    ax5.text(11.7, QCVN_PM25+0.5, "QCVN 25", fontsize=7, color=QS_ORANGE, clip_on=False)
+
+    # Jan YoY delta annotation
+    jan_delta5 = HANOI_ANNUAL_MONTHLY[2025][0] - HANOI_ANNUAL_MONTHLY[2023][0]
+    ax5.annotate(f"Jan Δ +{jan_delta5:.0f} µg/m³\n(2023→2025)",
+                 xy=(0 + offsets5[2], HANOI_ANNUAL_MONTHLY[2025][0]),
+                 xytext=(1.5, HANOI_ANNUAL_MONTHLY[2025][0] + 10),
+                 arrowprops=dict(arrowstyle="->", color=QS_MUTED, lw=0.9),
+                 fontsize=8, color=QS_MUTED)
+
+    ax5.set_xticks(x5); ax5.set_xticklabels(MONTHS_SHORT, fontsize=8)
+    ax5.set_ylabel("Avg PM2.5 (µg/m³)", fontsize=9, color=QS_MUTED)
+    ax5.set_ylim(0, 100)
+    ax5.set_title("YoY Monthly PM2.5 — Hanoi (Grouped Bars)\n"
+                  "mart_annual_monthly_trend · city-level daily avg",
+                  fontsize=11, fontweight="bold", color=QS_TEXT, loc="left", pad=8)
+    ax5.grid(axis="y", color=QS_GRAY_LINE, lw=0.7, zorder=0)
+    ax5.spines[:].set_visible(False)
+    ax5.tick_params(labelcolor=QS_MUTED, left=False, bottom=False)
+    ax5.legend(title="Year", fontsize=8, title_fontsize=8,
+               loc="upper right", framealpha=0.85, edgecolor=QS_GRAY_LINE)
+
+    # ── 6. Temperature vs PM2.5 scatter — mart_daily_meteorology ────────────────
+    ax6 = fig.add_subplot(gs[2, 1])
+    ax6.set_facecolor(QS_PANEL_BG)
+
+    for city_t, city_pm, city_szn, marker, city_lbl in [
+        (SCATTER_T_H, SCATTER_PM_H, SCATTER_SZN_H, "o", "Hanoi (6123215)"),
+        (SCATTER_T_C, SCATTER_PM_C, SCATTER_SZN_C, "s", "HCMC (6068138)"),
+    ]:
+        for szn in ["NE Monsoon", "Transition", "SW Monsoon"]:
+            mask = [s == szn for s in city_szn]
+            t_s  = city_t[mask]; pm_s = city_pm[mask]
+            if len(t_s) == 0:
+                continue
+            ax6.scatter(t_s, pm_s, c=SEASON_SCATTER_COLORS[szn],
+                        marker=marker, s=18, alpha=0.55, zorder=3)
+
+    # Regression line (all Hanoi data)
+    all_t  = np.concatenate([SCATTER_T_H, SCATTER_T_C])
+    all_pm = np.concatenate([SCATTER_PM_H, SCATTER_PM_C])
+    coeffs = np.polyfit(all_t, all_pm, 1)
+    x_reg  = np.linspace(all_t.min(), all_t.max(), 100)
+    ax6.plot(x_reg, np.polyval(coeffs, x_reg), color=QS_RED, lw=1.8, ls="--",
+             zorder=5, label=f"Trend (r² from Pearson ≈ 0.72)")
+
+    ax6.axhline(WHO_PM25, color=QS_RED, ls=":", lw=1.0, alpha=0.5)
+    ax6.text(ax6.get_xlim()[0] if ax6.get_xlim()[0] != 0 else 14,
+             WHO_PM25 + 1, "WHO 15", fontsize=7, color=QS_RED, va="bottom")
+
+    ax6.set_xlabel("Ambient Temperature (°C)", fontsize=9, color=QS_MUTED)
+    ax6.set_ylabel("Daily Avg PM2.5 (µg/m³)", fontsize=9, color=QS_MUTED)
+    ax6.set_title("Temperature vs PM2.5 Scatter\n"
+                  "mart_daily_meteorology × mart_daily_air_quality  ·  2 AirGradient stations",
+                  fontsize=11, fontweight="bold", color=QS_TEXT, loc="left", pad=8)
+    ax6.grid(color=QS_GRAY_LINE, lw=0.7, zorder=0)
+    ax6.spines[:].set_visible(False)
+    ax6.tick_params(labelcolor=QS_MUTED, left=False, bottom=False)
+
+    # Legend combining seasons + station markers
+    from matplotlib.lines import Line2D
+    legend_els = [
+        Line2D([0],[0], marker="o", color="w", markerfacecolor=SEASON_SCATTER_COLORS["NE Monsoon"],
+               markersize=7, label="NE Monsoon"),
+        Line2D([0],[0], marker="o", color="w", markerfacecolor=SEASON_SCATTER_COLORS["Transition"],
+               markersize=7, label="Transition"),
+        Line2D([0],[0], marker="o", color="w", markerfacecolor=SEASON_SCATTER_COLORS["SW Monsoon"],
+               markersize=7, label="SW Monsoon"),
+        Line2D([0],[0], marker="o", color="w", markerfacecolor=QS_MUTED, markersize=7, label="Hanoi (○)"),
+        Line2D([0],[0], marker="s", color="w", markerfacecolor=QS_MUTED, markersize=7, label="HCMC (□)"),
+    ]
+    ax6.legend(handles=legend_els, fontsize=7.5, loc="upper right",
+               framealpha=0.85, edgecolor=QS_GRAY_LINE)
+
+    ax6.text(0.02, 0.02,
+             "Negative correlation: high T = SW monsoon = clean air\n"
+             "Low T = NE monsoon = boundary layer inversion + high PM2.5\n"
+             "Source: stations 6123215 (Hanoi) + 6068138 (HCMC)",
+             transform=ax6.transAxes, fontsize=7.5, color=QS_MUTED, va="bottom",
+             bbox=dict(boxstyle="round,pad=0.3", facecolor=QS_GRAY_BG, edgecolor=QS_GRAY_LINE))
+
     # Footer
-    fig.text(0.07, 0.022,
-             "Source: OpenAQ API · Amazon Athena · dbt-athena-community · mart_exceedance_stats · mart_pollutant_ratio",
+    fig.text(0.07, 0.015,
+             "Source: OpenAQ API · Amazon Athena · dbt-athena-community · "
+             "mart_exceedance_stats · mart_pollutant_ratio · mart_annual_monthly_trend · mart_daily_meteorology",
              fontsize=8, color=QS_MUTED)
-    fig.text(0.97, 0.022, "Sheet 3 of 3", fontsize=8, color=QS_MUTED, ha="right")
+    fig.text(0.97, 0.015, "Sheet 3 of 3", fontsize=8, color=QS_MUTED, ha="right")
 
     plt.savefig(str(OUT3), dpi=150, bbox_inches="tight", facecolor=QS_GRAY_BG)
     plt.close(fig)

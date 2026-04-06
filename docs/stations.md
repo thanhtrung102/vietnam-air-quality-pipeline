@@ -130,3 +130,40 @@ location-{location_id}-{YYYYMMDD}.csv.gz
 3. **Multiple sensors per location** — `sensors_id` varies within a single `location_id` file for stations measuring multiple parameters. Each row is one parameter reading for one hour.
 4. **Coordinate precision** — some `lon` values have floating-point noise (e.g., `105.79990000000001`). Normalise to 6 decimal places in staging.
 5. **Name format** in archive is `{human_name}-{location_id}` (e.g., `"Chi cục Bảo vệ Môi trường-2131268"`). Use `location_id` as the join key to `dim_locations`, not the name string.
+
+---
+
+## AirGradient-Specific Parameters
+
+Three parameters are reported exclusively by AirGradient low-cost optical sensors
+(stations 6123215, 6068138, 6273386). These are **not** EPA AQI pollutants and
+are not used in health category calculations.
+
+| Parameter | Count (full dataset) | Reporting stations | Description |
+|-----------|---------------------|--------------------|-------------|
+| `relativehumidity` | 4,678 | 6123215, 6068138, 6273386 | Ambient relative humidity (%), SHT30 sensor |
+| `temperature` | 4,678 | 6123215, 6068138, 6273386 | Ambient temperature (°C), SHT30 sensor |
+| `pm1` | 4,678 | 6123215, 6068138, 6273386 | PM1.0 concentration (µg/m³), PMS5003 bin |
+| `um003` | 4,678 | 6123215, 6068138, 6273386 | Particle count ≥ 0.3 µm (particles/dL), PMS5003 bin count output |
+
+### um003 — Particle Count ≥ 0.3 µm
+
+`um003` is the raw particle number concentration for particles ≥ 0.3 µm diameter,
+directly from the Plantower PMS5003 sensor's bin count channel. Units are
+**particles per decilitre (particles/dL)** — not µg/m³.
+
+**Interpretation:**
+- Not an AQI pollutant; cannot be compared to EPA or WHO mass concentration thresholds
+- Useful for particle size distribution analysis: higher um003 with lower PM2.5/PM10
+  ratio suggests coarse particle dominance (crustal dust)
+- Correlated with PM2.5 but has different units and humidity sensitivity
+- Typical range in Vietnam: 5,000–100,000 particles/dL (low-end clean-air, high-end
+  heavily polluted urban)
+
+**Pipeline handling:**
+- Passes staging filters (`value > 0`, `value != -999.0`)
+- Included in `int_measurements_enriched` and `mart_daily_air_quality` with
+  `aqi_value = NULL` (AQI only computed for pm25/pm10)
+- Listed in the streaming Lambda validation whitelist (`_KNOWN_PARAMETERS`)
+- **Not** used in any current mart aggregation — available for future particle-size
+  distribution diagnostic models

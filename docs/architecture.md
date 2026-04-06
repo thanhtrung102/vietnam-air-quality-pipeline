@@ -30,7 +30,7 @@ Once raw data lands in S3 and is catalogued by Glue, dbt materialises the mart. 
 
 1. **Staging models** (`stg_*.sql`) — cast types, rename columns to snake_case, parse ISO-8601 timestamps into separate date and hour fields, and filter to rows with non-null `value` and known `parameter`. Sentinel value -999.0 and negative readings are excluded here.
 2. **Intermediate models** (`int_*.sql`) — join measurement facts to the `vn_stations` seed (21 rows) that maps OpenAQ location IDs to canonical city names, coordinates, and sensor type (`reference` | `low_cost`). Materialised as a table so the raw scan + seed join runs once per dbt invocation rather than once per mart reference.
-3. **Mart models** (`mart_*.sql`) — seven tables covering daily aggregates, composite AQI per station-day, diurnal profiles, monthly profiles, annual health summaries, monthly exceedance statistics, and daily pollutant source ratios. All mart tables are Parquet with Snappy compression, written to `s3://{bucket}/processed/openaq_mart/{model_name}/`. `mart_daily_air_quality` and `mart_daily_aqi` are partitioned on `measurement_date`; the remaining three are small cross-date aggregates with no partition.
+3. **Mart models** (`mart_*.sql`) — nine tables covering daily aggregates, composite AQI per station-day, diurnal profiles, monthly profiles, annual health summaries, monthly exceedance statistics, daily pollutant source ratios, daily meteorology (T/RH), and year × month PM2.5 trends. All mart tables are Parquet with Snappy compression, written to `s3://{bucket}/processed/openaq_mart/{model_name}/`. `mart_daily_air_quality` and `mart_daily_aqi` are partitioned on `measurement_date`; the remaining three are small cross-date aggregates with no partition.
 
 ### 2.4 Dashboard
 
@@ -378,8 +378,10 @@ vietnam-air-quality-pipeline/
     │   │   └── int_measurements_enriched.sql
     │   └── marts/
     │       ├── schema.yml
+    │       ├── mart_annual_monthly_trend.sql
     │       ├── mart_daily_air_quality.sql
     │       ├── mart_daily_aqi.sql
+    │       ├── mart_daily_meteorology.sql
     │       ├── mart_diurnal_profile.sql
     │       ├── mart_exceedance_stats.sql
     │       ├── mart_health_summary.sql

@@ -11,8 +11,8 @@
 |-------|-------------|--------|--------------|
 | 0 | Complete In-Progress Work | ✅ DONE | — |
 | 1 | Infrastructure Reliability (7 IoT Lens Gaps) | ✅ DONE | Phase 0 |
-| 2 | Diagnostic Analytics Completion | 🔄 NEXT | Phase 1 IAM |
-| 3 | Weather Data Ingestion | ⏳ Pending | Phase 1 infra |
+| 2 | Diagnostic Analytics Completion | ✅ DONE | Phase 1 IAM |
+| 3 | Weather Data Ingestion | 🔄 NEXT | Phase 1 infra |
 | 4 | Predictive Feature Engineering | ⏳ Pending | Phase 3 data |
 | 5 | Predictive Modelling (SARIMA → Prophet) | ⏳ Pending | Phase 4 features |
 | 6 | Architecture Documentation & Case Study | ⏳ Pending | Phase 5 |
