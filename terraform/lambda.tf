@@ -154,12 +154,66 @@ data "aws_iam_policy_document" "lambda_inline" {
       "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/openaq_*:*",
     ]
   }
+
+  # SQS — DLQ for streaming Lambda (Gap 1: IoT Lens dead-letter queue)
+  statement {
+    sid    = "StreamingDLQSend"
+    effect = "Allow"
+
+    actions = ["sqs:SendMessage"]
+
+    resources = [aws_sqs_queue.streaming_dlq.arn]
+  }
+
+  # Secrets Manager — retrieve OPENAQ_API_KEY (Gap 2: IoT Lens secrets rotation)
+  statement {
+    sid    = "SecretsManagerGetApiKey"
+    effect = "Allow"
+
+    actions = ["secretsmanager:GetSecretValue"]
+
+    resources = [aws_secretsmanager_secret.openaq_api_key.arn]
+  }
+
+  # CloudWatch Metrics — custom pipeline metrics (Gap 3: validation rejections; Gap 6: completeness)
+  statement {
+    sid    = "CloudWatchPutMetrics"
+    effect = "Allow"
+
+    actions = ["cloudwatch:PutMetricData"]
+
+    resources = ["*"]
+    # cloudwatch:PutMetricData does not support resource-level restrictions
+  }
+
+  # SNS — publish alerts for completeness check (Gap 6)
+  statement {
+    sid    = "SNSPublishAlerts"
+    effect = "Allow"
+
+    actions = ["sns:Publish"]
+
+    resources = [aws_sns_topic.openaq_alerts.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_inline" {
   name   = "openaq_lambda_policy"
   role   = aws_iam_role.lambda_exec.id
   policy = data.aws_iam_policy_document.lambda_inline.json
+}
+
+# ── SQS Dead Letter Queue: streaming Lambda (Gap 1 — IoT Lens) ───────────────
+# Captures failed Kinesis PutRecord events and API fetch failures that cause the
+# Lambda to crash (unhandled exception). Visibility timeout must exceed Lambda
+# timeout (120s) to prevent the same message being reprocessed while in-flight.
+
+resource "aws_sqs_queue" "streaming_dlq" {
+  name                       = "openaq_streaming_dlq"
+  message_retention_seconds  = 86400            # 1 day — operator drains manually
+  visibility_timeout_seconds = 130              # > Lambda timeout (120s)
+
+  tags = local.common_tags
 }
 
 # ── CloudWatch Log Groups ──────────────────────────────────────────────────────
@@ -219,10 +273,21 @@ resource "aws_lambda_function" "streaming_producer" {
   timeout       = 120
   memory_size   = 256
 
+  # Gap 1 (IoT Lens): Dead Letter Queue captures unhandled Lambda failures.
+  # On crash (unhandled exception), the failed event JSON is sent to this queue.
+  dead_letter_config {
+    target_arn = aws_sqs_queue.streaming_dlq.arn
+  }
+
   environment {
     variables = {
-      OPENAQ_API_KEY      = var.openaq_api_key
-      KINESIS_STREAM_NAME = aws_kinesis_stream.openaq.name
+      # Gap 2 (IoT Lens): API key is now read from Secrets Manager at runtime
+      # (see lambda/streaming/handler.py _get_api_key()). OPENAQ_API_KEY env var
+      # is retained as an emergency fallback for local testing only — do NOT
+      # set it in production after secrets.tf is applied.
+      OPENAQ_API_KEY        = var.openaq_api_key
+      OPENAQ_SECRET_NAME    = aws_secretsmanager_secret.openaq_api_key.name
+      KINESIS_STREAM_NAME   = aws_kinesis_stream.openaq.name
     }
   }
 
@@ -460,4 +525,100 @@ resource "aws_lambda_permission" "aqi_api_apigw" {
   function_name = aws_lambda_function.aqi_api.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.aqi_api.execution_arn}/*"
+}
+
+# ── Lambda: openaq_completeness_check (Gap 6 — IoT Lens) ──────────────────────
+# Runs hourly. Queries mart_daily_aqi to count distinct active stations for
+# today. Emits CloudWatch metric MissingStations (namespace: OpenAQ/Pipeline).
+# If coverage < 18/21 stations (< 85%) for 2 consecutive hours → SNS alert.
+
+resource "aws_cloudwatch_log_group" "completeness_check" {
+  name              = "/aws/lambda/openaq_completeness_check"
+  retention_in_days = 14
+  tags              = local.common_tags
+}
+
+resource "aws_lambda_function" "completeness_check" {
+  function_name = "openaq_completeness_check"
+  role          = aws_iam_role.lambda_exec.arn
+  runtime       = "python3.12"
+  handler       = "handler.handler"
+  filename      = var.lambda_completeness_zip_path
+  timeout       = 120
+  memory_size   = 256
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME      = local.bucket_name
+      ATHENA_DATABASE     = "openaq_mart"
+      ATHENA_WORKGROUP    = "openaq_workgroup"
+      EXPECTED_STATIONS   = "21"
+      ALERT_THRESHOLD     = "18"          # < 18 = alert (85% coverage floor)
+      SNS_ALERT_TOPIC_ARN = aws_sns_topic.openaq_alerts.arn
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.completeness_check]
+  tags       = local.common_tags
+}
+
+resource "aws_scheduler_schedule" "completeness_hourly" {
+  name       = "openaq_completeness_hourly"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "cron(0 * * * ? *)"   # top of every hour
+
+  target {
+    arn      = aws_lambda_function.completeness_check.arn
+    role_arn = aws_iam_role.scheduler.arn
+    input    = jsonencode({})
+  }
+}
+
+resource "aws_lambda_permission" "completeness_scheduler" {
+  statement_id  = "AllowSchedulerInvokeCompleteness"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.completeness_check.function_name
+  principal     = "scheduler.amazonaws.com"
+  source_arn    = aws_scheduler_schedule.completeness_hourly.arn
+}
+
+# Allow scheduler to invoke completeness Lambda
+resource "aws_iam_role_policy" "scheduler_invoke_completeness" {
+  name = "openaq_scheduler_invoke_completeness"
+  role = aws_iam_role.scheduler.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "InvokeCompleteness"
+      Effect   = "Allow"
+      Action   = "lambda:InvokeFunction"
+      Resource = aws_lambda_function.completeness_check.arn
+    }]
+  })
+}
+
+# ── CloudWatch Alarm: MissingStations (Gap 6) ─────────────────────────────────
+# Fires when > 3 stations are missing for 2 consecutive 1-hour periods.
+
+resource "aws_cloudwatch_metric_alarm" "missing_stations" {
+  alarm_name          = "openaq_missing_stations"
+  alarm_description   = "More than 3 VN stations are missing from mart_daily_aqi for the current date"
+  metric_name         = "MissingStations"
+  namespace           = "OpenAQ/Pipeline"
+  statistic           = "Maximum"
+  period              = 3600          # 1-hour evaluation window
+  evaluation_periods  = 2             # alarm after 2 consecutive breaches
+  threshold           = 3
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
 }

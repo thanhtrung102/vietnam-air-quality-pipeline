@@ -59,3 +59,25 @@ output "aqi_api_url" {
   description = "HTTP API Gateway URL for the AQI GeoJSON API (consumed by Leaflet map)"
   value       = aws_apigatewayv2_stage.aqi_api.invoke_url
 }
+
+# ── IoT Lens Gap Fixes ────────────────────────────────────────────────────────
+
+output "streaming_dlq_url" {
+  description = "SQS DLQ URL for streaming Lambda failures (Gap 1)"
+  value       = aws_sqs_queue.streaming_dlq.url
+}
+
+output "streaming_dlq_arn" {
+  description = "SQS DLQ ARN for streaming Lambda failures (Gap 1)"
+  value       = aws_sqs_queue.streaming_dlq.arn
+}
+
+output "openaq_api_key_secret_arn" {
+  description = "Secrets Manager ARN for the OpenAQ API key (Gap 2). Inject real value post-deploy."
+  value       = aws_secretsmanager_secret.openaq_api_key.arn
+}
+
+output "openaq_api_key_secret_name" {
+  description = "Secrets Manager secret name for the OpenAQ API key (Gap 2)"
+  value       = aws_secretsmanager_secret.openaq_api_key.name
+}

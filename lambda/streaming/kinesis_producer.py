@@ -64,6 +64,73 @@ POLL_INTERVAL   = 2 * 3600   # 2 hours between polls in --loop mode
 BATCH_SIZE      = 500        # max records per Kinesis PutRecords call
 RETRY_BACKOFF   = 5          # seconds before retrying failed Kinesis records
 
+# Gap 3: Known valid parameter set. um003 = particle count ≥0.3µm (AirGradient bins).
+_KNOWN_PARAMETERS = frozenset({
+    "pm25", "pm10", "no2", "o3", "co", "so2",
+    "temperature", "relativehumidity", "um003", "pm1",
+})
+
+# Gap 3: Phase A (log-and-pass) vs Phase B (log-and-block).
+# Set VALIDATION_BLOCK=true in the Lambda env var to switch to Phase B.
+_VALIDATION_BLOCK = os.environ.get("VALIDATION_BLOCK", "false").lower() == "true"
+
+# Gap 4: API retry config
+_API_MAX_RETRIES = 3
+_API_BASE_DELAY  = 5    # seconds
+_API_MAX_DELAY   = 20   # seconds; caps exponential growth
+
+
+# ── Gap 3: Ingestion-time validation ─────────────────────────────────────────
+
+_cw_client = None   # lazy-initialised CloudWatch client (avoids cold-start cost)
+
+
+def _get_cw():
+    global _cw_client
+    if _cw_client is None:
+        _cw_client = boto3.client("cloudwatch", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
+    return _cw_client
+
+
+def _emit_validation_metric(parameter: str, count: int = 1) -> None:
+    """Emit a CloudWatch metric for each rejected reading (namespace: OpenAQ/Pipeline)."""
+    try:
+        _get_cw().put_metric_data(
+            Namespace="OpenAQ/Pipeline",
+            MetricData=[{
+                "MetricName": "ValidationRejections",
+                "Dimensions": [{"Name": "parameter", "Value": parameter or "unknown"}],
+                "Value": count,
+                "Unit": "Count",
+            }],
+        )
+    except Exception as exc:
+        log.warning("CloudWatch PutMetricData failed: %s", exc)
+
+
+def _validate_reading(value: float, parameter: str) -> tuple[bool, str]:
+    """
+    Validate a single reading. Returns (is_valid, reason).
+
+    Rules:
+      1. value must not be sentinel -999.0
+      2. value must be ≥ 0 and < 500 (physical plausibility)
+      3. parameter must be in the known set
+
+    In Phase A (VALIDATION_BLOCK=false): invalid readings are logged and
+    metrics are emitted, but the record is still forwarded to Kinesis.
+    In Phase B (VALIDATION_BLOCK=true): invalid readings are dropped.
+    """
+    if value == -999.0:
+        return False, "sentinel_value"
+    if value < 0:
+        return False, "negative_value"
+    if value >= 500:
+        return False, "value_out_of_range"
+    if parameter and parameter not in _KNOWN_PARAMETERS:
+        return False, "unknown_parameter"
+    return True, ""
+
 
 def _load_config() -> dict:
     """Read and validate required environment variables."""
@@ -92,20 +159,54 @@ def _load_config() -> dict:
 # ── OpenAQ API helpers ────────────────────────────────────────────────────────
 
 def _api_get(path: str, params: dict, api_key: str) -> dict | None:
-    """GET one OpenAQ v3 endpoint; returns parsed JSON or None on error."""
-    try:
-        resp = requests.get(
-            f"{OPENAQ_BASE_URL}/{path}",
-            params=params,
-            headers={"X-API-Key": api_key},
-            timeout=30,
-        )
-        resp.raise_for_status()
+    """
+    GET one OpenAQ v3 endpoint with exponential backoff retry (Gap 4).
+
+    Retry policy:
+      - Retries on HTTP 429 (rate limit) and 5xx (server errors)
+      - Raises immediately on 400/401/403/404 (client errors — retrying is futile)
+      - Up to _API_MAX_RETRIES attempts; delay = min(base * 2^attempt, max_delay)
+
+    Returns parsed JSON on success, or None after all retries are exhausted.
+    """
+    delay = _API_BASE_DELAY
+
+    for attempt in range(1, _API_MAX_RETRIES + 1):
+        try:
+            resp = requests.get(
+                f"{OPENAQ_BASE_URL}/{path}",
+                params=params,
+                headers={"X-API-Key": api_key},
+                timeout=30,
+            )
+        except requests.RequestException as exc:
+            log.error("API request failed %s (attempt %d/%d): %s",
+                      path, attempt, _API_MAX_RETRIES, exc)
+            if attempt < _API_MAX_RETRIES:
+                log.info("retrying in %ds", delay)
+                time.sleep(delay)
+                delay = min(delay * 2, _API_MAX_DELAY)
+            continue
+
+        if resp.status_code in (429,) or resp.status_code >= 500:
+            log.warning("API HTTP %d for %s (attempt %d/%d) — retryable",
+                        resp.status_code, path, attempt, _API_MAX_RETRIES)
+            if attempt < _API_MAX_RETRIES:
+                log.info("retrying in %ds", delay)
+                time.sleep(delay)
+                delay = min(delay * 2, _API_MAX_DELAY)
+            else:
+                log.error("API HTTP %d: all %d attempts exhausted for %s",
+                          resp.status_code, _API_MAX_RETRIES, path)
+            continue
+
+        if not resp.ok:
+            # 400/401/403/404 — client error, retrying won't help
+            log.error("API HTTP %d for %s — non-retryable", resp.status_code, path)
+            return None
+
         return resp.json()
-    except requests.HTTPError as exc:
-        log.error("API HTTP error %s %s: %s", path, params, exc)
-    except requests.RequestException as exc:
-        log.error("API request failed %s: %s", path, exc)
+
     return None
 
 
@@ -166,11 +267,20 @@ def fetch_latest_measurements(
         for reading in data["results"]:
             try:
                 value = float(reading.get("value", -999.0))
-                if value == -999.0 or value < 0 or value >= 500:
-                    continue
 
                 sensor_id = reading.get("sensorsId")
                 meta      = sensor_cache.get(sensor_id, {})
+                parameter = meta.get("parameter", "")
+
+                # Gap 3: validate reading; emit CloudWatch metric for rejections
+                is_valid, reason = _validate_reading(value, parameter)
+                if not is_valid:
+                    log.debug("rejected reading station=%s param=%s value=%s reason=%s",
+                              station_id, parameter, value, reason)
+                    _emit_validation_metric(parameter)
+                    if _VALIDATION_BLOCK:
+                        continue   # Phase B: drop invalid reading
+                    # Phase A: log-and-pass — fall through to append
 
                 dt = reading.get("datetime") or {}
                 dt_str = dt.get("utc", "") if isinstance(dt, dict) else str(dt)
@@ -186,7 +296,7 @@ def fetch_latest_measurements(
                     "datetime":     dt_str,
                     "lat":          lat,
                     "lon":          lon,
-                    "parameter":    meta.get("parameter", ""),
+                    "parameter":    parameter,
                     "units":        meta.get("units", ""),
                     "value":        value,
                     "ingested_at":  ingested_at,

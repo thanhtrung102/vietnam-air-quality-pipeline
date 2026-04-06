@@ -107,6 +107,26 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
       noncurrent_days = 7
     }
   }
+
+  # Gap 7 (IoT Lens): Move processed/ Parquet files to S3 Intelligent-Tiering
+  # from day 0. IT automatically demotes to Infrequent Access after 30 days of
+  # no access (~40% storage cost reduction for cold partitions like 2023 data).
+  # Retrieval from IA is synchronous — Athena queries are unaffected.
+  # Archive tiers (3–5h latency) are NOT enabled, preserving Athena access.
+  # Objects < 128 KB are not charged for IA transition (S3 IT minimum object size).
+  rule {
+    id     = "processed-intelligent-tiering"
+    status = "Enabled"
+
+    filter {
+      prefix = "processed/"
+    }
+
+    transition {
+      days          = 0
+      storage_class = "INTELLIGENT_TIERING"
+    }
+  }
 }
 
 # ── Glue Data Catalog ─────────────────────────────────────────────────────────

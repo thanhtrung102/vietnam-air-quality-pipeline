@@ -43,3 +43,9 @@ variable "lambda_aqi_api_zip_path" {
   type        = string
   default     = "../lambda/aqi_api.zip"
 }
+
+variable "lambda_completeness_zip_path" {
+  description = "Path to the completeness check Lambda zip file, relative to the terraform/ directory"
+  type        = string
+  default     = "../lambda/completeness_check.zip"
+}

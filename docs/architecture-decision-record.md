@@ -1,7 +1,7 @@
 # Architecture Decision Record — Vietnam Air Quality Pipeline
 
-**Version:** 1.1
-**Date:** 2026-03-28
+**Version:** 1.2
+**Date:** 2026-04-06
 **Status:** Accepted
 
 ---
@@ -226,4 +226,27 @@ triggering was rejected because it would break the reproducibility criterion
   comfortable. If the station list grows significantly, the batch job will
   need to be restructured as parallel Lambda invocations.
 - The original Kestra ADR (ADR-006) is retained in this document as a record of the design intent before the Docker constraint was encountered.
+
+---
+
+## ADR-009: Athena Result Reuse — Manual Configuration
+
+### Context
+
+Athena supports a result reuse feature that caches query results for a configurable TTL (up to 60 minutes). When an identical query is submitted within the TTL window, Athena returns the cached result without scanning S3, eliminating scan costs entirely for repeated dashboard refreshes. This is identified as Gap 5 in the AWS IoT Well-Architected Lens review.
+
+### Decision
+
+Athena result reuse (60-minute TTL) is enabled manually post-deploy via the AWS Console rather than via Terraform.
+
+### Rationale
+
+As of April 2026, the AWS Terraform provider (`hashicorp/aws ~> 5.0`) does not expose the `result_reuse_configuration` attribute of the Athena workgroup. The attribute exists in the AWS API (`ResultReuseConfiguration.ResultReuseByAgeConfiguration`) but is absent from the provider resource schema. Encoding a workaround (e.g., `aws_athena_workgroup` with `configuration` raw JSON) would be fragile and would break on provider upgrades. The manual step is low-risk, one-time, and documented in the post-deploy checklist in `README.md`.
+
+### Consequences
+
+- Result reuse is not idempotent across `terraform destroy` + `terraform apply` cycles; it must be re-enabled after each full redeploy.
+- QuickSight SPICE refreshes (daily) will benefit from result reuse when multiple users trigger the same underlying Athena query within the 60-minute window.
+- When the Terraform provider adds support for `result_reuse_configuration`, migrate this setting to `terraform/main.tf` in the `aws_athena_workgroup.openaq` resource and remove from the manual post-deploy checklist.
+
 

@@ -174,6 +174,24 @@ aws s3 cp dashboard/index.html s3://openaq-pipeline-thanhtrung102/dashboard/inde
   --content-type text/html
 ```
 
+### Post-Deploy Checklist (one-time, manual steps after `terraform apply`)
+
+1. **Inject OpenAQ API key into Secrets Manager** (Gap 2):
+   ```bash
+   aws secretsmanager put-secret-value \
+       --secret-id openaq/api_key \
+       --secret-string "YOUR_REAL_OPENAQ_API_KEY"
+   ```
+
+2. **Enable Athena result reuse** (Gap 5 — not yet supported by Terraform provider):
+   - Athena console → Workgroups → `openaq_workgroup` → Edit
+   - Result reuse → Enable → Reuse results (60 minutes) → Save
+
+3. **Switch streaming validation to Phase B** after 2 weeks of Phase A monitoring:
+   - Verify `ValidationRejections` CloudWatch metric shows expected rejection patterns
+   - Lambda console → `openaq_streaming_producer` → Configuration → Environment variables
+   - Set `VALIDATION_BLOCK = true`
+
 ### Ongoing Operation
 
 EventBridge Scheduler runs automatically:
