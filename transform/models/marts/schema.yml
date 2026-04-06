@@ -835,3 +835,153 @@ models:
 
       - name: wet_scavenging
         description: 1 = daily precipitation > 5 mm (PM2.5 washout conditions); NULL if weather unavailable
+
+  - name: mart_lagged_features
+    description: >
+      Autoregressive feature mart for predictive modelling (Phase 5 SARIMA/Prophet).
+      Grain: one row per location_id × measurement_date (pm25 only, outlier excluded).
+      Source: mart_aq_weather_daily + vn_holidays seed.
+      Contains lag/rolling features, cyclical seasonality, calendar flags, weather
+      covariates, and the supervised learning target pm25_next1.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - location_id
+              - measurement_date
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+
+      - name: measurement_date
+        description: Calendar date (partition key)
+        tests:
+          - not_null
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: avg_pm25
+        description: Current day's daily mean PM2.5 (µg/m³, 4 dp)
+
+      - name: corrected_pm25
+        description: Bias-corrected PM2.5 for low-cost sensors (÷1.50)
+
+      - name: pm25_lag1
+        description: Previous day's avg_pm25 (µg/m³); NULL for first row of each station series
+
+      - name: pm25_lag7
+        description: avg_pm25 seven days prior; NULL for first 7 rows of series
+
+      - name: pm25_lag30
+        description: avg_pm25 thirty days prior; NULL for first 30 rows of series
+
+      - name: pm25_roll7
+        description: 7-day trailing mean of avg_pm25 (µg/m³, 4 dp)
+
+      - name: pm25_roll30
+        description: 30-day trailing mean of avg_pm25 (µg/m³, 4 dp)
+
+      - name: month_sin
+        description: sin(2π × month / 12) — cyclical month encoding (6 dp)
+
+      - name: month_cos
+        description: cos(2π × month / 12) — cyclical month encoding (6 dp)
+
+      - name: day_of_week
+        description: Day of week (1=Monday … 7=Sunday; Presto convention)
+
+      - name: is_weekend
+        description: 1 if day_of_week in (6, 7), else 0
+
+      - name: is_holiday
+        description: 1 if measurement_date matches a date in vn_holidays seed, else 0
+
+      - name: is_tet_period
+        description: 1 if measurement_date falls within the 7-day Tết holiday window, else 0
+
+      - name: avg_rh_2m
+        description: Daily mean relative humidity at 2 m (%); NULL if weather unavailable
+
+      - name: avg_wind_speed
+        description: Daily mean wind speed at 10 m (m/s); NULL if weather unavailable
+
+      - name: total_precipitation_mm
+        description: Daily total precipitation (mm); NULL if weather unavailable
+
+      - name: inversion_risk
+        description: 1 = shallow BLH + calm winds; NULL if weather unavailable
+
+      - name: wet_scavenging
+        description: 1 = daily precipitation > 5 mm; NULL if weather unavailable
+
+      - name: pm25_next1
+        description: >
+          Next day's avg_pm25 (LEAD(1)) — supervised learning target.
+          NULL for the last row in each station's time series.
+
+  - name: mart_feature_stats
+    description: >
+      Feature quality validation report for mart_lagged_features.
+      Grain: one row per location_id (station-level summary).
+      Reports null counts per feature and Pearson correlations vs avg_pm25
+      (current day) and pm25_next1 (target). Run after dbt build to verify
+      acceptance criteria before Phase 5 model training.
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+          - unique
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+
+      - name: location_name
+        description: Canonical station name
+
+      - name: total_rows
+        description: Total row count for this station in mart_lagged_features
+
+      - name: pm25_lag1_nulls
+        description: Null count for pm25_lag1 (expected = 1)
+
+      - name: pm25_lag7_nulls
+        description: Null count for pm25_lag7 (expected = 7)
+
+      - name: pm25_lag30_nulls
+        description: Null count for pm25_lag30 (expected = 30)
+
+      - name: corr_lag1_pm25
+        description: Pearson r of pm25_lag1 vs avg_pm25 (expected 0.70–0.90)
+
+      - name: corr_rh_pm25
+        description: Pearson r of avg_rh_2m vs avg_pm25 (expected 0.20–0.45)
+
+      - name: corr_wind_pm25
+        description: Pearson r of avg_wind_speed vs avg_pm25 (expected −0.30–−0.10)
+
+      - name: corr_precip_pm25
+        description: Pearson r of total_precipitation_mm vs avg_pm25 (expected −0.25–−0.05)
+
+      - name: corr_inv_pm25
+        description: Pearson r of inversion_risk vs avg_pm25 (expected 0.15–0.35)
+
+      - name: corr_lag1_next
+        description: Pearson r of pm25_lag1 vs pm25_next1 (next-day forecast relevance)
+
+      - name: mean_pm25
+        description: Mean daily PM2.5 for this station over the full series (µg/m³)
+
+      - name: series_start
+        description: Earliest measurement_date in this station's feature series
+
+      - name: series_end
+        description: Latest measurement_date in this station's feature series

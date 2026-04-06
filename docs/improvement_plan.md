@@ -13,8 +13,8 @@
 | 1 | Infrastructure Reliability (7 IoT Lens Gaps) | ✅ DONE | Phase 0 |
 | 2 | Diagnostic Analytics Completion | ✅ DONE | Phase 1 IAM |
 | 3 | Weather Data Ingestion | ✅ DONE | Phase 1 infra |
-| 4 | Predictive Feature Engineering | 🔄 NEXT | Phase 3 data |
-| 5 | Predictive Modelling (SARIMA → Prophet) | ⏳ Pending | Phase 4 features |
+| 4 | Predictive Feature Engineering | ✅ DONE | Phase 3 data |
+| 5 | Predictive Modelling (SARIMA → Prophet) | 🔄 NEXT | Phase 4 features |
 | 6 | Architecture Documentation & Case Study | ⏳ Pending | Phase 5 |
 
 **Total estimated effort:** ~12–16 days of work
@@ -175,23 +175,27 @@ Priority ordering: Gap 1 and 2 first (highest risk), then 3 and 4 (code quality)
 
 ---
 
-## Phase 4 — Predictive Feature Engineering
+## Phase 4 — Predictive Feature Engineering ✅ DONE
 
 ### 4.1 `mart_lagged_features` — autoregressive feature mart
-- [ ] Create `transform/models/marts/mart_lagged_features.sql`
+- [x] Created `transform/models/marts/mart_lagged_features.sql`
   - Lag features: `pm25_lag1`, `pm25_lag7`, `pm25_lag30`
-  - Rolling: `pm25_roll7`, `pm25_roll30`
-  - Seasonality: `month_sin`, `month_cos` (cyclical encoding)
-  - Calendar: `day_of_week`, `is_weekend`, `is_holiday`
-  - Weather: `avg_rh`, `avg_wind_speed`, `total_precip_mm`, `inversion_risk`
-  - Target: `pm25_next1` = LEAD(1)
+  - Rolling: `pm25_roll7`, `pm25_roll30` (trailing windows)
+  - Seasonality: `month_sin`, `month_cos` (cyclical encoding, no Dec/Jan discontinuity)
+  - Calendar: `day_of_week`, `is_weekend`, `is_holiday`, `is_tet_period`
+  - Weather: `avg_rh_2m`, `avg_wind_speed`, `total_precipitation_mm`, `inversion_risk`, `wet_scavenging`
+  - Target: `pm25_next1` = LEAD(1) per location_id ordered by date
 
 ### 4.2 Validate feature quality
-- [ ] `mart_feature_stats.sql`: null counts and Pearson correlations
-- [ ] Expected: `pm25_lag1` → 0.7–0.9, `avg_rh` → 0.2–0.4
+- [x] `mart_feature_stats.sql`: null counts per feature + Pearson correlations vs avg_pm25 and pm25_next1
+  - Expected: `pm25_lag1` → 0.70–0.90, `avg_rh` → 0.20–0.45
+  - Also reports: roll7 correlation, wind/precip/inversion correlations vs target
+  - Grain: one row per station; run after dbt build to verify acceptance criteria
 
 ### 4.3 Tết holiday calendar
-- [ ] Create `transform/seeds/vn_holidays.csv` (2023–2027)
+- [x] Created `transform/seeds/vn_holidays.csv` (2023–2027)
+  - Vietnamese public holidays: New Year, Tết (7-day window), Hung Kings, Liberation Day, Labour Day, National Day
+  - Columns: date, holiday_name, is_tet_period (0/1)
 
 **Acceptance criteria:** Zero nulls in lag features for dates > 30 days into series. `pm25_lag1` correlation documented.
 
