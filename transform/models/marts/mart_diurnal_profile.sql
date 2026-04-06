@@ -1,22 +1,28 @@
 /*
 mart_diurnal_profile — average pollutant concentration by hour of day (Vietnam local time).
 
-Grain: location_id × parameter × hour_of_day (0–23, UTC+7)
+Grain: location_id × parameter × hour_of_day × day_type × season
 
-Answers: "At what hour is PM2.5 worst in Hanoi?"
+Answers: "At what hour is PM2.5 worst in Hanoi on a weekday in winter?"
 
 Methodology:
   - measured_at is stored as UTC. Vietnam is UTC+7 (no daylight saving).
     Adding 7 hours converts to local time before extracting the hour.
-  - Averages are computed across all available dates (the full 2023–2026 range).
+  - day_type splits weekdays (Mon–Fri) from weekends (Sat–Sun) because traffic-driven
+    diurnal peaks (07–09 morning rush, 17–19 evening rush) are significantly attenuated
+    on weekends. Reference: namanhnt/Hanoi-Air-Quality-Analysis EDA findings.
+  - season splits the NE monsoon (Nov–Mar) from the SW monsoon (Jun–Sep) because
+    boundary-layer dynamics and wet scavenging fundamentally change the diurnal shape:
+    monsoon season suppresses nighttime accumulation and shifts afternoon lows earlier.
   - reading_count is the total number of individual measurements contributing to
-    each hour bucket (not the number of days).
+    each bucket (not the number of days).
 
 Use in dashboard:
+  - Line chart: X = hour_of_day (0–23), Y = avg_value, series = city, filter = day_type
+    → isolates traffic signal from background; weekday peaks at 07–09 / 17–19 Hanoi
+  - Faceted chart: day_type × season shows all four regimes in one view
   - Heatmap: X = hour_of_day, Y = month_of_year (join with mart_monthly_profile
     on location_id + parameter), colour = avg_value
-  - Line chart: X = hour_of_day (0–23), Y = avg_value, series = city
-    → shows rush-hour peaks (07–09, 17–19) vs. overnight lows
 */
 
 {{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
@@ -30,6 +36,29 @@ select
     parameter,
     -- Convert UTC → Vietnam local time (UTC+7, no DST)
     hour(measured_at + interval '7' hour)   as hour_of_day,
+
+    -- Weekday vs weekend split (day-of-week: 1=Sun … 7=Sat in Trino/Athena)
+    case
+        when day_of_week(date(measured_at + interval '7' hour)) in (1, 7)
+            then 'Weekend'
+        else 'Weekday'
+    end as day_type,
+
+    -- Vietnam meteorological season based on local month
+    -- NE Monsoon (Nov–Mar): cold/dry in north, dry in south — peak PM2.5
+    -- Transition (Apr–May): biomass burning, rice straw — elevated PM
+    -- SW Monsoon (Jun–Sep): wet season — lowest PM2.5, strong washout
+    -- Transition (Oct): monsoon retreat — rising PM
+    case
+        when month(date(measured_at + interval '7' hour)) in (11, 12, 1, 2, 3)
+            then 'NE Monsoon (Nov-Mar)'
+        when month(date(measured_at + interval '7' hour)) in (4, 5)
+            then 'Transition (Apr-May)'
+        when month(date(measured_at + interval '7' hour)) in (6, 7, 8, 9)
+            then 'SW Monsoon (Jun-Sep)'
+        else 'Transition (Oct)'
+    end as season,
+
     round(avg(measurement_value), 4)        as avg_value,
     round(max(measurement_value), 4)        as max_value,
     round(min(measurement_value), 4)        as min_value,
@@ -44,5 +73,7 @@ group by
     province,
     sensor_type,
     parameter,
-    hour(measured_at + interval '7' hour)
+    hour(measured_at + interval '7' hour),
+    day_of_week(date(measured_at + interval '7' hour)),
+    month(date(measured_at + interval '7' hour))
 

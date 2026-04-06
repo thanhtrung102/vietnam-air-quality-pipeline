@@ -22,6 +22,21 @@ Exceedance flags and health metrics (PM2.5 only):
   - who_compliant_day:    1 if avg_value ≤ 15 µg/m³, else 0 (use for WHO compliance % in health_summary)
   - cigarette_equivalent: avg_value / 22.0  (1 cigarette ≈ 22 µg/m³ PM2.5/day, Berkeley Earth standard)
 
+Data quality flags:
+  - is_outlier_station: 1 for known stations with confirmed calibration/initialisation
+      artefacts that produce unrepresentative readings. Currently:
+        6273386 (VNUHCMUS Campus 1, HCMC) — started Mar 2026, readings ≫ all other HCMC
+        stations and IQAir reference data; likely sensor initialisation artefact.
+      Downstream marts (health_summary, exceedance_stats) exclude these rows.
+      Add new station IDs here as data quality issues are identified.
+
+  - corrected_pm25: bias-corrected PM2.5 for low-cost optical particle counters
+      (sensor_type = 'low-cost sensor'). AirGradient field studies show raw PMS5003
+      readings overestimate true PM2.5 by ~50% in high-humidity tropical conditions
+      (RH > 70%). Correction: corrected = avg_value / 1.50.
+      Reference stations (BAM/TEOM) are unaffected (corrected_pm25 = avg_value).
+      NULL for non-PM2.5 parameters.
+
 Grain: one row per measurement_date × location_id × parameter.
 Source: int_measurements_enriched (staging measurements + station metadata).
 */
@@ -155,6 +170,32 @@ select
     -- Methodology: 1 cigarette ≈ 22 µg/m³ PM2.5 over 24 hours (Berkeley Earth / aqi.in standard).
     -- NULL for non-PM2.5 parameters.
     case when parameter = 'pm25' then round(avg_value / 22.0, 2) end as cigarette_equivalent,
+
+    -- Outlier station flag: 1 for stations with known calibration/initialisation artefacts.
+    -- Use WHERE is_outlier_station = 0 in downstream analytics to exclude bad readings.
+    -- See header comment for current list of flagged station IDs.
+    case
+        when location_id in (
+            '6273386'   -- VNUHCMUS Campus 1, HCMC: artefact readings from Mar 2026 startup
+        ) then 1
+        else 0
+    end as is_outlier_station,
+
+    -- Bias-corrected PM2.5 for low-cost optical sensors (PMS5003 family).
+    -- Raw readings overestimate by ~50% in tropical high-humidity conditions (AirGradient, 2023).
+    -- corrected_pm25 = avg_value / 1.50 for low-cost sensors; = avg_value for reference instruments.
+    -- NULL for non-PM2.5 parameters.
+    case
+        when parameter = 'pm25' then
+            case
+                when lower(sensor_type) like '%low%cost%'
+                  or lower(sensor_type) like '%low_cost%'
+                  or lower(sensor_type) = 'low-cost sensor'
+                    then round(avg_value / 1.50, 4)
+                else avg_value
+            end
+        else null
+    end as corrected_pm25,
 
     -- partition column must be last
     measurement_date

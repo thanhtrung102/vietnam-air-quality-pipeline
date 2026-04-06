@@ -74,7 +74,7 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 |-------|-------|------|
 | `stg_measurements` | raw hourly reading | ~885K (view) |
 | `int_measurements_enriched` | reading + station metadata | ~774K |
-| `mart_daily_air_quality` | date × station × parameter | ~14,600 |
+| `mart_daily_air_quality` | date × station × parameter | ~15,700 |
 | `mart_daily_aqi` | date × station | ~7,000 |
 | `mart_health_summary` | city × year | 7 |
 | `mart_diurnal_profile` | station × parameter × hour | ~1,800 |
@@ -82,9 +82,9 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 
 ## Dashboard
 
-**Live map:** `http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html`
+**Live map:** *(infrastructure deprovisioned — redeploy with `terraform apply` to restore)*
 
-**API endpoint:** `https://7fv6swyuo5.execute-api.ap-southeast-1.amazonaws.com/` — GeoJSON of 7-day average AQI per station (cached 1h in `/tmp`).
+**API endpoint:** *(infrastructure deprovisioned)* — when live, serves GeoJSON of 7-day average AQI per station (cached 1h in `/tmp`).
 
 ### Leaflet Station Map
 
@@ -102,7 +102,7 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 
 ![QuickSight Sheet 2](docs/quicksight_sheet2.png)
 
-> Sources: `mart_monthly_profile` + `mart_diurnal_profile`. Charts: Monthly PM2.5 profile with monsoon seasons · Hour-of-day diurnal profile (Hanoi peak 07:00, HCMC peak 04:00) · Sensor type comparison (reference vs AirGradient low-cost) · Hanoi vs HCMC dual-axis overlay.
+> Sources: `mart_monthly_profile` + `mart_diurnal_profile`. Charts: Monthly PM2.5 profile with monsoon seasons · Hour-of-day diurnal profile (Hanoi peak 07:00, HCMC peak 09:00 post-morning accumulation) · Sensor type comparison (reference vs AirGradient low-cost, ~50% bias) · Hanoi vs HCMC dual-axis overlay.
 
 See [`docs/architecture.md § 2.4`](docs/architecture.md#24-dashboard) for full dashboard design including QuickSight sheets and visual descriptions.
 
