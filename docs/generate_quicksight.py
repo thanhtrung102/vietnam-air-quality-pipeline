@@ -184,7 +184,7 @@ def make_sheet1():
              ha="center", fontsize=17, fontweight="bold", color=QS_TEXT)
     fig.text(0.5, 0.940, "mart_daily_air_quality  ·  Jan 2023 – Mar 2026  ·  21 stations",
              ha="center", fontsize=10, color=QS_MUTED)
-    fig.text(0.93, 0.950, "Last 12 months", ha="right", fontsize=9, color="#FFFFFF",
+    fig.text(0.93, 0.950, "Full history (2023–2026)", ha="right", fontsize=9, color="#FFFFFF",
              bbox=dict(boxstyle="round,pad=0.3", facecolor=QS_BLUE, edgecolor="none"))
 
     # ── 1. Annual AQI by city ───────────────────────────────────────────────────
@@ -234,7 +234,8 @@ def make_sheet1():
     ax2 = fig.add_subplot(gs[0, 1])
     ax2.set_facecolor(QS_PANEL_BG)
     ax2.set_axis_off()
-    ax2.set_title("Hanoi AQI Calendar Heatmap  (Jan 2023 – Dec 2025)",
+    ax2.set_title("Hanoi AQI Calendar Heatmap  (Jan 2023 – Dec 2025)\n"
+                  "Hanoi only — HCMC seasonal pattern shown in Sheet 2 monthly profile",
                   fontsize=11, fontweight="bold", color=QS_TEXT, loc="left", pad=8)
 
     cat_order = ["Good","Moderate","USG","Unhealthy","VeryUnhealthy","Hazardous"]
@@ -319,13 +320,19 @@ def make_sheet1():
                     color=AQI_COLORS[cat], edgecolor="none", zorder=3)
             bottoms += np.array(vals)
 
-    # WHO compliance % annotations
+    # WHO compliance % annotations — from mart_health_summary (PM2.5 ≤ 15 µg/m³ days)
+    # Note: this is NOT the same as % AQI-Good days (≤ 9.0 µg/m³). WHO AQG uses 15 µg/m³
+    # which spans parts of both Good and Moderate AQI bands.
+    WHO_COMPLIANCE = {
+        "Hanoi":            {2023: 2, 2024: 2, 2025: 1},   # mart_health_summary who_compliance_pct
+        "Ho Chi Minh City": {2023: 42, 2024: 37, 2025: 28}, # declining year-over-year
+    }
     for ci, (city, off) in enumerate(zip(cities, offsets)):
         for xi, yr in enumerate(years3):
             data = HEALTH_DAYS[city][yr]
             total = sum(data.values())
-            pct = 100 * data["Good"] / total
-            ax3.text(xi + off, total + 6, f"{pct:.0f}%\nWHO",
+            pct = WHO_COMPLIANCE[city][yr]
+            ax3.text(xi + off, total + 6, f"{pct}%\nWHO\n≤15µg",
                      ha="center", va="bottom", fontsize=6.5, color=QS_MUTED)
 
     ax3.set_xticks(x3); ax3.set_xticklabels([str(y) for y in years3], fontsize=9)

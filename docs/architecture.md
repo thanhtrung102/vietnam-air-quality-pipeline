@@ -40,8 +40,8 @@ The project ships two complementary dashboard surfaces with a clear division of 
 
 `dashboard/index.html` — a single-page app hosted as an S3 static website. Fetches the latest composite AQI per station from `openaq_aqi_api` Lambda via HTTP API Gateway and renders colour-coded circle markers on a CartoDB Dark Matter basemap.
 
-- **Live URL:** `http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html`
-- **API endpoint:** `https://7fv6swyuo5.execute-api.ap-southeast-1.amazonaws.com/` (HTTP API Gateway → `openaq_aqi_api` Lambda → Athena `mart_daily_aqi`)
+- **Live URL:** *(infrastructure deprovisioned — redeploy with `terraform apply` to restore)*
+- **API endpoint:** *(infrastructure deprovisioned)* — when live, HTTP API Gateway → `openaq_aqi_api` Lambda → Athena `mart_daily_aqi`
 - **Tile provider:** CartoDB Dark Matter (`basemaps.cartocdn.com`) — OSM tile servers require a `Referer` header absent from S3 static website origins
 - **Auth note:** Lambda Function URLs with `AuthType=NONE` are blocked by AWS account-level Block Public Access (default-on for accounts created after November 2024); HTTP API Gateway bypasses this
 
@@ -68,6 +68,9 @@ Two sheets; no station map (covered by Leaflet). Datasets refreshed daily via SP
 | Hour-of-day PM2.5 profile | Line chart (0–23 UTC+7), series = city | Hanoi peaks at ~06:00 (pre-dawn inversion + rush hour); HCMC peaks at ~09:00 (post-morning-rush accumulation) |
 | Sensor type comparison | Side-by-side bar, reference vs low-cost | Shows whether AirGradient low-cost sensors systematically read higher or lower than co-located FEM reference monitors |
 | Hanoi vs HCMC paired overlay | Dual-axis line, same x-axis | Direct city comparison on monthly and diurnal axes |
+
+**Known gap — NO₂, O₃, CO, SO₂ not visualised as health risk:**
+The problem statement (see `README.md`) names PM2.5, PM10, NO₂, O₃, and CO as pollutants of interest. All six parameters are present in `mart_daily_air_quality` and the sensor comparison chart shows raw µg/m³ values for reference instruments. However, EPA AQI breakpoints for NO₂, O₃, SO₂, and CO require unit conversion (µg/m³ → ppb/ppm) and sub-daily averaging windows (NO₂: 1-hour; O₃: 8-hour rolling; CO: 8-hour rolling) that are not yet computed in the staging layer. Until unit normalisation is implemented, these pollutants cannot be ranked by health impact or compared to EPA AQI thresholds in the dashboard. Consequence: the displayed composite AQI is PM2.5 + PM10 only and understates true AQI on high-ozone or high-NO₂ days.
 
 ---
 
