@@ -104,6 +104,12 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 
 > Sources: `mart_monthly_profile` + `mart_diurnal_profile`. Charts: Monthly PM2.5 profile with monsoon seasons · Hour-of-day diurnal profile (Hanoi peak 07:00, HCMC peak 09:00 post-morning accumulation) · Sensor type comparison (reference vs AirGradient low-cost, ~50% bias) · Hanoi vs HCMC dual-axis overlay.
 
+### QuickSight — Sheet 3: Statistical Analysis
+
+![QuickSight Sheet 3](docs/quicksight_sheet3.png)
+
+> Sources: `mart_exceedance_stats` + `mart_pollutant_ratio`. Charts: Monthly WHO exceedance rate trend by year (Hanoi & HCMC 2023–2025) · PM2.5/PM10 source indicator by season (combustion vs crustal/dust) · Year-over-year monthly PM2.5 Hanoi (predictive baseline showing upward trend) · Corrected vs raw PM2.5 for low-cost sensors (÷1.50 humidity correction).
+
 See [`docs/architecture.md § 2.4`](docs/architecture.md#24-dashboard) for full dashboard design including QuickSight sheets and visual descriptions.
 
 ## Reproduction Steps

@@ -28,6 +28,15 @@ select
     sensor_type,
     parameter,
     month(measurement_date)                 as month_of_year,
+
+    -- Vietnam meteorological season (same mapping as mart_diurnal_profile)
+    case
+        when month(measurement_date) in (11, 12, 1, 2, 3) then 'NE Monsoon (Nov-Mar)'
+        when month(measurement_date) in (4, 5)             then 'Transition (Apr-May)'
+        when month(measurement_date) in (6, 7, 8, 9)       then 'SW Monsoon (Jun-Sep)'
+        else                                                     'Transition (Oct)'
+    end                                     as season,
+
     round(avg(measurement_value), 4)        as avg_value,
     round(max(measurement_value), 4)        as max_value,
     round(min(measurement_value), 4)        as min_value,

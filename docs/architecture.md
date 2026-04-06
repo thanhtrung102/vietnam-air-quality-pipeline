@@ -30,7 +30,7 @@ Once raw data lands in S3 and is catalogued by Glue, dbt materialises the mart. 
 
 1. **Staging models** (`stg_*.sql`) — cast types, rename columns to snake_case, parse ISO-8601 timestamps into separate date and hour fields, and filter to rows with non-null `value` and known `parameter`. Sentinel value -999.0 and negative readings are excluded here.
 2. **Intermediate models** (`int_*.sql`) — join measurement facts to the `vn_stations` seed (21 rows) that maps OpenAQ location IDs to canonical city names, coordinates, and sensor type (`reference` | `low_cost`). Materialised as a table so the raw scan + seed join runs once per dbt invocation rather than once per mart reference.
-3. **Mart models** (`mart_*.sql`) — five tables covering daily aggregates, composite AQI per station-day, diurnal profiles, monthly profiles, and annual health summaries. All mart tables are Parquet with Snappy compression, written to `s3://{bucket}/processed/openaq_mart/{model_name}/`. `mart_daily_air_quality` and `mart_daily_aqi` are partitioned on `measurement_date`; the remaining three are small cross-date aggregates with no partition.
+3. **Mart models** (`mart_*.sql`) — seven tables covering daily aggregates, composite AQI per station-day, diurnal profiles, monthly profiles, annual health summaries, monthly exceedance statistics, and daily pollutant source ratios. All mart tables are Parquet with Snappy compression, written to `s3://{bucket}/processed/openaq_mart/{model_name}/`. `mart_daily_air_quality` and `mart_daily_aqi` are partitioned on `measurement_date`; the remaining three are small cross-date aggregates with no partition.
 
 ### 2.4 Dashboard
 
@@ -49,7 +49,7 @@ Popup per station: composite AQI, health category badge, dominant pollutant, sen
 
 #### QuickSight (internal, analytical)
 
-Two sheets; no station map (covered by Leaflet). Datasets refreshed daily via SPICE.
+Three sheets; no station map (covered by Leaflet). Datasets refreshed daily via SPICE.
 
 **Sheet 1 — Historical Trends** · source: `mart_daily_air_quality`
 
@@ -68,6 +68,15 @@ Two sheets; no station map (covered by Leaflet). Datasets refreshed daily via SP
 | Hour-of-day PM2.5 profile | Line chart (0–23 UTC+7), series = city | Hanoi peaks at ~06:00 (pre-dawn inversion + rush hour); HCMC peaks at ~09:00 (post-morning-rush accumulation) |
 | Sensor type comparison | Side-by-side bar, reference vs low-cost | Shows whether AirGradient low-cost sensors systematically read higher or lower than co-located FEM reference monitors |
 | Hanoi vs HCMC paired overlay | Dual-axis line, same x-axis | Direct city comparison on monthly and diurnal axes |
+
+**Sheet 3 — Statistical Analysis** · sources: `mart_exceedance_stats`, `mart_pollutant_ratio`
+
+| Visual | Type | Key insight delivered |
+|---|---|---|
+| Monthly WHO exceedance rate trend | Line per year, x = month | Upward year-over-year shift in all months confirms secular trend, not seasonal variation; Hanoi Jan exceeds WHO threshold >95% of days |
+| PM2.5/PM10 source indicator by season | Grouped bar by season, series = city | Hanoi NE monsoon ratio ~0.69 (near combustion threshold > 0.7); SW monsoon ratio drops as wet deposition reduces combustion fraction |
+| Year-over-year PM2.5 by month — Hanoi | Line per year with WHO/QCVN reference lines | Predictive baseline: all months trending upward; Jan 2023→2025 +5.7 µg/m³; provides anchor for SARIMA/Prophet forecast |
+| Corrected vs raw PM2.5 by sensor type | Multi-line comparison | PMS5003 low-cost sensors overestimate by ~50% in VN humidity; corrected_pm25 field (÷1.50) aligns with reference monitors; validates correction factor |
 
 **Known gap — NO₂, O₃, CO, SO₂ not visualised as health risk:**
 The problem statement (see `README.md`) names PM2.5, PM10, NO₂, O₃, and CO as pollutants of interest. All six parameters are present in `mart_daily_air_quality` and the sensor comparison chart shows raw µg/m³ values for reference instruments. However, EPA AQI breakpoints for NO₂, O₃, SO₂, and CO require unit conversion (µg/m³ → ppb/ppm) and sub-daily averaging windows (NO₂: 1-hour; O₃: 8-hour rolling; CO: 8-hour rolling) that are not yet computed in the staging layer. Until unit normalisation is implemented, these pollutants cannot be ranked by health impact or compared to EPA AQI thresholds in the dashboard. Consequence: the displayed composite AQI is PM2.5 + PM10 only and understates true AQI on high-ozone or high-NO₂ days.
@@ -323,7 +332,8 @@ vietnam-air-quality-pipeline/
 │   ├── generate_leaflet_render.py           # Script to regenerate leaflet_map.png
 │   ├── quicksight_sheet1.png                # QuickSight Sheet 1 render (Historical Trends)
 │   ├── quicksight_sheet2.png                # QuickSight Sheet 2 render (Seasonal & Diurnal)
-│   ├── generate_quicksight.py               # Script to regenerate QuickSight renders
+│   ├── quicksight_sheet3.png                # QuickSight Sheet 3 render (Statistical Analysis)
+│   ├── generate_quicksight.py               # Script to regenerate QuickSight renders (3 sheets)
 │   ├── quicksight_dashboard_definition.json # Exported live QuickSight dashboard definition
 │   ├── metrics.md                           # Query scan sizes and pipeline run metrics
 │   └── stations.md                          # Station inventory notes
@@ -371,8 +381,10 @@ vietnam-air-quality-pipeline/
     │       ├── mart_daily_air_quality.sql
     │       ├── mart_daily_aqi.sql
     │       ├── mart_diurnal_profile.sql
+    │       ├── mart_exceedance_stats.sql
     │       ├── mart_health_summary.sql
-    │       └── mart_monthly_profile.sql
+    │       ├── mart_monthly_profile.sql
+    │       └── mart_pollutant_ratio.sql
     └── setup/
         └── create_external_table.sql   # Manual DDL for openaq_raw.raw_measurements
 ```

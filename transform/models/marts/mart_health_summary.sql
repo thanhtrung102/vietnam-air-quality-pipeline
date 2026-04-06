@@ -48,6 +48,7 @@ with city_daily as (
 
     from {{ ref('mart_daily_air_quality') }}
     where parameter = 'pm25'
+      and is_outlier_station = 0
     group by city, province, measurement_date
 
 ),

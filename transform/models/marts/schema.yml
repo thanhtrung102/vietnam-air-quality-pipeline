@@ -268,8 +268,8 @@ models:
   - name: mart_diurnal_profile
     description: >
       Average pollutant concentration by hour of day (Vietnam local time, UTC+7).
-      Grain: one row per location_id × parameter × hour_of_day (0–23).
-      Drives the rush-hour line chart and hour × month heatmap in the dashboard.
+      Grain: one row per location_id × parameter × hour_of_day × day_type × season.
+      Drives the rush-hour line chart (weekday vs weekend × monsoon season) in the dashboard.
 
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -278,6 +278,8 @@ models:
               - location_id
               - parameter
               - hour_of_day
+              - day_type
+              - season
 
     columns:
       - name: location_id
@@ -310,6 +312,23 @@ models:
 
       - name: hour_of_day
         description: Local hour (0–23, UTC+7, no DST)
+        tests:
+          - not_null
+
+      - name: day_type
+        description: >
+          'Weekday' (Mon–Fri) or 'Weekend' (Sat–Sun). Traffic-driven rush-hour
+          peaks are significantly attenuated on weekends.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Weekday', 'Weekend']
+
+      - name: season
+        description: >
+          Vietnam meteorological season: 'NE Monsoon (Nov-Mar)', 'Transition (Apr-May)',
+          'SW Monsoon (Jun-Sep)', or 'Transition (Oct)'.
         tests:
           - not_null
 
@@ -375,6 +394,14 @@ models:
         tests:
           - not_null
 
+      - name: season
+        description: >
+          Vietnam meteorological season derived from month_of_year: 'NE Monsoon (Nov-Mar)',
+          'Transition (Apr-May)', 'SW Monsoon (Jun-Sep)', or 'Transition (Oct)'.
+          Deterministic from month — no grain change.
+        tests:
+          - not_null
+
       - name: avg_value
         description: Mean concentration for this station/parameter/month across all years
         tests:
@@ -394,3 +421,117 @@ models:
 
       - name: day_count
         description: Number of distinct calendar dates contributing to this month bucket
+
+  - name: mart_exceedance_stats
+    description: >
+      Monthly WHO and QCVN exceedance counts and rates per city and pollutant.
+      Grain: one row per city × parameter × year × month_of_year.
+      Source: mart_daily_air_quality (outlier station 6273386 excluded).
+      Answers: "Is the WHO exceedance rate in Hanoi getting worse each January?"
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - city
+              - parameter
+              - year
+              - month_of_year
+
+    columns:
+      - name: city
+        description: City name (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: parameter
+        description: Pollutant code (pm25 only in this mart)
+        tests:
+          - not_null
+
+      - name: year
+        description: Calendar year (integer)
+        tests:
+          - not_null
+
+      - name: month_of_year
+        description: Calendar month (1–12)
+        tests:
+          - not_null
+
+      - name: total_days
+        description: Total station-days with PM2.5 readings in this city/year/month
+        tests:
+          - not_null
+
+      - name: who_exceedance_days
+        description: Days where city-level PM2.5 avg > 15 µg/m³ (WHO AQG 2021)
+
+      - name: qcvn_exceedance_days
+        description: Days where city-level PM2.5 avg > 50 µg/m³ (QCVN 05:2023)
+
+      - name: who_exceedance_rate
+        description: who_exceedance_days / total_days × 100 (rounded to 1 dp)
+
+      - name: qcvn_exceedance_rate
+        description: qcvn_exceedance_days / total_days × 100 (rounded to 1 dp)
+
+      - name: avg_pm25
+        description: Mean daily PM2.5 avg across station-days in this bucket (µg/m³, 2 dp)
+
+      - name: p95_pm25
+        description: 95th-percentile daily PM2.5 avg in this bucket (µg/m³, 2 dp)
+
+  - name: mart_pollutant_ratio
+    description: >
+      Daily PM2.5 / PM10 ratio per station — pollution source indicator.
+      Grain: one row per location_id × measurement_date.
+      Source: mart_daily_air_quality pivoted via conditional aggregation.
+      Outlier station 6273386 excluded.
+      Answers: "Is Hanoi PM2.5 driven by combustion (traffic/biomass) or crustal dust?"
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - location_id
+              - measurement_date
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+
+      - name: measurement_date
+        description: Calendar date
+        tests:
+          - not_null
+
+      - name: location_name
+        description: Canonical station name
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+
+      - name: province
+        description: Province / administrative division
+
+      - name: pm25_avg
+        description: Daily mean PM2.5 (µg/m³, 4 dp); NULL if station reported no PM2.5
+
+      - name: pm10_avg
+        description: Daily mean PM10 (µg/m³, 4 dp); NULL if station reported no PM10
+
+      - name: pm25_pm10_ratio
+        description: >
+          pm25_avg / pm10_avg (4 dp). NULL when either pollutant is missing or PM10 = 0.
+          Physically bounded [0, 1] for well-calibrated sensors.
+
+      - name: source_indicator
+        description: >
+          Pollution source type inferred from PM2.5/PM10 ratio:
+          'combustion-dominated' (ratio > 0.7) — traffic exhaust, biomass burning;
+          'mixed' (0.4–0.7) — mixture of combustion and resuspended dust;
+          'crustal/dust' (< 0.4) — road dust, construction, soil resuspension.
+          NULL when ratio cannot be computed.
