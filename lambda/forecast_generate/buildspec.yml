@@ -1,0 +1,45 @@
+version: 0.2
+
+# AWS CodeBuild spec for building and pushing the forecast_generate container image.
+# Use this as an alternative to local Docker when Docker is not available.
+#
+# Prerequisites:
+#   1. CodeBuild service role needs ecr:GetAuthorizationToken, ecr:BatchCheckLayerAvailability,
+#      ecr:PutImage, ecr:InitiateLayerUpload, ecr:UploadLayerPart, ecr:CompleteLayerUpload
+#   2. Run from the repo root or set base directory to lambda/forecast_generate/
+#
+# Start a one-off build (no project required):
+#   aws codebuild start-build \
+#       --project-name openaq-forecast-image \
+#       --environment-variables-override \
+#           name=AWS_ACCOUNT_ID,value=$(aws sts get-caller-identity --query Account --output text) \
+#           name=AWS_DEFAULT_REGION,value=ap-southeast-1
+
+env:
+  variables:
+    IMAGE_REPO: openaq-forecast-generate
+    IMAGE_TAG: latest
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION |
+          docker login --username AWS
+          --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO:$IMAGE_TAG
+
+  build:
+    commands:
+      - echo Building image...
+      - cd lambda/forecast_generate
+      - docker build -t $IMAGE_REPO:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO:$IMAGE_TAG $IMAGE_URI
+
+  post_build:
+    commands:
+      - echo Pushing image to ECR...
+      - docker push $IMAGE_URI
+      - echo IMAGE_URI=$IMAGE_URI
+      - printf '[{"name":"forecast_generate","imageUri":"%s"}]' $IMAGE_URI > /tmp/imagedefinitions.json
+      - cat /tmp/imagedefinitions.json

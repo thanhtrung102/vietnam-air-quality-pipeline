@@ -136,6 +136,7 @@ See [`docs/architecture.md § 2.5`](docs/architecture.md) for full dashboard des
 - Terraform ≥ 1.5 (`terraform version`)
 - Python 3.11+ with `pip`
 - Git + Bash (Git Bash on Windows)
+- **Docker** — only required for Step 6 (forecast Lambda ECR image build). If Docker is not available locally, use the AWS CodeBuild alternative described in that step.
 
 ### 1. Infrastructure
 
@@ -207,25 +208,64 @@ PYTHONUTF8=1 dbt run --select stg_weather int_weather_enriched mart_daily_weathe
 
 ### 6. Forecast Lambda (Phase 5)
 
+This step requires building a Docker container image (~1.5 GB) and pushing it to ECR. Choose one approach:
+
+#### Option A — Local Docker
+
 ```bash
-# Authenticate to ECR
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=ap-southeast-1
+
 aws ecr get-login-password --region $AWS_REGION | \
     docker login --username AWS \
     --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-# Build and push container image
 cd lambda/forecast_generate/
 docker build -t openaq-forecast-generate .
 docker tag openaq-forecast-generate:latest \
     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/openaq-forecast-generate:latest
 docker push \
     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/openaq-forecast-generate:latest
+```
 
-# Wire image URI to Lambda function
+#### Option B — AWS CodeBuild (no local Docker required)
+
+A `buildspec.yml` is provided at `lambda/forecast_generate/buildspec.yml`.
+
+```bash
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_REGION=ap-southeast-1
+
+# Create a CodeBuild project (one-time setup)
+aws codebuild create-project \
+    --name openaq-forecast-image \
+    --source type=NO_SOURCE,buildspec="$(cat lambda/forecast_generate/buildspec.yml)" \
+    --artifacts type=NO_ARTIFACTS \
+    --environment type=LINUX_CONTAINER,computeType=BUILD_GENERAL1_SMALL,\
+image=aws/codebuild/standard:7.0,privilegedMode=true \
+    --service-role arn:aws:iam::$AWS_ACCOUNT_ID:role/codebuild-openaq-role \
+    --region $AWS_REGION
+
+# Start the build (uploads source from current directory)
+aws codebuild start-build \
+    --project-name openaq-forecast-image \
+    --source-override type=S3,location=openaq-pipeline-thanhtrung102/codebuild-source.zip \
+    --environment-variables-override \
+        name=AWS_ACCOUNT_ID,value=$AWS_ACCOUNT_ID \
+        name=AWS_DEFAULT_REGION,value=$AWS_REGION \
+    --region $AWS_REGION
+
+# Poll until complete (or watch in CodeBuild console)
+aws codebuild batch-get-builds --ids <BUILD_ID> --query 'builds[0].buildStatus'
+```
+
+> **Simplest alternative:** zip the repo, upload to S3, and trigger a build from the CodeBuild console — no CLI project setup needed. The `buildspec.yml` is self-contained.
+
+#### After image is pushed (both options)
+
+```bash
 IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/openaq-forecast-generate:latest
-cd ../../terraform/
+cd terraform/
 terraform apply -var="forecast_lambda_image_uri=$IMAGE_URI"
 ```
 
