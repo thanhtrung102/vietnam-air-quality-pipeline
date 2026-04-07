@@ -209,7 +209,7 @@ def handler(event, context):
             },
         })
 
-    updated_at = rows[0]["measurement_date"] if rows else ""
+    updated_at = max((r["measurement_date"] for r in rows), default="")
     geojson = {"type": "FeatureCollection", "updated_at": updated_at, "features": features}
 
     _save_cache(geojson)

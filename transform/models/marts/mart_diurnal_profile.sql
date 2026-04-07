@@ -42,7 +42,7 @@ with labelled as (
 
         -- Weekday vs weekend (group before aggregating to avoid Saturday + Sunday = 2 rows)
         case
-            when day_of_week(date(measured_at + interval '7' hour)) in (1, 7)
+            when day_of_week(date(measured_at + interval '7' hour)) in (6, 7)
                 then 'Weekend'
             else 'Weekday'
         end as day_type,

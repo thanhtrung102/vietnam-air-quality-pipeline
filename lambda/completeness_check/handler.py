@@ -115,7 +115,6 @@ def handler(event, context):
         check_date, active_count = _get_query_result(athena, execution_id)
         missing_count = max(0, EXPECTED_STATIONS - active_count)
 
-        from datetime import datetime, timezone
         data_age_days = (datetime.now(timezone.utc).date() -
                          datetime.fromisoformat(check_date).date()).days
 

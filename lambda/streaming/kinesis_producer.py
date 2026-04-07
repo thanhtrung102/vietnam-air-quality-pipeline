@@ -48,7 +48,11 @@ log = logging.getLogger(__name__)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-_REQUIRED_ENV = ("OPENAQ_API_KEY", "AWS_REGION", "KINESIS_STREAM_NAME")
+# OPENAQ_API_KEY is intentionally absent: the Lambda handler resolves the key
+# from Secrets Manager first (see handler.py _get_api_key()) and injects it
+# into cfg["api_key"] after _load_config() returns. Keeping it here would cause
+# the function to fail at startup when only Secrets Manager is configured.
+_REQUIRED_ENV = ("AWS_REGION", "KINESIS_STREAM_NAME")
 
 # 21 confirmed Vietnamese station IDs — overridable via STATION_IDS env var
 _DEFAULT_STATION_IDS = [
@@ -149,7 +153,7 @@ def _load_config() -> dict:
         station_ids = list(_DEFAULT_STATION_IDS)
 
     return {
-        "api_key":     os.environ["OPENAQ_API_KEY"],
+        "api_key":     os.environ.get("OPENAQ_API_KEY", ""),   # overwritten by handler._get_api_key()
         "region":      os.environ["AWS_REGION"],
         "stream_name": os.environ["KINESIS_STREAM_NAME"],
         "station_ids": station_ids,

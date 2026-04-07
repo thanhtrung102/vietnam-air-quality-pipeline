@@ -71,46 +71,49 @@ _HOURLY_VARS = ",".join([
 ])
 
 
-def _fetch_weather(lat: float, lon: float, date_str: str) -> dict:
-    """Fetch hourly ERA5 weather from Open-Meteo for a single station and date."""
+def _fetch_weather_range(lat: float, lon: float, start_date: str, end_date: str) -> dict:
+    """Fetch hourly ERA5 weather from Open-Meteo for a single station over a date range.
+
+    One HTTP request covers all requested dates — avoids N×stations requests when
+    backfill_days > 1 (e.g. backfill_days=365 was 7,665 requests; now it is 21).
+    """
     resp = requests.get(
         _ARCHIVE_URL,
         params={
             "latitude":   lat,
             "longitude":  lon,
-            "start_date": date_str,
-            "end_date":   date_str,
+            "start_date": start_date,
+            "end_date":   end_date,
             "hourly":     _HOURLY_VARS,
             "timezone":   "UTC",
         },
-        timeout=30,
+        timeout=60,
     )
     resp.raise_for_status()
     return resp.json()
 
 
-def _to_ndjson(location_id: int, target_date: date, data: dict) -> str:
-    """Convert Open-Meteo hourly response to NDJSON string (one row per hour)."""
-    hourly = data["hourly"]
+def _rows_for_date(location_id: int, target_date: date, hourly: dict, indices: list[int]) -> list[str]:
+    """Serialise the hourly rows belonging to target_date as NDJSON lines."""
     date_str = target_date.isoformat()
     rows = []
-    for i, time_str in enumerate(hourly["time"]):
-        # time_str format: "2024-01-01T00:00"
-        hour_utc = int(time_str.split("T")[1].split(":")[0])
+    for i in indices:
+        time_str = hourly["time"][i]          # "2024-01-01T00:00"
+        hour_utc = int(time_str[11:13])       # faster than split
         row = {
-            "location_id":           location_id,
-            "date":                  date_str,
-            "hour_utc":              hour_utc,
-            "temperature_2m":        hourly["temperature_2m"][i],
-            "rh_2m":                 hourly["relative_humidity_2m"][i],
-            "wind_speed":            hourly["wind_speed_10m"][i],
-            "wind_dir":              hourly["wind_direction_10m"][i],
-            "precipitation_mm":      hourly["precipitation"][i],
-            "surface_pressure_hpa":  hourly["surface_pressure"][i],
+            "location_id":             location_id,
+            "date":                    date_str,
+            "hour_utc":                hour_utc,
+            "temperature_2m":          hourly["temperature_2m"][i],
+            "rh_2m":                   hourly["relative_humidity_2m"][i],
+            "wind_speed":              hourly["wind_speed_10m"][i],
+            "wind_dir":                hourly["wind_direction_10m"][i],
+            "precipitation_mm":        hourly["precipitation"][i],
+            "surface_pressure_hpa":    hourly["surface_pressure"][i],
             "boundary_layer_height_m": hourly["boundary_layer_height"][i],
         }
         rows.append(json.dumps(row, separators=(",", ":")))
-    return "\n".join(rows)
+    return rows
 
 
 def _s3_key(location_id: int, target_date: date) -> str:
@@ -135,21 +138,38 @@ def handler(event, context):
 
     today = date.today()
     # Fetch from yesterday back N days (Open-Meteo ERA5 lag ~5 days)
-    target_dates = [today - timedelta(days=d) for d in range(1, backfill_days + 1)]
+    target_dates = sorted(
+        [today - timedelta(days=d) for d in range(1, backfill_days + 1)]
+    )
+    start_str = target_dates[0].isoformat()
+    end_str   = target_dates[-1].isoformat()
 
     total_written = 0
-    error_count = 0
+    error_count   = 0
 
-    for target_date in target_dates:
-        date_str = target_date.isoformat()
-        logger.info("Fetching weather for %s across %d stations", date_str, len(STATIONS))
+    for station in STATIONS:
+        location_id = station["location_id"]
+        try:
+            # One HTTP request covers the full date range for this station.
+            data   = _fetch_weather_range(station["lat"], station["lon"], start_str, end_str)
+            hourly = data["hourly"]
 
-        for station in STATIONS:
-            location_id = station["location_id"]
-            try:
-                data = _fetch_weather(station["lat"], station["lon"], date_str)
-                ndjson = _to_ndjson(location_id, target_date, data)
-                key = _s3_key(location_id, target_date)
+            # Build a mapping date_str → [row indices] so we can write one S3
+            # object per date without a second pass over the full hourly array.
+            date_index: dict[str, list[int]] = {}
+            for i, time_str in enumerate(hourly["time"]):
+                d_str = time_str[:10]   # "YYYY-MM-DD"
+                date_index.setdefault(d_str, []).append(i)
+
+            for target_date in target_dates:
+                d_str   = target_date.isoformat()
+                indices = date_index.get(d_str, [])
+                if not indices:
+                    logger.warning("No hourly data for station %s on %s", location_id, d_str)
+                    continue
+                rows   = _rows_for_date(location_id, target_date, hourly, indices)
+                ndjson = "\n".join(rows)
+                key    = _s3_key(location_id, target_date)
                 s3.put_object(
                     Bucket=S3_BUCKET,
                     Key=key,
@@ -158,15 +178,14 @@ def handler(event, context):
                 )
                 logger.info("Wrote s3://%s/%s", S3_BUCKET, key)
                 total_written += 1
-            except Exception as exc:
-                logger.error(
-                    "Failed location_id=%s date=%s: %s",
-                    location_id, date_str, exc,
-                )
-                error_count += 1
+
+        except Exception as exc:
+            logger.error("Failed location_id=%s range=%s..%s: %s",
+                         location_id, start_str, end_str, exc)
+            error_count += 1
 
     logger.info(
-        "Completed: %d written, %d errors (backfill_days=%d)",
-        total_written, error_count, backfill_days,
+        "Completed: %d written, %d errors (backfill_days=%d, stations=%d, requests=%d)",
+        total_written, error_count, backfill_days, len(STATIONS), len(STATIONS),
     )
     return {"total_written": total_written, "errors": error_count}

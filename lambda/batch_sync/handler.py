@@ -16,7 +16,7 @@ loop. Each thread creates its own boto3 session for thread safety.
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timezone
 
 import boto3
 from botocore.exceptions import ClientError
@@ -116,7 +116,7 @@ def _sync_station(station_id: int, dst_bucket: str, dst_region: str, year: str, 
 def handler(event, context):
     dst_bucket = os.environ["S3_BUCKET_NAME"]
     dst_region = os.environ.get("AWS_REGION", "ap-southeast-1")
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     year = str(now.year)
     month = str(now.month).zfill(2)
 

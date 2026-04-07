@@ -53,6 +53,7 @@ with per_pollutant as (
 
     from {{ ref('mart_daily_air_quality') }}
     where aqi_value is not null
+      and is_outlier_station = 0
 
 ),
 
@@ -102,9 +103,10 @@ with_dominant as (
         c.composite_aqi,
         c.pm25_avg,
         c.cigarette_equivalent,
-        -- If two pollutants tie, PM2.5 takes precedence (stricter health relevance)
-        max_by(p.parameter, p.aqi_value)    as dominant_pollutant,
-        max_by(p.aqi_category, p.aqi_value) as health_category
+        -- If two pollutants tie, PM2.5 takes precedence (stricter health relevance).
+        -- Tie-break: add 0.5 to pm25 sort key so it always wins over pm10 at equal AQI.
+        max_by(p.parameter,    p.aqi_value + case when p.parameter = 'pm25' then 0.5 else 0 end) as dominant_pollutant,
+        max_by(p.aqi_category, p.aqi_value + case when p.parameter = 'pm25' then 0.5 else 0 end) as health_category
 
     from composite c
     join per_pollutant p
