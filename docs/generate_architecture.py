@@ -47,8 +47,8 @@ def ha(hex6, alpha_pct):
     return hex6 + format(int(alpha_pct * 255 / 100), "02X")
 
 # ── Logical canvas (pixels at 1x, multiplied by SCALE for output) ────────────
-# 1440 × 620 logical → 2880 × 1240 output
-LW, LH = 1440, 620
+# 1440 × 900 logical → 2880 × 1800 output
+LW, LH = 1440, 900
 
 # ── Font loading ──────────────────────────────────────────────────────────────
 FONTS = [
@@ -237,6 +237,8 @@ def elbow_arrow(draw, x1, y1, x2, y2, via_x=None, via_y=None,
 BATCH_Y  = 155    # center-y of batch track boxes
 STREAM_Y = 390    # center-y of stream track boxes
 MID_Y    = (BATCH_Y + STREAM_Y) // 2  # 272
+COMPL_Y  = 538    # center-y: completeness_check Lambda
+OPS_Y    = 720    # center-y: weather_ingest + forecast_generate track
 
 # Box dimensions
 BW = 165   # service box width
@@ -247,13 +249,13 @@ EBH = 52
 # Cluster bounds (x, y, w, h)
 CL = {
     #               x     y    w     h
-    "external":  (  8,   35, 182,  540),
-    "ingest":    (202,   35, 215,  540),
-    "kinesis":   (431,  290, 178,  210),
-    "raw":       (621,   35, 188,  540),
-    "catalog":   (823,   90, 188,  385),
-    "transform": (1024,  90, 205,  385),
-    "serving":   (1243,  35, 185,  540),
+    "external":  (  8,   35, 182,  848),   # extended for Open-Meteo row
+    "ingest":    (202,   35, 215,  848),   # extended for completeness + weather rows
+    "kinesis":   (431,  290, 178,  210),   # stream segment only — unchanged
+    "raw":       (621,   35, 188,  848),   # extended for raw/weather row
+    "catalog":   (823,   90, 188,  585),   # extended: Athena queried by forecast_generate
+    "transform": (1024,  90, 205,  748),   # extended for forecast_generate row
+    "serving":   (1243,  35, 185,  848),   # extended for forecast alarm row
 }
 
 # Column center-x for each service
@@ -334,7 +336,7 @@ service_box(draw, CX["catalog"], 352, BW, BH,
 
 # Transform column — dbt + processed S3
 service_box(draw, CX["transform"], 185, BW, BH,
-            "dbt-athena-community\nstg → int → 5 mart models\nParquet CTAS", "dbt")
+            "dbt-athena-community\nstg → int → 14 mart models\nParquet CTAS", "dbt")
 service_box(draw, CX["transform"], 352, BW+15, BH,
             "S3 processed/openaq_mart/\nParquet · Snappy\nmeasurement_date partition", "s3")
 
@@ -349,6 +351,38 @@ service_box(draw, CX["serving"], 395, BW-10, BH-8,
             "QuickSight SPICE\n2 sheets · daily refresh\n14,662 rows", "quicksight")
 service_box(draw, CX["serving"], 490, BW-10, BH-10,
             "CloudWatch Logs\n+ SNS billing alerts", "cloudwatch")
+
+# ── New: Phase 3-5 components ────────────────────────────────────────────────
+
+# External column — Open-Meteo ERA5 API (Phase 3)
+service_box(draw, CX["external"], 600, BW, BH,
+            "Open-Meteo\nERA5 Archive API\nfree · no API key", "external")
+
+# Ingest column — completeness_check (Phase 1) + weather_ingest (Phase 3)
+service_box(draw, CX["ingest"], 475, EBW, EBH,
+            "EventBridge\nDaily 00:30 UTC", "eventbr")
+service_box(draw, CX["ingest"], COMPL_Y, BW+10, BH-8,
+            "λ completeness_check\n300 s · 256 MB\nAthena rowcount → CW", "lambda")
+service_box(draw, CX["ingest"], 625, EBW, EBH,
+            "EventBridge\nDaily 02:00 UTC", "eventbr")
+service_box(draw, CX["ingest"], OPS_Y, BW+10, BH,
+            "λ openaq_weather_ingest\n300 s · 256 MB\nOpen-Meteo hourly ERA5", "lambda")
+
+# Raw column — raw/weather (Phase 3)
+service_box(draw, CX["raw"], OPS_Y, BW+10, BH,
+            "raw/weather/\nlocation_id/year/month/day\nNDJSON", "s3")
+
+# Transform column — forecast_generate (Phase 5)
+service_box(draw, CX["transform"], 625, EBW, EBH,
+            "EventBridge\nDaily 03:00 UTC", "eventbr")
+service_box(draw, CX["transform"], OPS_Y, BW, BH,
+            "λ forecast_generate\n900 s · 3008 MB\nECR · SARIMA + Prophet", "lambda")
+
+# Serving column — forecast alarm (Phase 5)
+service_box(draw, CX["serving"], 640, BW-10, BH-10,
+            "CloudWatch Alarm\nForecastRMSE > 25\n+ SNS alert", "cloudwatch")
+service_box(draw, CX["serving"], OPS_Y, BW-10, BH-10,
+            "S3 processed/\nmart_daily_forecast/\nParquet · Snappy", "s3")
 
 # ── Arrows ─────────────────────────────────────────────────────────────────────
 AC = "#444444"   # default arrow color
@@ -433,6 +467,55 @@ arrow(draw, CX["serving"], 200 + (BH-10)//2,
       color=PAL["s3"][0])
 
 # CloudWatch/SNS shown in Serving column — no cross-diagram monitoring arrow
+
+# ── Phase 3-5 arrows ──────────────────────────────────────────────────────────
+
+# completeness_check trigger + flow
+arrow(draw, CX["ingest"], 475 + EBH//2,
+      CX["ingest"], COMPL_Y - (BH-8)//2,
+      color=CLUSTER_COLORS["ingest"][0])
+# completeness_check → Athena (dashed query)
+elbow_arrow(draw, CX["ingest"] + (BW+10)//2, COMPL_Y,
+            CX["catalog"] - BW//2, 352,
+            color=DC, dashed=True, label="row check")
+# completeness_check → CloudWatch Logs (serving column)
+arrow(draw, CX["ingest"] + (BW+10)//2, COMPL_Y,
+      CX["serving"] - (BW-10)//2, 490,
+      label="CW metrics", color=PAL["cloudwatch"][0], dashed=True)
+
+# weather_ingest trigger + flow
+arrow(draw, CX["ingest"], 625 + EBH//2,
+      CX["ingest"], OPS_Y - BH//2,
+      color=CLUSTER_COLORS["ingest"][0])
+# Open-Meteo → weather_ingest
+arrow(draw, CX["external"] + BW//2, 600,
+      CX["ingest"] - (BW+10)//2, OPS_Y,
+      label="REST pull", color=AC)
+# weather_ingest → raw/weather S3
+arrow(draw, CX["ingest"] + (BW+10)//2, OPS_Y,
+      CX["raw"] - (BW+10)//2, OPS_Y,
+      label="NDJSON write", color=PAL["s3"][0])
+# raw/weather → Glue (Partition Projection, dashed)
+arrow(draw, CX["raw"] + (BW+10)//2, OPS_Y,
+      CX["catalog"] - BW//2, 185,
+      label="Partition Projection", color=DC, dashed=True, bend=20)
+
+# forecast_generate trigger + flow
+arrow(draw, CX["transform"], 625 + EBH//2,
+      CX["transform"], OPS_Y - BH//2,
+      color=CLUSTER_COLORS["ingest"][0])
+# Athena → forecast_generate (reads mart_lagged_features)
+elbow_arrow(draw, CX["catalog"] + BW//2, 352,
+            CX["transform"] - BW//2, OPS_Y,
+            color=DC, dashed=True, label="mart_lagged_features")
+# forecast_generate → mart_daily_forecast S3
+arrow(draw, CX["transform"] + BW//2, OPS_Y,
+      CX["serving"] - (BW-10)//2, OPS_Y,
+      label="Parquet write", color=PAL["s3"][0])
+# forecast_generate → CloudWatch Alarm
+arrow(draw, CX["transform"] + BW//2, OPS_Y,
+      CX["serving"] - (BW-10)//2, 640,
+      label="ForecastRMSE", color=PAL["cloudwatch"][0], dashed=True)
 
 # ── Column separator lines (subtle) ──────────────────────────────────────────
 for xi in [195, 425, 615, 818, 1018, 1240]:

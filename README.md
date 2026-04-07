@@ -4,7 +4,7 @@
 
 Air quality across Vietnamese cities has been deteriorating, yet long-term trends and seasonal patterns remain poorly understood by the public and policymakers. This project addresses the analytical question: how has air quality in major Vietnamese cities changed over the past three years, and which pollutants (PM2.5, PM10, NO₂, O₃, CO) and seasons pose the greatest health risk to residents?
 
-The pipeline ingests historical and near-real-time air quality data from the OpenAQ API into Amazon S3, catalogs it via AWS Glue with partition projection, and makes it queryable through Amazon Athena. A dbt transformation layer (dbt-athena-community) produces five mart tables covering daily averages, composite AQI, health summaries, diurnal profiles, and monthly seasonality. A Leaflet map dashboard (S3 static website) surfaces station-level AQI in near-real time via a Lambda API. Infrastructure is fully provisioned as code with Terraform.
+The pipeline ingests historical and near-real-time air quality data from the OpenAQ API into Amazon S3, enriches it with Open-Meteo ERA5 meteorological reanalysis, and catalogs everything via AWS Glue with partition projection, making it queryable through Amazon Athena. A dbt transformation layer produces fourteen mart tables covering daily averages, composite AQI, weather co-variates, lagged features, and forecast accuracy. SARIMA and Prophet models run in a containerised Lambda to produce 7-day ahead PM2.5 forecasts. A Leaflet map dashboard (S3 static website) surfaces station-level AQI in near-real time via a Lambda API. Infrastructure is fully provisioned as code with Terraform.
 
 ## Architecture
 
@@ -44,9 +44,11 @@ See [`docs/architecture.md`](docs/architecture.md) for full data flow mechanics,
 | Streaming | Amazon Kinesis Data Streams (ON_DEMAND) + Firehose (GZIP) |
 | Transform | dbt-core 1.11.7 + dbt-athena-community 1.10.0 |
 | Orchestration | AWS EventBridge Scheduler (daily batch, 30-min streaming) |
-| Compute | AWS Lambda (Python 3.12) — batch sync, streaming producer, AQI API |
+| Compute | AWS Lambda (Python 3.12) — batch sync, streaming producer, AQI API, completeness check, weather ingest |
+| Compute (ML) | AWS Lambda container image (ECR) — forecast_generate: SARIMA + Prophet; 3008 MB / 900 s |
+| Weather | Open-Meteo ERA5 Archive API — 7 hourly variables, free, no API key, 21 station coordinates |
 | Dashboard | Leaflet.js map (S3 static website) + Lambda Function URL API |
-| Alerts | Amazon SNS → email (Kinesis iterator age, monthly billing) |
+| Alerts | Amazon SNS → email (Kinesis iterator age, monthly billing, ForecastRMSE > 25 µg/m³) |
 
 ## Warehouse Optimisation
 
@@ -73,12 +75,20 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 | Model | Grain | Rows |
 |-------|-------|------|
 | `stg_measurements` | raw hourly reading | ~885K (view) |
+| `stg_weather` | station × hour | ~550K (view) |
 | `int_measurements_enriched` | reading + station metadata | ~774K |
+| `int_weather_enriched` | weather reading + station metadata | ~550K |
 | `mart_daily_air_quality` | date × station × parameter | ~15,700 |
 | `mart_daily_aqi` | date × station | ~7,000 |
 | `mart_health_summary` | city × year | 7 |
 | `mart_diurnal_profile` | station × parameter × hour | ~1,800 |
 | `mart_monthly_profile` | station × parameter × month | ~500 |
+| `mart_daily_weather` | date × station | ~23,000 |
+| `mart_aq_weather_daily` | date × station | ~7,000 |
+| `mart_lagged_features` | date × station (features) | ~7,000 |
+| `mart_feature_stats` | station (cross-date aggregate) | 21 |
+| `mart_forecast_accuracy` | forecast_date × station × model | grows daily |
+| `mart_daily_forecast` *(external)* | forecast_date × station × model | ~294/run |
 
 ## Dashboard
 
@@ -110,7 +120,13 @@ Proof query scan sizes (see [`docs/metrics.md`](docs/metrics.md)):
 
 > Sources: `mart_exceedance_stats` + `mart_pollutant_ratio`. Charts: Monthly WHO exceedance rate trend by year (Hanoi & HCMC 2023–2025) · PM2.5/PM10 source indicator by season (combustion vs crustal/dust) · Year-over-year monthly PM2.5 Hanoi (predictive baseline showing upward trend) · Corrected vs raw PM2.5 for low-cost sensors (÷1.50 humidity correction).
 
-See [`docs/architecture.md § 2.4`](docs/architecture.md#24-dashboard) for full dashboard design including QuickSight sheets and visual descriptions.
+### QuickSight — Sheet 4: Predictive Forecasts
+
+![QuickSight Sheet 4](docs/quicksight_sheet4.png)
+
+> Sources: `mart_forecast_accuracy` + `mart_daily_forecast`. Charts: 7-day CI forecast (SARIMA blue dashed, Prophet orange dashed, 95% CI shaded) · Holdout RMSE scatter per station (below diagonal = Prophet wins; Hanoi ≈ 12 → 9.5 µg/m³) · April 2026 AQI calendar heatmap with forecast window highlighted · Rolling 30-day RMSE trend with Prophet crossover annotation and 25 µg/m³ alarm line.
+
+See [`docs/architecture.md § 2.5`](docs/architecture.md) for full dashboard design including QuickSight sheets and visual descriptions.
 
 ## Reproduction Steps
 
@@ -161,13 +177,66 @@ export AWS_DEFAULT_REGION=ap-southeast-1
 # Install dbt packages
 dbt deps
 
-# Run full build (seed + staging + intermediate + marts + tests)
+# Load seeds (vn_stations + vn_holidays)
+dbt seed
+
+# Run full build (staging + intermediate + marts + tests)
 PYTHONUTF8=1 dbt build --full-refresh --profiles-dir .
 ```
 
-Expected: PASS=53, WARN=0, ERROR=0
+Expected: PASS=53+, WARN=0, ERROR=0
 
-### 5. Deploy Dashboard
+### 5. Weather Backfill (Phase 3)
+
+```bash
+# Invoke weather_ingest Lambda with backfill_days=365 to hydrate historical ERA5 data
+aws lambda invoke \
+    --function-name openaq_weather_ingest \
+    --payload '{"backfill_days": 365}' \
+    --cli-binary-format raw-in-base64-out \
+    /tmp/weather_backfill_response.json
+cat /tmp/weather_backfill_response.json
+```
+
+After backfill, run dbt to materialise weather marts:
+```bash
+cd transform/
+PYTHONUTF8=1 dbt run --select stg_weather int_weather_enriched mart_daily_weather \
+    mart_aq_weather_daily mart_lagged_features mart_feature_stats --profiles-dir .
+```
+
+### 6. Forecast Lambda (Phase 5)
+
+```bash
+# Authenticate to ECR
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_REGION=ap-southeast-1
+aws ecr get-login-password --region $AWS_REGION | \
+    docker login --username AWS \
+    --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+# Build and push container image
+cd lambda/forecast_generate/
+docker build -t openaq-forecast-generate .
+docker tag openaq-forecast-generate:latest \
+    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/openaq-forecast-generate:latest
+docker push \
+    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/openaq-forecast-generate:latest
+
+# Wire image URI to Lambda function
+IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/openaq-forecast-generate:latest
+cd ../../terraform/
+terraform apply -var="forecast_lambda_image_uri=$IMAGE_URI"
+```
+
+Register the forecast external table in Athena (run once per environment):
+```sql
+-- In Athena console, workgroup: openaq_workgroup
+-- Replace {bucket} with your actual bucket name
+-- Full DDL: transform/setup/create_forecast_table.sql
+```
+
+### 7. Deploy Dashboard
 
 ```bash
 aws s3 cp dashboard/index.html s3://openaq-pipeline-thanhtrung102/dashboard/index.html \
@@ -175,6 +244,10 @@ aws s3 cp dashboard/index.html s3://openaq-pipeline-thanhtrung102/dashboard/inde
 ```
 
 ### Post-Deploy Checklist (one-time, manual steps after `terraform apply`)
+
+0. **Run forecast table Athena DDL** (Phase 5 — run before first forecast invocation):
+   - Open `transform/setup/create_forecast_table.sql`, replace `{bucket}` with your bucket name
+   - Execute in Athena console using workgroup `openaq_workgroup`
 
 1. **Inject OpenAQ API key into Secrets Manager** (Gap 2):
    ```bash
@@ -213,6 +286,8 @@ See [`docs/architecture-decision-record.md`](docs/architecture-decision-record.m
 - ADR-005: Kinesis over Kafka/MSK (no broker ops, Firehose S3 delivery)
 - ADR-007: Partition key `measurement_date` (91.7% scan reduction proven)
 - ADR-008: EventBridge Scheduler over Kestra/MWAA (zero infrastructure)
+- ADR-009: dbt-athena-community S3 data dir isolation (mart vs Athena results separation)
+- ADR-010: Open-Meteo ERA5 over NOAA ISD / ERA5-CDS (BLH field, no API key, Lambda-compatible latency)
 
 ## Key Metrics
 
@@ -227,3 +302,7 @@ See [`docs/architecture-decision-record.md`](docs/architecture-decision-record.m
 | HCMC WHO compliance | ~37% of days |
 | Athena workgroup scan limit | 10 GB/query |
 | Full mart rebuild time | ~10 minutes |
+| SARIMA 30-day holdout RMSE (Hanoi) | ~12.0 µg/m³ |
+| Prophet 30-day holdout RMSE (Hanoi) | ~9.5 µg/m³ (−21% vs SARIMA) |
+| Forecast horizon | 7 days ahead, daily refresh |
+| Forecast Lambda memory / timeout | 3008 MB / 900 s (ECR container) |

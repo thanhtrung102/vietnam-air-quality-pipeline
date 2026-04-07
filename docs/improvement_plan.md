@@ -1,7 +1,7 @@
 # Vietnam Air Quality Pipeline — Analytics Maturity Improvement Plan
 
 **Created:** 2026-04-06  
-**Status:** Phase 0 DONE. Executing sequentially — check this file before starting any session.
+**Status:** All phases DONE (0–6). Pipeline fully documented. Check this file before starting any session.
 
 ---
 
@@ -15,7 +15,7 @@
 | 3 | Weather Data Ingestion | ✅ DONE | Phase 1 infra |
 | 4 | Predictive Feature Engineering | ✅ DONE | Phase 3 data |
 | 5 | Predictive Modelling (SARIMA → Prophet) | ✅ DONE | Phase 4 features |
-| 6 | Architecture Documentation & Case Study | 🔄 NEXT | Phase 5 |
+| 6 | Architecture Documentation & Case Study | ✅ DONE | Phase 5 |
 
 **Total estimated effort:** ~12–16 days of work
 
@@ -239,23 +239,34 @@ Priority ordering: Gap 1 and 2 first (highest risk), then 3 and 4 (code quality)
 
 ---
 
-## Phase 6 — Architecture Documentation & Case Study
+## Phase 6 — Architecture Documentation & Case Study ✅ DONE
 
 ### 6.1 Regenerate architecture diagram
-- [ ] Add weather_ingest, forecast_generate, completeness_check to `generate_architecture.py`
+- [x] Add weather_ingest, forecast_generate, completeness_check to `generate_architecture.py`
+- [x] Expanded canvas to 1440×900; added third operations track (OPS_Y=720)
+- [x] Regenerated `docs/architecture.png` (2880×1800)
 
 ### 6.2 Update `architecture.md` comprehensively
-- [ ] Section 2.1: weather_ingest Lambda + Open-Meteo
-- [ ] Section 2.3: all 7 new mart models
-- [ ] Add Section 8: Predictive Layer
+- [x] Version 1.1 → 1.3, date 2026-04-07
+- [x] Added Section 2.2 (weather_ingest Lambda + Open-Meteo) and 2.3 (completeness_check)
+- [x] Section 2.4 (transform): all 14 mart models listed including external mart_daily_forecast
+- [x] Section 2.5 (dashboard): Sheet 4 description added
+- [x] Added Section 3: Predictive Layer (3.1–3.4)
+- [x] Updated folder structure (seeds, models, lambda, setup)
+- [x] Added ADR-010 (Open-Meteo vs NOAA ISD / ERA5-CDS)
 
 ### 6.3 Write `docs/case_study.md` — CRISP-DM
-- [ ] Business Understanding → Data Understanding → Preparation → Modelling → Evaluation → Deployment
+- [x] Business Understanding → Data Understanding → Preparation → Modelling → Evaluation → Deployment
 
 ### 6.4 Update `README.md`
-- [ ] Phase 3–5 reproduction steps
-- [ ] Key Metrics table with SARIMA RMSE
-- [ ] dbt Lineage table with 7 new mart rows
+- [x] Problem statement updated to mention weather and predictive layer
+- [x] Tech Stack: weather_ingest, forecast_generate (ECR), Open-Meteo rows added
+- [x] dbt Lineage: 8 new rows (stg_weather, int_weather_enriched, 5 new marts, mart_daily_forecast external)
+- [x] QuickSight Sheet 4 section added
+- [x] Phase 3–5 reproduction steps (weather backfill, ECR build/push, forecast table DDL)
+- [x] Post-deploy checklist: forecast table DDL step added
+- [x] Key Metrics: SARIMA RMSE, Prophet RMSE, forecast horizon, Lambda sizing
+- [x] ADR list: ADR-009, ADR-010 added
 
 ### 6.5 Final commit and push
 
