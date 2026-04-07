@@ -55,3 +55,19 @@ variable "lambda_weather_zip_path" {
   type        = string
   default     = "../lambda/weather_ingest.zip"
 }
+
+variable "forecast_lambda_image_uri" {
+  description = <<-EOT
+    ECR image URI for the forecast_generate container Lambda.
+    Set to a non-empty value only after the Docker image has been built and pushed to ECR.
+    Example: 123456789012.dkr.ecr.ap-southeast-1.amazonaws.com/openaq-forecast-generate:latest
+
+    Deployment steps:
+      1. terraform apply                  → creates ECR repo (Lambda skipped while this is empty)
+      2. docker build lambda/forecast_generate/
+      3. docker tag + docker push to ECR
+      4. terraform apply -var="forecast_lambda_image_uri=<URI>:latest"
+  EOT
+  type        = string
+  default     = ""
+}

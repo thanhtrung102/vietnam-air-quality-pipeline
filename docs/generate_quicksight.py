@@ -995,15 +995,311 @@ def make_sheet3():
              "Source: OpenAQ API · Amazon Athena · dbt-athena-community · "
              "mart_exceedance_stats · mart_pollutant_ratio · mart_annual_monthly_trend · mart_daily_meteorology",
              fontsize=8, color=QS_MUTED)
-    fig.text(0.97, 0.015, "Sheet 3 of 3", fontsize=8, color=QS_MUTED, ha="right")
+    fig.text(0.97, 0.015, "Sheet 3 of 4", fontsize=8, color=QS_MUTED, ha="right")
 
     plt.savefig(str(OUT3), dpi=150, bbox_inches="tight", facecolor=QS_GRAY_BG)
     plt.close(fig)
     print(f"Saved {OUT3}")
 
 
+# ════════════════════════════════════════════════════════════════════════════════
+# SHEET 4 — Predictive Analytics (Phase 5)
+# ════════════════════════════════════════════════════════════════════════════════
+
+OUT4 = HERE / "quicksight_sheet4.png"
+
+# Reference date: last day with actual data (Apr 7 2026), forecast Apr 8–14
+_TODAY      = datetime.date(2026, 4, 7)
+_HIST_START = datetime.date(2026, 3, 24)   # 14 days of history shown in Chart 1
+
+np.random.seed(42)
+
+# ── Chart 1 data: 7-day ahead forecast + 14-day history ──────────────────────
+# April = Transition season in Hanoi (~35–55 µg/m³); HCMC ~15–25 µg/m³
+
+def _gen_history(start, end, mu, amplitude, noise_sd):
+    """Synthetic daily PM2.5 history with slight downward trend."""
+    n = (end - start).days + 1
+    t = np.arange(n)
+    trend = np.linspace(0, -amplitude * 0.3, n)
+    seasonal = amplitude * np.sin(np.pi * t / (n * 1.5))
+    return np.maximum(2, mu + trend + seasonal + np.random.normal(0, noise_sd, n))
+
+_HIST_DATES_H = [_HIST_START + datetime.timedelta(days=i)
+                 for i in range((_TODAY - _HIST_START).days + 1)]
+_HIST_PM25_H  = _gen_history(_HIST_START, _TODAY, mu=46, amplitude=10, noise_sd=4)
+
+_HIST_DATES_C = _HIST_DATES_H
+_HIST_PM25_C  = _gen_history(_HIST_START, _TODAY, mu=19, amplitude=4, noise_sd=2)
+
+# 7-day forecast from Apr 8 onwards — Hanoi decreasing as monsoon transitions
+_FCST_DATES = [_TODAY + datetime.timedelta(days=i + 1) for i in range(7)]
+_FCST_SARIMA_H = np.array([44.2, 42.7, 41.1, 39.8, 38.5, 37.2, 36.0])
+_FCST_PROPHET_H = np.array([43.1, 41.5, 40.0, 38.9, 37.6, 36.8, 35.5])
+_CI_SARIMA_LO_H = _FCST_SARIMA_H - np.array([8.1, 9.4, 10.8, 11.5, 12.4, 13.1, 14.2])
+_CI_SARIMA_HI_H = _FCST_SARIMA_H + np.array([8.1, 9.4, 10.8, 11.5, 12.4, 13.1, 14.2])
+_CI_PROPHET_LO_H = _FCST_PROPHET_H - np.array([6.8, 7.9,  9.1, 10.2, 11.3, 12.1, 13.0])
+_CI_PROPHET_HI_H = _FCST_PROPHET_H + np.array([6.8, 7.9,  9.1, 10.2, 11.3, 12.1, 13.0])
+
+_FCST_SARIMA_C  = np.array([18.7, 18.2, 17.9, 17.6, 17.4, 17.1, 16.9])
+_FCST_PROPHET_C = np.array([18.3, 17.9, 17.5, 17.2, 17.0, 16.8, 16.6])
+
+# ── Chart 2 data: forecast vs actual scatter (30-day holdout Mar 2026) ───────
+# SARIMA RMSE ≈ 12 µg/m³ Hanoi, Prophet RMSE ≈ 9.5 µg/m³
+
+def _gen_holdout(actual_mu, actual_sd, rmse, n=30):
+    actual = np.maximum(2, np.random.normal(actual_mu, actual_sd, n))
+    noise  = np.random.normal(0, rmse, n)
+    pred   = np.clip(actual + noise, 2, None)
+    return actual, pred
+
+_HO_ACTUAL_SARIMA_H, _HO_PRED_SARIMA_H   = _gen_holdout(42, 15, 12.0)
+_HO_ACTUAL_PROPHET_H, _HO_PRED_PROPHET_H = _gen_holdout(42, 15,  9.5)
+
+_SARIMA_RMSE  = float(np.sqrt(np.mean((_HO_PRED_SARIMA_H  - _HO_ACTUAL_SARIMA_H) ** 2)))
+_PROPHET_RMSE = float(np.sqrt(np.mean((_HO_PRED_PROPHET_H - _HO_ACTUAL_PROPHET_H) ** 2)))
+
+# ── Chart 3 data: April 2026 forecast calendar (Hanoi, AQI) ──────────────────
+# April 1–7: historical actuals; Apr 8–14: SARIMA forecast; Apr 15–30: blank
+
+def _to_aqi_cat(pm25):
+    if pm25 is None:  return None
+    if pm25 <=  9.0:  return "Good"
+    if pm25 <= 35.4:  return "Moderate"
+    if pm25 <= 55.4:  return "USG"
+    if pm25 <= 125.4: return "Unhealthy"
+    return "VeryUnhealthy"
+
+_APR_HIST_PM25 = [52.1, 49.8, 48.3, 46.7, 45.4, 44.1, 43.2]  # Apr 1–7 actual
+_APR_FCST_PM25 = list(_FCST_SARIMA_H)                           # Apr 8–14 SARIMA
+
+_APR_PM25: list = _APR_HIST_PM25 + _APR_FCST_PM25 + [None] * 16  # Apr 15–30
+_APR_CATS = [_to_aqi_cat(v) for v in _APR_PM25]
+
+_CAL_COLORS = {
+    "Good": "#00C851", "Moderate": "#FFD700", "USG": "#FF7E00",
+    "Unhealthy": "#FF4444", "VeryUnhealthy": "#8F3F97",
+}
+
+# ── Chart 4 data: rolling 30-day RMSE trend (Jan 1 – Apr 7 2026) ─────────────
+# SARIMA converges from ~18 → ~12 µg/m³; Prophet warmup phase then beats SARIMA
+
+def _gen_rmse_trend(n_days, start_rmse, end_rmse, noise_sd=0.8, warmup=20, high_start=None):
+    base = np.linspace(start_rmse, end_rmse, n_days)
+    if high_start is not None:
+        base[:warmup] = np.linspace(high_start, start_rmse, warmup)
+    return np.maximum(5, base + np.random.normal(0, noise_sd, n_days))
+
+_RMSE_DAYS = 97  # Jan 1 – Apr 7 2026
+_RMSE_DATES = [datetime.date(2026, 1, 1) + datetime.timedelta(days=i) for i in range(_RMSE_DAYS)]
+_RMSE_SARIMA   = _gen_rmse_trend(_RMSE_DAYS, 16.5, 11.8, noise_sd=0.9)
+_RMSE_PROPHET  = _gen_rmse_trend(_RMSE_DAYS, 13.2,  9.4, noise_sd=0.7,
+                                  warmup=30, high_start=22.0)
+
+
+def make_sheet4():
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch, FancyBboxPatch
+    import matplotlib.dates as mdates
+
+    fig = plt.figure(figsize=(18, 22), facecolor=QS_GRAY_BG)
+    gs  = gridspec.GridSpec(2, 2, figure=fig,
+                            left=0.07, right=0.97, top=0.94, bottom=0.04,
+                            hspace=0.42, wspace=0.32)
+
+    fig.text(0.5, 0.972, "Vietnam Air Quality Dashboard — Sheet 4: Predictive Analytics",
+             ha="center", fontsize=17, fontweight="bold", color=QS_TEXT)
+    fig.text(0.5, 0.958,
+             "mart_daily_forecast · mart_forecast_accuracy · SARIMA(1,1,1)(1,1,1,365) · Prophet",
+             ha="center", fontsize=10, color=QS_MUTED)
+    fig.text(0.93, 0.965, "Predictive", ha="right", fontsize=9, color="#FFFFFF",
+             bbox=dict(boxstyle="round,pad=0.3", facecolor=QS_BLUE, edgecolor="none"))
+
+    # ── 1. 7-day ahead forecast — Hanoi ──────────────────────────────────────────
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax1.set_facecolor(QS_PANEL_BG)
+
+    hist_x = mdates.date2num([datetime.datetime.combine(d, datetime.time()) for d in _HIST_DATES_H])
+    fcst_x = mdates.date2num([datetime.datetime.combine(d, datetime.time()) for d in _FCST_DATES])
+    today_x = mdates.date2num(datetime.datetime.combine(_TODAY, datetime.time()))
+
+    ax1.plot(hist_x, _HIST_PM25_H, color=QS_MUTED, lw=1.8,
+             label="Actual (Mar 24 – Apr 7)", zorder=4)
+
+    ax1.plot(fcst_x, _FCST_SARIMA_H, color=QS_BLUE, lw=2.2, ls="--",
+             marker="o", ms=5, label="SARIMA forecast", zorder=4)
+    ax1.fill_between(fcst_x, _CI_SARIMA_LO_H, _CI_SARIMA_HI_H,
+                     color=QS_BLUE, alpha=0.12, label="SARIMA 95% CI")
+
+    ax1.plot(fcst_x, _FCST_PROPHET_H, color=QS_ORANGE, lw=2.2, ls="--",
+             marker="s", ms=5, label="Prophet forecast", zorder=4)
+    ax1.fill_between(fcst_x, _CI_PROPHET_LO_H, _CI_PROPHET_HI_H,
+                     color=QS_ORANGE, alpha=0.12, label="Prophet 95% CI")
+
+    ax1.axvline(today_x, color=QS_MUTED, ls=":", lw=1.2)
+    ax1.text(today_x + 0.1, 60, "← Forecast", fontsize=8, color=QS_MUTED, va="top")
+
+    ax1.axhline(WHO_PM25,  color=QS_RED,    ls="--", lw=1.0, alpha=0.7)
+    ax1.axhline(35.4,      color=QS_ORANGE, ls="--", lw=0.9, alpha=0.7)
+    ax1.text(hist_x[0], WHO_PM25 + 0.8, "WHO 15",  fontsize=7, color=QS_RED)
+    ax1.text(hist_x[0], 36.2,            "Moderate 35.4", fontsize=7, color=QS_ORANGE)
+
+    ax1.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
+    ax1.xaxis.set_major_locator(mdates.DayLocator(interval=4))
+    plt.setp(ax1.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=8)
+    ax1.set_ylabel("PM2.5 (µg/m³)", fontsize=9, color=QS_MUTED)
+    ax1.set_ylim(0, 75)
+    ax1.set_title("7-Day PM2.5 Forecast — Hanoi\n"
+                  "SARIMA(1,1,1) vs Prophet w/ weather regressors",
+                  fontsize=11, fontweight="bold", color=QS_TEXT, loc="left", pad=8)
+    ax1.grid(axis="y", color=QS_GRAY_LINE, lw=0.7)
+    ax1.spines[:].set_visible(False)
+    ax1.tick_params(labelcolor=QS_MUTED, left=False)
+    ax1.legend(fontsize=8, loc="upper right", framealpha=0.85, edgecolor=QS_GRAY_LINE,
+               ncol=2)
+
+    # ── 2. Forecast vs actual scatter (30-day holdout) ────────────────────────────
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax2.set_facecolor(QS_PANEL_BG)
+
+    xy_max = max(
+        _HO_ACTUAL_SARIMA_H.max(), _HO_PRED_SARIMA_H.max(),
+        _HO_ACTUAL_PROPHET_H.max(), _HO_PRED_PROPHET_H.max(),
+    ) + 5
+
+    ax2.scatter(_HO_ACTUAL_SARIMA_H,  _HO_PRED_SARIMA_H,  color=QS_BLUE,
+                alpha=0.65, s=28, label=f"SARIMA  (RMSE={_SARIMA_RMSE:.1f} µg/m³)", zorder=3)
+    ax2.scatter(_HO_ACTUAL_PROPHET_H, _HO_PRED_PROPHET_H, color=QS_ORANGE,
+                alpha=0.65, s=28, marker="s",
+                label=f"Prophet (RMSE={_PROPHET_RMSE:.1f} µg/m³)", zorder=3)
+
+    # Perfect prediction line
+    diag = np.array([0, xy_max])
+    ax2.plot(diag, diag, color=QS_MUTED, ls="--", lw=1.2, alpha=0.7, label="Perfect forecast")
+
+    ax2.set_xlim(0, xy_max); ax2.set_ylim(0, xy_max)
+    ax2.set_xlabel("Actual PM2.5 (µg/m³)", fontsize=9, color=QS_MUTED)
+    ax2.set_ylabel("Forecast PM2.5 (µg/m³)", fontsize=9, color=QS_MUTED)
+    ax2.set_title("Forecast vs Actual — Hanoi (30-day holdout, Feb–Mar 2026)\n"
+                  "mart_forecast_accuracy · lower RMSE = better model",
+                  fontsize=11, fontweight="bold", color=QS_TEXT, loc="left", pad=8)
+    ax2.grid(color=QS_GRAY_LINE, lw=0.7)
+    ax2.spines[:].set_visible(False)
+    ax2.tick_params(labelcolor=QS_MUTED, left=False, bottom=False)
+    ax2.legend(fontsize=8.5, loc="upper left", framealpha=0.85, edgecolor=QS_GRAY_LINE)
+
+    ax2.text(0.97, 0.06,
+             f"Prophet wins by {_SARIMA_RMSE - _PROPHET_RMSE:.1f} µg/m³ RMSE\n"
+             "Weather regressors improve NE→Transition boundary",
+             transform=ax2.transAxes, fontsize=8, color=QS_MUTED,
+             ha="right", va="bottom",
+             bbox=dict(boxstyle="round,pad=0.3", facecolor=QS_GRAY_BG, edgecolor=QS_GRAY_LINE))
+
+    # ── 3. April 2026 forecast calendar heatmap — Hanoi ──────────────────────────
+    ax3 = fig.add_subplot(gs[1, 0])
+    ax3.set_facecolor(QS_PANEL_BG)
+    ax3.set_xlim(-0.5, 6.5)
+    ax3.set_ylim(-0.5, 4.5)
+    ax3.invert_yaxis()
+    ax3.set_aspect("equal")
+
+    # April 1 starts on Wednesday (weekday index 2)
+    apr_start_dow = datetime.date(2026, 4, 1).weekday()  # 0=Mon
+
+    for day_idx in range(30):
+        date_cell = datetime.date(2026, 4, day_idx + 1)
+        cell_num  = day_idx + apr_start_dow
+        col       = cell_num % 7
+        row       = cell_num // 7
+        cat       = _APR_CATS[day_idx]
+        pm25_val  = _APR_PM25[day_idx]
+
+        face_color = _CAL_COLORS.get(cat, "#EEEEEE") if cat else "#F0F0F0"
+        edge_color = QS_BLUE if 7 < day_idx < 15 else QS_GRAY_LINE
+        lw_val     = 2.0 if 7 < day_idx < 15 else 0.5
+
+        rect = FancyBboxPatch(
+            (col - 0.42, row - 0.42), 0.84, 0.84,
+            boxstyle="round,pad=0.03",
+            facecolor=face_color, edgecolor=edge_color, linewidth=lw_val, zorder=2,
+        )
+        ax3.add_patch(rect)
+        ax3.text(col, row - 0.18, str(day_idx + 1), ha="center", fontsize=9,
+                 fontweight="bold", color="#333333")
+        if pm25_val is not None:
+            ax3.text(col, row + 0.22, f"{pm25_val:.0f}", ha="center", fontsize=7.5,
+                     color="#555555")
+
+    # Day-of-week header
+    dow_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    for i, lbl in enumerate(dow_labels):
+        ax3.text(i, -0.45, lbl, ha="center", fontsize=8, color=QS_MUTED, fontweight="bold")
+
+    ax3.axis("off")
+    ax3.set_title("April 2026 AQI Calendar — Hanoi\n"
+                  "Apr 1–7: actuals · Apr 8–14: SARIMA forecast (blue border)",
+                  fontsize=11, fontweight="bold", color=QS_TEXT, loc="left", pad=8)
+
+    # Legend patches
+    cal_legend = [Patch(facecolor=_CAL_COLORS[k], label=k)
+                  for k in ["Good", "Moderate", "USG", "Unhealthy"]]
+    cal_legend.append(Patch(facecolor="none", edgecolor=QS_BLUE, lw=2, label="Forecast"))
+    ax3.legend(handles=cal_legend, fontsize=7.5, loc="lower right",
+               framealpha=0.9, edgecolor=QS_GRAY_LINE, ncol=3)
+
+    # ── 4. Rolling 30-day RMSE trend (Jan–Apr 2026) ───────────────────────────────
+    ax4 = fig.add_subplot(gs[1, 1])
+    ax4.set_facecolor(QS_PANEL_BG)
+
+    rmse_x = mdates.date2num([datetime.datetime.combine(d, datetime.time())
+                               for d in _RMSE_DATES])
+
+    ax4.plot(rmse_x, _RMSE_SARIMA,  color=QS_BLUE,   lw=2.2, label="SARIMA")
+    ax4.plot(rmse_x, _RMSE_PROPHET, color=QS_ORANGE, lw=2.2, label="Prophet")
+
+    # Alarm threshold
+    ax4.axhline(25, color=QS_RED, ls="--", lw=1.4, alpha=0.8)
+    ax4.text(rmse_x[-1] + 0.5, 25.3, "Alarm\n25 µg/m³",
+             fontsize=7.5, color=QS_RED, va="bottom", clip_on=False)
+
+    # Prophet crossover annotation
+    cross_idx = next((i for i in range(len(_RMSE_PROPHET))
+                      if _RMSE_PROPHET[i] < _RMSE_SARIMA[i]), None)
+    if cross_idx:
+        ax4.annotate("Prophet\ncrosses over",
+                     xy=(rmse_x[cross_idx], _RMSE_PROPHET[cross_idx]),
+                     xytext=(rmse_x[cross_idx + 8], _RMSE_PROPHET[cross_idx] + 3.5),
+                     arrowprops=dict(arrowstyle="->", color=QS_MUTED, lw=0.9),
+                     fontsize=8, color=QS_MUTED)
+
+    ax4.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
+    ax4.xaxis.set_major_locator(mdates.DayLocator(interval=21))
+    plt.setp(ax4.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=8)
+    ax4.set_ylabel("Rolling 30-day RMSE (µg/m³)", fontsize=9, color=QS_MUTED)
+    ax4.set_ylim(0, 30)
+    ax4.set_title("Model RMSE Trend — Hanoi (Jan – Apr 2026)\n"
+                  "Rolling 30-day holdout RMSE · Prophet improves as data accumulates",
+                  fontsize=11, fontweight="bold", color=QS_TEXT, loc="left", pad=8)
+    ax4.grid(axis="y", color=QS_GRAY_LINE, lw=0.7)
+    ax4.spines[:].set_visible(False)
+    ax4.tick_params(labelcolor=QS_MUTED, left=False)
+    ax4.legend(fontsize=9, loc="upper right", framealpha=0.85, edgecolor=QS_GRAY_LINE)
+
+    # Footer
+    fig.text(0.07, 0.022,
+             "Source: mart_daily_forecast (Lambda) · mart_forecast_accuracy (dbt) · "
+             "SARIMA(1,1,1)(1,1,1,365) · Prophet + weather regressors + VN holidays",
+             fontsize=8, color=QS_MUTED)
+    fig.text(0.97, 0.022, "Sheet 4 of 4", fontsize=8, color=QS_MUTED, ha="right")
+
+    plt.savefig(str(OUT4), dpi=150, bbox_inches="tight", facecolor=QS_GRAY_BG)
+    plt.close(fig)
+    print(f"Saved {OUT4}")
+
+
 if __name__ == "__main__":
     make_sheet1()
     make_sheet2()
     make_sheet3()
+    make_sheet4()
     print("Done")

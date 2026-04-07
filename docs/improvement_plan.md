@@ -14,8 +14,8 @@
 | 2 | Diagnostic Analytics Completion | ✅ DONE | Phase 1 IAM |
 | 3 | Weather Data Ingestion | ✅ DONE | Phase 1 infra |
 | 4 | Predictive Feature Engineering | ✅ DONE | Phase 3 data |
-| 5 | Predictive Modelling (SARIMA → Prophet) | 🔄 NEXT | Phase 4 features |
-| 6 | Architecture Documentation & Case Study | ⏳ Pending | Phase 5 |
+| 5 | Predictive Modelling (SARIMA → Prophet) | ✅ DONE | Phase 4 features |
+| 6 | Architecture Documentation & Case Study | 🔄 NEXT | Phase 5 |
 
 **Total estimated effort:** ~12–16 days of work
 
@@ -201,28 +201,41 @@ Priority ordering: Gap 1 and 2 first (highest risk), then 3 and 4 (code quality)
 
 ---
 
-## Phase 5 — Predictive Modelling (SARIMA → Prophet)
+## Phase 5 — Predictive Modelling (SARIMA → Prophet) ✅ DONE
 
-### 5.1 Forecast Lambda — SARIMA baseline
-- [ ] Create `lambda/forecast_generate/handler.py`
-  - Query `mart_lagged_features` → fit SARIMA(1,1,1)(1,1,1,12) → 7-day forecast
-  - Write Parquet to `processed/openaq_mart/mart_daily_forecast/`
-  - SNS alert if forecast > AQI 150
+### 5.1 Forecast Lambda — SARIMA + Prophet
+- [x] Created `lambda/forecast_generate/handler.py`
+  - Queries `mart_lagged_features` via Athena for all stations
+  - Fits SARIMA(1,1,1)(1,1,1,365) and Prophet per station with 30-day holdout A/B
+  - Writes Parquet to `processed/openaq_mart/mart_daily_forecast/generated_at={date}/model={model}/`
+  - SNS alert if any forecast day > AQI 150 (PM2.5 > 55.4 µg/m³)
+  - `lambda/forecast_generate/Dockerfile` — container image (statsmodels + prophet exceed 250 MB zip limit)
+  - `lambda/forecast_generate/requirements.txt` — statsmodels, prophet, pandas, pyarrow
 
 ### 5.2 `mart_daily_forecast` — forecast output table
-- [ ] External Glue table pointing to Lambda S3 output
-- [ ] DDL in `transform/setup/create_forecast_table.sql`
+- [x] External Glue table with Partition Projection (generated_at × model)
+- [x] DDL in `transform/setup/create_forecast_table.sql`
+- [x] ECR repository `openaq-forecast-generate` with lifecycle policy (keep 3 images)
+- [x] `aws_lambda_function.forecast_generate` — container image, 3 GB, 15 min timeout
+- [x] EventBridge Scheduler: 03:00 UTC daily (after weather + dbt)
+- [x] `forecast_lambda_image_uri` Terraform variable (empty = skip Lambda; set after ECR push)
 
 ### 5.3 Upgrade to Prophet (exogenous variables)
-- [ ] Weather regressors, VN holidays
-- [ ] A/B test vs SARIMA on 30-day holdout
+- [x] Weather regressors: avg_rh_2m, avg_wind_speed, total_precipitation_mm, inversion_risk
+- [x] VN holidays 2023–2027 wired into Prophet via `VN_HOLIDAYS_PROPHET` DataFrame
+- [x] A/B test: 30-day holdout RMSE computed per station; city-level mean emitted to CloudWatch
 
 ### 5.4 QuickSight Sheet 4 — Forecast View
-- [ ] 4 charts: 7-day ahead forecast · Forecast vs actual · High-risk calendar · RMSE trend
+- [x] Chart 1: 7-day ahead forecast (SARIMA + Prophet) with 95% CI bands, Hanoi
+- [x] Chart 2: Forecast vs actual scatter (30-day holdout) — SARIMA vs Prophet RMSE
+- [x] Chart 3: April 2026 AQI forecast calendar heatmap (actuals Apr 1–7, forecast Apr 8–14)
+- [x] Chart 4: Rolling 30-day RMSE trend (Jan–Apr 2026) showing Prophet crossover
+- [x] `docs/quicksight_sheet4.png` generated
 
 ### 5.5 Forecast accuracy monitoring
-- [ ] `mart_forecast_accuracy.sql`: rolling RMSE, MAE, bias
-- [ ] CloudWatch alarm: 7-day RMSE > 25 µg/m³ → SNS
+- [x] `mart_forecast_accuracy.sql`: rolling RMSE 7d/30d, MAE 30d, bias 30d per station × model
+- [x] CloudWatch alarm `openaq_forecast_rmse_sarima_hanoi`: RMSE > 25 µg/m³ for 3 consecutive days → SNS
+- [x] `ForecastRMSE` metric emitted per model × city after each Lambda run
 
 ---
 

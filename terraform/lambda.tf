@@ -708,3 +708,149 @@ resource "aws_iam_role_policy" "scheduler_invoke_weather" {
     }]
   })
 }
+
+# ── ECR Repository: forecast_generate container image (Phase 5) ───────────────
+# statsmodels + prophet + pandas + pyarrow exceed the 250 MB Lambda zip limit.
+# The forecast Lambda is therefore deployed as a container image via ECR.
+#
+# Deployment order:
+#   1. terraform apply   → creates ECR repo (forecast Lambda is skipped on first
+#                           apply because forecast_lambda_image_uri is empty by default)
+#   2. docker build && docker push  (see lambda/forecast_generate/Dockerfile)
+#   3. terraform apply -var="forecast_lambda_image_uri=<ECR_URI>:latest"
+
+resource "aws_ecr_repository" "forecast" {
+  name                 = "openaq-forecast-generate"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_ecr_lifecycle_policy" "forecast" {
+  repository = aws_ecr_repository.forecast.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Retain last 3 images to allow rollback"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 3
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
+# ── Lambda: openaq_forecast_generate (Phase 5) ────────────────────────────────
+# Container image Lambda. Created only when forecast_lambda_image_uri is non-empty.
+# Runs after weather_ingest (02:00 UTC) and dbt (assumed ~02:30 UTC): scheduled 03:00 UTC.
+# 3 GB memory for statsmodels + Prophet; 15 min timeout for 21 stations × 2 models.
+
+resource "aws_cloudwatch_log_group" "forecast_generate" {
+  count             = var.forecast_lambda_image_uri != "" ? 1 : 0
+  name              = "/aws/lambda/openaq_forecast_generate"
+  retention_in_days = 14
+  tags              = local.common_tags
+}
+
+resource "aws_lambda_function" "forecast_generate" {
+  count         = var.forecast_lambda_image_uri != "" ? 1 : 0
+  function_name = "openaq_forecast_generate"
+  role          = aws_iam_role.lambda_exec.arn
+  package_type  = "Image"
+  image_uri     = var.forecast_lambda_image_uri
+  timeout       = 900    # 15 minutes — SARIMA + Prophet for 21 stations
+  memory_size   = 3008   # 3 GB — statsmodels + Prophet in-memory model objects
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME      = local.bucket_name
+      ATHENA_DATABASE     = "openaq_mart"
+      ATHENA_WORKGROUP    = "openaq_workgroup"
+      SNS_ALERT_TOPIC_ARN = aws_sns_topic.openaq_alerts.arn
+      FORECAST_HORIZON    = "7"
+      HOLDOUT_DAYS        = "30"
+      MIN_TRAIN_DAYS      = "60"
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.forecast_generate]
+  tags       = local.common_tags
+}
+
+resource "aws_scheduler_schedule" "forecast_daily" {
+  count      = var.forecast_lambda_image_uri != "" ? 1 : 0
+  name       = "openaq_forecast_daily"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  # 03:00 UTC — after weather_ingest (02:00) and dbt mart rebuild (~02:30)
+  schedule_expression = "cron(0 3 * * ? *)"
+
+  target {
+    arn      = aws_lambda_function.forecast_generate[0].arn
+    role_arn = aws_iam_role.scheduler.arn
+    input    = jsonencode({})
+  }
+}
+
+resource "aws_lambda_permission" "forecast_scheduler" {
+  count         = var.forecast_lambda_image_uri != "" ? 1 : 0
+  statement_id  = "AllowSchedulerInvokeForecast"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.forecast_generate[0].function_name
+  principal     = "scheduler.amazonaws.com"
+  source_arn    = aws_scheduler_schedule.forecast_daily[0].arn
+}
+
+resource "aws_iam_role_policy" "scheduler_invoke_forecast" {
+  count = var.forecast_lambda_image_uri != "" ? 1 : 0
+  name  = "openaq_scheduler_invoke_forecast"
+  role  = aws_iam_role.scheduler.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "InvokeForecast"
+      Effect   = "Allow"
+      Action   = "lambda:InvokeFunction"
+      Resource = aws_lambda_function.forecast_generate[0].arn
+    }]
+  })
+}
+
+# ── CloudWatch Alarm: ForecastRMSE (Phase 5.5) ────────────────────────────────
+# Fires when SARIMA holdout RMSE for Hanoi exceeds 25 µg/m³ (model drift indicator).
+# The forecast Lambda emits ForecastRMSE{Model=sarima, City=Hanoi} after each run.
+
+resource "aws_cloudwatch_metric_alarm" "forecast_rmse_sarima" {
+  count               = var.forecast_lambda_image_uri != "" ? 1 : 0
+  alarm_name          = "openaq_forecast_rmse_sarima_hanoi"
+  alarm_description   = "SARIMA 30-day holdout RMSE for Hanoi > 25 µg/m³ — model may need retraining"
+  metric_name         = "ForecastRMSE"
+  namespace           = "OpenAQ/Pipeline"
+  statistic           = "Average"
+  period              = 86400         # 1-day evaluation (Lambda runs once daily)
+  evaluation_periods  = 3             # alert after 3 consecutive breaches
+  threshold           = 25
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    Model = "sarima"
+    City  = "Hanoi"
+  }
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
+}

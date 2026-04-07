@@ -985,3 +985,89 @@ models:
 
       - name: series_end
         description: Latest measurement_date in this station's feature series
+
+  - name: mart_forecast_accuracy
+    description: >
+      Rolling forecast error metrics for SARIMA and Prophet models (Phase 5.5).
+      Grain: one row per location_id × model × forecast_date.
+      Sources: openaq_mart.mart_daily_forecast (Lambda external Parquet table) +
+               mart_daily_air_quality (actuals). Most-recent-generated_at forecast
+               wins when multiple runs exist for the same forecast_date.
+      Partitioned by forecast_date. NULL error columns for future dates not yet observed.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - location_id
+              - model
+              - forecast_date
+
+    columns:
+      - name: location_id
+        description: OpenAQ internal location identifier
+        tests:
+          - not_null
+
+      - name: forecast_date
+        description: The date being forecast (partition key)
+        tests:
+          - not_null
+
+      - name: model
+        description: Model type ('sarima' or 'prophet')
+        tests:
+          - not_null
+          - accepted_values:
+              values: [sarima, prophet]
+
+      - name: city
+        description: City (Hanoi or Ho Chi Minh City)
+
+      - name: generated_at
+        description: Date the forecast was generated (most recent run for this forecast_date)
+
+      - name: forecast_pm25
+        description: Predicted daily mean PM2.5 (µg/m³)
+
+      - name: forecast_aqi
+        description: Predicted AQI derived from forecast_pm25 (US EPA 2024 breakpoints)
+
+      - name: ci_lower_95
+        description: 95% confidence interval lower bound (µg/m³)
+
+      - name: ci_upper_95
+        description: 95% confidence interval upper bound (µg/m³)
+
+      - name: holdout_rmse
+        description: 30-day holdout RMSE for this station × model from the Lambda invocation
+
+      - name: actual_pm25
+        description: Observed PM2.5 from mart_daily_air_quality; NULL for future forecast_dates
+
+      - name: error
+        description: forecast_pm25 − actual_pm25 (positive = over-forecast); NULL until observed
+
+      - name: abs_error
+        description: Absolute forecast error (|forecast_pm25 - actual_pm25|); NULL until observed
+
+      - name: squared_error
+        description: error²; NULL until observed; used for RMSE computation
+
+      - name: rolling_rmse_7d
+        description: >
+          sqrt(avg(squared_error) over last 7 forecast dates) per station × model.
+          NULL until sufficient observed rows exist in the window.
+
+      - name: rolling_rmse_30d
+        description: >
+          sqrt(avg(squared_error) over last 30 forecast dates).
+          CloudWatch alarm fires when this exceeds 25 µg/m³ for Hanoi SARIMA.
+
+      - name: rolling_mae_30d
+        description: avg(|error|) over last 30 forecast dates (µg/m³)
+
+      - name: rolling_bias_30d
+        description: >
+          avg(error) over last 30 forecast dates.
+          Positive = systematic over-forecast; negative = systematic under-forecast.
