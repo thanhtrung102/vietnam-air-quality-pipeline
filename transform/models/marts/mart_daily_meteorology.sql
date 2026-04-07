@@ -33,7 +33,6 @@ select
     city,
     province,
     sensor_type,
-    measurement_date,
 
     -- Temperature (°C) — daily statistics
     round(avg(case when parameter = 'temperature'      then measurement_value end), 4) as avg_temperature,
@@ -45,7 +44,10 @@ select
     round(avg(case when parameter = 'relativehumidity' then measurement_value end), 4) as avg_rh,
     round(max(case when parameter = 'relativehumidity' then measurement_value end), 4) as max_rh,
     round(min(case when parameter = 'relativehumidity' then measurement_value end), 4) as min_rh,
-    count(case when parameter = 'relativehumidity'     then 1                  end)    as reading_count_rh
+    count(case when parameter = 'relativehumidity'     then 1                  end)    as reading_count_rh,
+
+    -- Partition key — must be last column for Athena CTAS
+    measurement_date
 
 from {{ ref('int_measurements_enriched') }}
 where parameter in ('relativehumidity', 'temperature')

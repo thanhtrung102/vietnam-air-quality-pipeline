@@ -31,7 +31,7 @@ with source as (
         units,
         value
 
-    from {{ source('openaq_raw', 'raw_measurements') }}
+    from {{ source('openaq_raw', 'batch') }}
 
     where datetime        is not null
       and value           is not null

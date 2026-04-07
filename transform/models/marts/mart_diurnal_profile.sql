@@ -27,6 +27,41 @@ Use in dashboard:
 
 {{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
 
+with labelled as (
+
+    select
+        location_id,
+        location_name,
+        city,
+        province,
+        sensor_type,
+        parameter,
+        measurement_value,
+        -- Convert UTC → Vietnam local time (UTC+7, no DST)
+        hour(measured_at + interval '7' hour) as hour_of_day,
+
+        -- Weekday vs weekend (group before aggregating to avoid Saturday + Sunday = 2 rows)
+        case
+            when day_of_week(date(measured_at + interval '7' hour)) in (1, 7)
+                then 'Weekend'
+            else 'Weekday'
+        end as day_type,
+
+        -- Vietnam meteorological season
+        case
+            when month(date(measured_at + interval '7' hour)) in (11, 12, 1, 2, 3)
+                then 'NE Monsoon (Nov-Mar)'
+            when month(date(measured_at + interval '7' hour)) in (4, 5)
+                then 'Transition (Apr-May)'
+            when month(date(measured_at + interval '7' hour)) in (6, 7, 8, 9)
+                then 'SW Monsoon (Jun-Sep)'
+            else 'Transition (Oct)'
+        end as season
+
+    from {{ ref('int_measurements_enriched') }}
+
+)
+
 select
     location_id,
     location_name,
@@ -34,37 +69,15 @@ select
     province,
     sensor_type,
     parameter,
-    -- Convert UTC → Vietnam local time (UTC+7, no DST)
-    hour(measured_at + interval '7' hour)   as hour_of_day,
+    hour_of_day,
+    day_type,
+    season,
+    round(avg(measurement_value), 4) as avg_value,
+    round(max(measurement_value), 4) as max_value,
+    round(min(measurement_value), 4) as min_value,
+    count(*)                         as reading_count
 
-    -- Weekday vs weekend split (day-of-week: 1=Sun … 7=Sat in Trino/Athena)
-    case
-        when day_of_week(date(measured_at + interval '7' hour)) in (1, 7)
-            then 'Weekend'
-        else 'Weekday'
-    end as day_type,
-
-    -- Vietnam meteorological season based on local month
-    -- NE Monsoon (Nov–Mar): cold/dry in north, dry in south — peak PM2.5
-    -- Transition (Apr–May): biomass burning, rice straw — elevated PM
-    -- SW Monsoon (Jun–Sep): wet season — lowest PM2.5, strong washout
-    -- Transition (Oct): monsoon retreat — rising PM
-    case
-        when month(date(measured_at + interval '7' hour)) in (11, 12, 1, 2, 3)
-            then 'NE Monsoon (Nov-Mar)'
-        when month(date(measured_at + interval '7' hour)) in (4, 5)
-            then 'Transition (Apr-May)'
-        when month(date(measured_at + interval '7' hour)) in (6, 7, 8, 9)
-            then 'SW Monsoon (Jun-Sep)'
-        else 'Transition (Oct)'
-    end as season,
-
-    round(avg(measurement_value), 4)        as avg_value,
-    round(max(measurement_value), 4)        as max_value,
-    round(min(measurement_value), 4)        as min_value,
-    count(*)                                as reading_count
-
-from {{ ref('int_measurements_enriched') }}
+from labelled
 
 group by
     location_id,
@@ -73,7 +86,7 @@ group by
     province,
     sensor_type,
     parameter,
-    hour(measured_at + interval '7' hour),
-    day_of_week(date(measured_at + interval '7' hour)),
-    month(date(measured_at + interval '7' hour))
+    hour_of_day,
+    day_type,
+    season
 

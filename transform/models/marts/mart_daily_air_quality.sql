@@ -176,7 +176,7 @@ select
     -- See header comment for current list of flagged station IDs.
     case
         when location_id in (
-            '6273386'   -- VNUHCMUS Campus 1, HCMC: artefact readings from Mar 2026 startup
+            6273386   -- VNUHCMUS Campus 1, HCMC: artefact readings from Mar 2026 startup
         ) then 1
         else 0
     end as is_outlier_station,

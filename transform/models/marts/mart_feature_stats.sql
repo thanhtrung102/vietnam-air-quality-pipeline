@@ -29,8 +29,9 @@ To avoid confusion with forecasting evaluation, the target correlation
 */
 
 {{ config(
-    materialized = 'table',
-    format       = 'parquet',
+    materialized      = 'table',
+    partitioned_by    = [],
+    format            = 'parquet',
     write_compression = 'snappy'
 ) }}
 
