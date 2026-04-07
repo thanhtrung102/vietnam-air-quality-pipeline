@@ -22,20 +22,10 @@
 
 FROM public.ecr.aws/lambda/python:3.12
 
-# Prophet requires a C++ toolchain to build cmdstanpy on Linux
-RUN dnf install -y gcc gcc-c++ make && dnf clean all
-
 COPY requirements.txt .
 
-# Install ML dependencies; --no-cache-dir keeps image lean
+# statsmodels + pandas + pyarrow — no C compiler needed (all manylinux wheels).
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Pre-compile Prophet's Stan model during build so the first Lambda
-# invocation doesn't time out waiting for JIT compilation
-RUN python -c "\
-import logging, warnings; \
-logging.disable(logging.CRITICAL); warnings.filterwarnings('ignore'); \
-from prophet import Prophet; Prophet()" || true
 
 COPY handler.py .
 

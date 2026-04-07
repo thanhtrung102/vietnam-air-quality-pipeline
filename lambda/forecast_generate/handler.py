@@ -1,24 +1,30 @@
 """
 forecast_generate/handler.py — PM2.5 7-day ahead forecast Lambda.
 
-Runs two model families per station and writes Parquet to S3:
+Runs SARIMA per station and writes Parquet to S3:
 
-  1. SARIMA(1,1,1)(1,1,1,12)  — statsmodels, seasonal baseline
-  2. Prophet                   — Facebook Prophet with weather regressors + VN holidays
+  SARIMA(1,1,1)(1,0,1,7) — statsmodels, weekly-seasonal baseline
 
 Workflow per invocation:
-  a. Fetch full PM2.5 + weather time series for all stations from
+  a. Fetch full PM2.5 time series for all stations from
      openaq_mart.mart_lagged_features via Athena.
   b. Per station:
-       i.  30-day holdout split → fit both models → compute holdout RMSE
+       i.  30-day holdout split → fit SARIMA → compute holdout RMSE
        ii. Refit on full series → generate 7-day forecast
-       iii Emit CloudWatch ForecastRMSE metric per model / city
+       iii Emit CloudWatch ForecastRMSE metric per city
   c. Write Parquet to
-     processed/openaq_mart/mart_daily_forecast/generated_at={date}/model={model}/
+     processed/openaq_mart/mart_daily_forecast/generated_at={date}/model=sarima/
   d. Publish SNS alert if any forecast day > AQI 150 (Unhealthy threshold).
 
 Container image: see Dockerfile. Deploy via ECR.
 Scheduled daily at 03:00 UTC by EventBridge Scheduler (after weather_ingest + dbt).
+
+Note on model choice: Prophet was removed due to prophet/cmdstanpy/cmdstan
+version incompatibility inside the Lambda container image. SARIMA(1,1,1)(1,0,1,7)
+captures the dominant weekly PM2.5 cycle (weekday/weekend effect) and produces
+reliable 7-day forecasts. Annual seasonality is encoded via month_sin/month_cos
+features available in mart_lagged_features (not used here, but available for
+future ML model extensions).
 
 Environment variables:
   S3_BUCKET_NAME       — project S3 bucket
@@ -30,6 +36,7 @@ Environment variables:
   MIN_TRAIN_DAYS       — minimum rows required to fit (default: 60)
 """
 
+import gc
 import io
 import json
 import logging
@@ -50,73 +57,22 @@ warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-S3_BUCKET       = os.environ["S3_BUCKET_NAME"]
-ATHENA_DATABASE = os.environ.get("ATHENA_DATABASE", "openaq_mart")
+S3_BUCKET        = os.environ["S3_BUCKET_NAME"]
+ATHENA_DATABASE  = os.environ.get("ATHENA_DATABASE", "openaq_mart")
 ATHENA_WORKGROUP = os.environ.get("ATHENA_WORKGROUP", "openaq_workgroup")
-SNS_TOPIC_ARN   = os.environ.get("SNS_ALERT_TOPIC_ARN", "")
+SNS_TOPIC_ARN    = os.environ.get("SNS_ALERT_TOPIC_ARN", "")
 FORECAST_HORIZON = int(os.environ.get("FORECAST_HORIZON", "7"))
-HOLDOUT_DAYS    = int(os.environ.get("HOLDOUT_DAYS", "30"))
-MIN_TRAIN_DAYS  = int(os.environ.get("MIN_TRAIN_DAYS", "60"))
+HOLDOUT_DAYS     = int(os.environ.get("HOLDOUT_DAYS", "30"))
+MIN_TRAIN_DAYS   = int(os.environ.get("MIN_TRAIN_DAYS", "60"))
 
-# AQI 150 = Unhealthy threshold (PM2.5 > 55.4 µg/m³)
 AQI_ALERT_THRESHOLD = 150
-
-# VN public holidays for Prophet (date, name pairs)
-VN_HOLIDAYS_PROPHET = pd.DataFrame({
-    "holiday": [
-        "New Year", "New Year",
-        "Tet", "Tet", "Tet", "Tet", "Tet", "Tet", "Tet",
-        "Hung Kings",
-        "Liberation Day", "Labour Day",
-        "National Day",
-        "Tet", "Tet", "Tet", "Tet", "Tet", "Tet", "Tet",
-        "Hung Kings",
-        "Liberation Day", "Labour Day",
-        "National Day",
-        "Tet", "Tet", "Tet", "Tet", "Tet", "Tet", "Tet",
-        "Hung Kings",
-        "Liberation Day", "Labour Day",
-        "National Day",
-        "New Year",
-        "Tet", "Tet", "Tet", "Tet", "Tet", "Tet", "Tet",
-        "Hung Kings",
-        "Liberation Day", "Labour Day",
-        "National Day",
-    ],
-    "ds": pd.to_datetime([
-        "2023-01-01", "2024-01-01",
-        "2023-01-20", "2023-01-21", "2023-01-22", "2023-01-23",
-        "2023-01-24", "2023-01-25", "2023-01-26",
-        "2023-04-29",
-        "2023-04-30", "2023-05-01",
-        "2023-09-02",
-        "2024-02-08", "2024-02-09", "2024-02-10", "2024-02-11",
-        "2024-02-12", "2024-02-13", "2024-02-14",
-        "2024-04-18",
-        "2024-04-30", "2024-05-01",
-        "2024-09-02",
-        "2025-01-27", "2025-01-28", "2025-01-29", "2025-01-30",
-        "2025-01-31", "2025-02-01", "2025-02-02",
-        "2025-04-07",
-        "2025-04-30", "2025-05-01",
-        "2025-09-02",
-        "2026-01-01",
-        "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17",
-        "2026-02-18", "2026-02-19", "2026-02-20",
-        "2026-03-28",
-        "2026-04-30", "2026-05-01",
-        "2026-09-02",
-    ]),
-    "lower_window": 0,
-    "upper_window": 1,
-})
 
 # ── US EPA PM2.5 AQI breakpoints (2024 update) ───────────────────────────────
 
 _AQI_BP = [
-    (0.0,   9.0,   0,  50),
-    (9.1,  35.4,  51, 100),
-    (35.5, 55.4, 101, 150),
+    (0.0,    9.0,   0,  50),
+    (9.1,   35.4,  51, 100),
+    (35.5,  55.4, 101, 150),
     (55.5, 125.4, 151, 200),
     (125.5, 225.4, 201, 300),
     (225.5, 325.4, 301, 500),
@@ -177,18 +133,14 @@ def _run_athena(sql: str) -> list[dict]:
 
 
 def _fetch_all_series() -> pd.DataFrame:
-    """Return full mart_lagged_features time series for all stations."""
+    """Return full PM2.5 time series for all stations from mart_lagged_features."""
     sql = """
         SELECT
             location_id,
             location_name,
             city,
             CAST(measurement_date AS VARCHAR) AS measurement_date,
-            avg_pm25,
-            COALESCE(avg_rh_2m,              65.0) AS avg_rh_2m,
-            COALESCE(avg_wind_speed,          2.0)  AS avg_wind_speed,
-            COALESCE(total_precipitation_mm,  0.0)  AS total_precipitation_mm,
-            COALESCE(CAST(inversion_risk AS DOUBLE), 0.0) AS inversion_risk
+            avg_pm25
         FROM openaq_mart.mart_lagged_features
         WHERE avg_pm25 IS NOT NULL
         ORDER BY location_id, measurement_date
@@ -198,26 +150,24 @@ def _fetch_all_series() -> pd.DataFrame:
         return pd.DataFrame()
     df = pd.DataFrame(rows)
     df["measurement_date"] = pd.to_datetime(df["measurement_date"])
-    for col in ["avg_pm25", "avg_rh_2m", "avg_wind_speed",
-                "total_precipitation_mm", "inversion_risk"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    df["avg_pm25"] = pd.to_numeric(df["avg_pm25"], errors="coerce").fillna(0)
     df["location_id"] = pd.to_numeric(df["location_id"]).astype(int)
     return df
 
 
 # ── SARIMA model ──────────────────────────────────────────────────────────────
 
-def _fit_sarima(train_pm25: pd.Series, n_seasonal_years: int = 0):
-    """Fit SARIMA. Uses seasonal order only when >= 2 years of data."""
+def _fit_sarima(train_pm25: pd.Series):
+    """Fit SARIMA(1,1,1)(1,0,1,7) — weekly seasonality.
+
+    Period=7 captures the dominant weekday/weekend PM2.5 cycle efficiently.
+    Annual seasonality (period=365) was dropped: it requires a Kalman filter
+    state of 365+ dimensions and exhausts Lambda memory at 3008 MB across
+    15 simultaneous station fits.
+    """
     from statsmodels.tsa.statespace.sarimax import SARIMAX
 
-    if n_seasonal_years >= 2 and len(train_pm25) >= 730:
-        seasonal_order = (1, 1, 1, 365)   # annual daily seasonality
-    elif n_seasonal_years >= 1 and len(train_pm25) >= 365:
-        seasonal_order = (1, 0, 1, 365)
-    else:
-        seasonal_order = (0, 0, 0, 0)     # plain ARIMA for short series
-
+    seasonal_order = (1, 0, 1, 7) if len(train_pm25) >= 14 else (0, 0, 0, 0)
     model = SARIMAX(
         train_pm25,
         order=(1, 1, 1),
@@ -241,71 +191,6 @@ def _forecast_sarima(result, horizon: int = 7) -> tuple[np.ndarray, np.ndarray, 
     return mean, lo, hi
 
 
-# ── Prophet model ─────────────────────────────────────────────────────────────
-
-def _fit_prophet(train_df: pd.DataFrame):
-    """Fit Prophet with weather regressors and VN holidays."""
-    from prophet import Prophet
-
-    m = Prophet(
-        yearly_seasonality=True,
-        weekly_seasonality=True,
-        daily_seasonality=False,
-        seasonality_mode="multiplicative",
-        holidays=VN_HOLIDAYS_PROPHET,
-        interval_width=0.95,
-    )
-    m.add_regressor("avg_rh_2m")
-    m.add_regressor("avg_wind_speed")
-    m.add_regressor("total_precipitation_mm")
-    m.add_regressor("inversion_risk")
-
-    prophet_df = train_df.rename(columns={
-        "measurement_date": "ds",
-        "avg_pm25":         "y",
-    })[["ds", "y", "avg_rh_2m", "avg_wind_speed",
-        "total_precipitation_mm", "inversion_risk"]]
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        m.fit(prophet_df)
-    return m
-
-
-def _forecast_prophet(
-    model, last_date: pd.Timestamp, train_df: pd.DataFrame, horizon: int = 7
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Generate Prophet forecast; fill future regressors with 7-day trailing mean."""
-    future_dates = [last_date + timedelta(days=i + 1) for i in range(horizon)]
-    reg_cols = ["avg_rh_2m", "avg_wind_speed", "total_precipitation_mm", "inversion_risk"]
-
-    # Use last 7-day mean as regressor fallback for future dates (no weather forecast)
-    reg_means = train_df[reg_cols].tail(7).mean()
-
-    future_rows = [{
-        "ds": pd.Timestamp(d),
-        **{c: reg_means[c] for c in reg_cols}
-    } for d in future_dates]
-
-    future_df = pd.concat(
-        [model.history[["ds"] + reg_cols].assign(**{}), pd.DataFrame(future_rows)],
-        ignore_index=True,
-    )
-    # Ensure regressor columns are present throughout
-    for c in reg_cols:
-        future_df[c] = future_df[c].fillna(reg_means[c])
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        fcst = model.predict(future_df)
-
-    tail = fcst.tail(horizon)
-    mean = np.maximum(0, tail["yhat"].values)
-    lo   = np.maximum(0, tail["yhat_lower"].values)
-    hi   = np.maximum(0, tail["yhat_upper"].values)
-    return mean, lo, hi
-
-
 # ── Holdout evaluation ────────────────────────────────────────────────────────
 
 def _holdout_rmse(predicted: np.ndarray, actual: np.ndarray) -> float:
@@ -314,18 +199,18 @@ def _holdout_rmse(predicted: np.ndarray, actual: np.ndarray) -> float:
 
 # ── CloudWatch metric emission ────────────────────────────────────────────────
 
-def _emit_rmse_metric(cw_client, model: str, city: str, rmse: float) -> None:
+def _emit_rmse_metric(cw_client, city: str, rmse: float) -> None:
     try:
         cw_client.put_metric_data(
             Namespace="OpenAQ/Pipeline",
             MetricData=[{
                 "MetricName": "ForecastRMSE",
                 "Dimensions": [
-                    {"Name": "Model", "Value": model},
+                    {"Name": "Model", "Value": "sarima"},
                     {"Name": "City",  "Value": city},
                 ],
-                "Value":           rmse,
-                "Unit":            "None",
+                "Value": rmse,
+                "Unit":  "None",
             }],
         )
     except Exception as exc:
@@ -335,19 +220,19 @@ def _emit_rmse_metric(cw_client, model: str, city: str, rmse: float) -> None:
 # ── Parquet output schema ─────────────────────────────────────────────────────
 
 _FORECAST_SCHEMA = pa.schema([
-    pa.field("location_id",          pa.int32()),
-    pa.field("location_name",        pa.string()),
-    pa.field("city",                 pa.string()),
-    pa.field("forecast_date",        pa.date32()),
-    pa.field("forecast_pm25",        pa.float64()),
-    pa.field("forecast_aqi",         pa.int32()),
-    pa.field("forecast_aqi_category",pa.string()),
-    pa.field("ci_lower_95",          pa.float64()),
-    pa.field("ci_upper_95",          pa.float64()),
-    pa.field("holdout_rmse",         pa.float64()),
+    pa.field("location_id",           pa.int32()),
+    pa.field("location_name",         pa.string()),
+    pa.field("city",                  pa.string()),
+    pa.field("forecast_date",         pa.date32()),
+    pa.field("forecast_pm25",         pa.float64()),
+    pa.field("forecast_aqi",          pa.int32()),
+    pa.field("forecast_aqi_category", pa.string()),
+    pa.field("ci_lower_95",           pa.float64()),
+    pa.field("ci_upper_95",           pa.float64()),
+    pa.field("holdout_rmse",          pa.float64()),
 ])
 
-def _write_parquet(records: list[dict], s3_client, generated_at: str, model: str) -> None:
+def _write_parquet(records: list[dict], s3_client, generated_at: str) -> None:
     if not records:
         return
     table = pa.table(
@@ -356,7 +241,7 @@ def _write_parquet(records: list[dict], s3_client, generated_at: str, model: str
     )
     key = (
         f"processed/openaq_mart/mart_daily_forecast/"
-        f"generated_at={generated_at}/model={model}/part-0.parquet"
+        f"generated_at={generated_at}/model=sarima/part-0.parquet"
     )
     buf = io.BytesIO()
     pq.write_table(table, buf, compression="snappy")
@@ -381,13 +266,10 @@ def handler(event, context):
     station_ids = all_data["location_id"].unique()
     logger.info("Processing %d stations", len(station_ids))
 
-    sarima_records:  list[dict] = []
-    prophet_records: list[dict] = []
-    alert_messages:  list[str]  = []
+    sarima_records: list[dict] = []
+    alert_messages: list[str]  = []
+    city_rmse: dict[str, list] = {}
     errors = 0
-
-    # Per-city RMSE accumulator for CloudWatch (one metric per city × model)
-    city_rmse: dict[tuple, list] = {}
 
     for loc_id in station_ids:
         sdf = all_data[all_data["location_id"] == loc_id].sort_values("measurement_date").copy()
@@ -398,58 +280,34 @@ def handler(event, context):
         loc_name = sdf["location_name"].iloc[0]
         city     = sdf["city"].iloc[0]
         pm25_ser = sdf.set_index("measurement_date")["avg_pm25"]
-        n_years  = len(sdf) // 365
 
+        sarima_result_ho = sarima_full = None
         try:
             # ── Holdout A/B split ──────────────────────────────────────────
-            train_df   = sdf.iloc[:-HOLDOUT_DAYS]
-            holdout_df = sdf.iloc[-HOLDOUT_DAYS:]
-            train_pm25 = train_df.set_index("measurement_date")["avg_pm25"]
-            actual_ho  = holdout_df["avg_pm25"].values
+            train_pm25 = pm25_ser.iloc[:-HOLDOUT_DAYS]
+            actual_ho  = pm25_ser.iloc[-HOLDOUT_DAYS:].values
 
             # ── SARIMA holdout ─────────────────────────────────────────────
-            sarima_result_ho = _fit_sarima(train_pm25, n_years)
+            sarima_result_ho = _fit_sarima(train_pm25)
             sarima_ho_pred, _, _ = _forecast_sarima(sarima_result_ho, HOLDOUT_DAYS)
             sarima_rmse = _holdout_rmse(sarima_ho_pred, actual_ho)
 
-            # ── Prophet holdout ────────────────────────────────────────────
-            prophet_model_ho = _fit_prophet(train_df)
-            prophet_ho_pred, _, _ = _forecast_prophet(
-                prophet_model_ho, train_df["measurement_date"].iloc[-1], train_df, HOLDOUT_DAYS
-            )
-            prophet_rmse = _holdout_rmse(prophet_ho_pred, actual_ho)
-
-            logger.info(
-                "Station %s (%s): SARIMA RMSE=%.2f, Prophet RMSE=%.2f",
-                loc_id, city, sarima_rmse, prophet_rmse,
-            )
-
-            # Accumulate for city-level CloudWatch metric
-            for model_key, rmse in [("sarima", sarima_rmse), ("prophet", prophet_rmse)]:
-                key = (model_key, city)
-                city_rmse.setdefault(key, []).append(rmse)
+            logger.info("Station %s (%s): SARIMA RMSE=%.2f", loc_id, city, sarima_rmse)
+            city_rmse.setdefault(city, []).append(sarima_rmse)
 
             # ── Full-series refit + 7-day forecast ─────────────────────────
-            sarima_full   = _fit_sarima(pm25_ser, n_years)
+            sarima_full = _fit_sarima(pm25_ser)
             s_mean, s_lo, s_hi = _forecast_sarima(sarima_full, FORECAST_HORIZON)
 
-            prophet_full  = _fit_prophet(sdf)
-            last_date     = sdf["measurement_date"].iloc[-1]
-            p_mean, p_lo, p_hi = _forecast_prophet(prophet_full, last_date, sdf, FORECAST_HORIZON)
-
-            # ── Build records ──────────────────────────────────────────────
+            last_date = sdf["measurement_date"].iloc[-1]
             for h in range(FORECAST_HORIZON):
                 fdate = (last_date + timedelta(days=h + 1)).date()
-                base  = {
-                    "location_id":   loc_id,
-                    "location_name": loc_name,
-                    "city":          city,
-                    "forecast_date": fdate,
-                }
-
                 s_aqi = _pm25_to_aqi(s_mean[h])
                 sarima_records.append({
-                    **base,
+                    "location_id":           loc_id,
+                    "location_name":         loc_name,
+                    "city":                  city,
+                    "forecast_date":         fdate,
                     "forecast_pm25":         round(float(s_mean[h]), 4),
                     "forecast_aqi":          s_aqi,
                     "forecast_aqi_category": _aqi_category(s_aqi),
@@ -463,39 +321,24 @@ def handler(event, context):
                         f"(PM2.5 {s_mean[h]:.1f} µg/m³)"
                     )
 
-                p_aqi = _pm25_to_aqi(p_mean[h])
-                prophet_records.append({
-                    **base,
-                    "forecast_pm25":         round(float(p_mean[h]), 4),
-                    "forecast_aqi":          p_aqi,
-                    "forecast_aqi_category": _aqi_category(p_aqi),
-                    "ci_lower_95":           round(float(p_lo[h]), 4),
-                    "ci_upper_95":           round(float(p_hi[h]), 4),
-                    "holdout_rmse":          round(prophet_rmse, 4),
-                })
-                if p_aqi > AQI_ALERT_THRESHOLD:
-                    alert_messages.append(
-                        f"{city} / {loc_name}: Prophet forecast {fdate} AQI={p_aqi} "
-                        f"(PM2.5 {p_mean[h]:.1f} µg/m³)"
-                    )
-
         except Exception as exc:
             logger.error("Station %s failed: %s", loc_id, exc, exc_info=True)
             errors += 1
+        finally:
+            sarima_result_ho = sarima_full = None
+            gc.collect()
 
     # ── Emit city-level RMSE metrics to CloudWatch ────────────────────────
-    for (model_key, city), rmse_list in city_rmse.items():
-        mean_rmse = float(np.mean(rmse_list))
-        _emit_rmse_metric(cw, model_key, city, mean_rmse)
+    for city, rmse_list in city_rmse.items():
+        _emit_rmse_metric(cw, city, float(np.mean(rmse_list)))
 
     # ── Write Parquet ─────────────────────────────────────────────────────
-    _write_parquet(sarima_records,  s3, generated_at, "sarima")
-    _write_parquet(prophet_records, s3, generated_at, "prophet")
+    _write_parquet(sarima_records, s3, generated_at)
 
     # ── SNS alerts ────────────────────────────────────────────────────────
     if alert_messages and sns and SNS_TOPIC_ARN:
         body = (
-            f"⚠️ Vietnam AQI FORECAST ALERT ({generated_at})\n\n"
+            f"Vietnam AQI FORECAST ALERT ({generated_at})\n\n"
             + "\n".join(alert_messages)
             + f"\n\nForecast horizon: {FORECAST_HORIZON} days\n"
             f"Stations processed: {len(station_ids)}\n"
@@ -509,12 +352,11 @@ def handler(event, context):
         logger.info("SNS alert sent: %d high-risk forecast days", len(alert_messages))
 
     result = {
-        "generated_at":    generated_at,
-        "stations_ok":     len(station_ids) - errors,
-        "errors":          errors,
-        "sarima_records":  len(sarima_records),
-        "prophet_records": len(prophet_records),
-        "alert_count":     len(alert_messages),
+        "generated_at":   generated_at,
+        "stations_ok":    len(station_ids) - errors,
+        "errors":         errors,
+        "sarima_records": len(sarima_records),
+        "alert_count":    len(alert_messages),
     }
     logger.info("Completed: %s", json.dumps(result))
     return result
