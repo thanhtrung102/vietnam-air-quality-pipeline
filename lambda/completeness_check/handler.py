@@ -54,13 +54,16 @@ def _wait_for_query(athena, execution_id: str) -> dict:
     raise TimeoutError(f"Athena query {execution_id} did not complete within {MAX_WAIT}s")
 
 
-def _get_query_count(athena, execution_id: str) -> int:
-    """Fetch the first cell from a single-row COUNT(*) result."""
+def _get_query_result(athena, execution_id: str) -> tuple[str, int]:
+    """Fetch (check_date, station_count) from the completeness query result."""
     results = athena.get_query_results(QueryExecutionId=execution_id)
     rows = results["ResultSet"]["Rows"]
     if len(rows) < 2:
-        return 0   # no data rows (header only)
-    return int(rows[1]["Data"][0]["VarCharValue"])
+        return date.today().isoformat(), 0   # no data in mart at all
+    row = rows[1]["Data"]
+    check_date    = row[0]["VarCharValue"]
+    station_count = int(row[1]["VarCharValue"])
+    return check_date, station_count
 
 
 def _emit_metric(cw, missing_count: int) -> None:
@@ -81,17 +84,23 @@ def handler(event, context):
     workgroup     = os.environ.get("ATHENA_WORKGROUP",  "openaq_workgroup")
     sns_topic_arn = os.environ.get("SNS_ALERT_TOPIC_ARN", "")
 
-    today = date.today().isoformat()
     output_location = f"s3://{bucket}/athena-results/"
 
     athena = boto3.client("athena")
     cw     = boto3.client("cloudwatch")
     sns    = boto3.client("sns") if sns_topic_arn else None
 
-    query = f"""
-        SELECT COUNT(DISTINCT location_id) AS station_count
+    # Use the most recent date present in the mart rather than today.
+    # OpenAQ's public S3 archive publishes with a multi-day (sometimes multi-month)
+    # lag, so checking "today" always returns 0 until the archive catches up.
+    # This query finds the latest date and checks coverage for that date instead.
+    query = """
+        SELECT
+            CAST(measurement_date AS VARCHAR) AS check_date,
+            COUNT(DISTINCT location_id)       AS station_count
         FROM mart_daily_aqi
-        WHERE measurement_date = DATE '{today}'
+        WHERE measurement_date = (SELECT MAX(measurement_date) FROM mart_daily_aqi)
+        GROUP BY measurement_date
     """
 
     try:
@@ -103,18 +112,30 @@ def handler(event, context):
             print(f"ERROR: Athena query failed — {reason}")
             return {"error": reason}
 
-        active_count  = _get_query_count(athena, execution_id)
+        check_date, active_count = _get_query_result(athena, execution_id)
         missing_count = max(0, EXPECTED_STATIONS - active_count)
 
+        from datetime import datetime, timezone
+        data_age_days = (datetime.now(timezone.utc).date() -
+                         datetime.fromisoformat(check_date).date()).days
+
         print(f"Station completeness: {active_count}/{EXPECTED_STATIONS} "
-              f"({missing_count} missing) for {today}")
+              f"({missing_count} missing) for {check_date} (data age: {data_age_days}d)")
 
         _emit_metric(cw, missing_count)
 
-        if active_count < ALERT_THRESHOLD and sns_topic_arn and sns:
+        # Suppress SNS alert when the archive itself is stale (>7 days old).
+        # A stale archive is an upstream data availability issue, not a pipeline
+        # failure — alerting every hour would be noise. The CloudWatch metric is
+        # still emitted so the dashboard reflects the true state.
+        archive_stale = data_age_days > 7
+        if archive_stale:
+            print(f"Archive data is {data_age_days} days old — suppressing SNS alert (upstream lag)")
+
+        if active_count < ALERT_THRESHOLD and not archive_stale and sns_topic_arn and sns:
             msg = (
                 f"OpenAQ pipeline alert: only {active_count}/{EXPECTED_STATIONS} stations "
-                f"reported data for {today} ({missing_count} missing). "
+                f"reported data for {check_date} ({missing_count} missing). "
                 f"Threshold: {ALERT_THRESHOLD}. Check Lambda logs and OpenAQ API status."
             )
             sns.publish(
@@ -125,10 +146,12 @@ def handler(event, context):
             print(f"SNS alert published: {active_count} < {ALERT_THRESHOLD}")
 
         return {
-            "date":          today,
-            "active":        active_count,
-            "missing":       missing_count,
-            "expected":      EXPECTED_STATIONS,
+            "date":           check_date,
+            "data_age_days":  data_age_days,
+            "archive_stale":  archive_stale,
+            "active":         active_count,
+            "missing":        missing_count,
+            "expected":       EXPECTED_STATIONS,
             "alert_threshold": ALERT_THRESHOLD,
         }
 

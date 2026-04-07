@@ -61,9 +61,12 @@ S3_BUCKET        = os.environ["S3_BUCKET_NAME"]
 ATHENA_DATABASE  = os.environ.get("ATHENA_DATABASE", "openaq_mart")
 ATHENA_WORKGROUP = os.environ.get("ATHENA_WORKGROUP", "openaq_workgroup")
 SNS_TOPIC_ARN    = os.environ.get("SNS_ALERT_TOPIC_ARN", "")
-FORECAST_HORIZON = int(os.environ.get("FORECAST_HORIZON", "7"))
-HOLDOUT_DAYS     = int(os.environ.get("HOLDOUT_DAYS", "30"))
-MIN_TRAIN_DAYS   = int(os.environ.get("MIN_TRAIN_DAYS", "60"))
+FORECAST_HORIZON  = int(os.environ.get("FORECAST_HORIZON", "7"))
+HOLDOUT_DAYS      = int(os.environ.get("HOLDOUT_DAYS", "30"))
+MIN_TRAIN_DAYS    = int(os.environ.get("MIN_TRAIN_DAYS", "60"))
+# Skip stations whose latest data is older than this many days.
+# Guards against alerting on forecasts rooted in stale historical data.
+MAX_STALENESS_DAYS = int(os.environ.get("MAX_STALENESS_DAYS", "90"))
 
 AQI_ALERT_THRESHOLD = 150
 
@@ -277,8 +280,17 @@ def handler(event, context):
             logger.warning("Station %s: only %d rows — skipping", loc_id, len(sdf))
             continue
 
-        loc_name = sdf["location_name"].iloc[0]
-        city     = sdf["city"].iloc[0]
+        loc_name  = sdf["location_name"].iloc[0]
+        city      = sdf["city"].iloc[0]
+        last_date = sdf["measurement_date"].iloc[-1]
+        staleness = (date.today() - last_date.date()).days
+        if staleness > MAX_STALENESS_DAYS:
+            logger.warning(
+                "Station %s (%s): latest data is %d days old — skipping (MAX_STALENESS_DAYS=%d)",
+                loc_id, loc_name, staleness, MAX_STALENESS_DAYS,
+            )
+            continue
+
         pm25_ser = sdf.set_index("measurement_date")["avg_pm25"]
 
         sarima_result_ho = sarima_full = None
@@ -299,7 +311,6 @@ def handler(event, context):
             sarima_full = _fit_sarima(pm25_ser)
             s_mean, s_lo, s_hi = _forecast_sarima(sarima_full, FORECAST_HORIZON)
 
-            last_date = sdf["measurement_date"].iloc[-1]
             for h in range(FORECAST_HORIZON):
                 fdate = (last_date + timedelta(days=h + 1)).date()
                 s_aqi = _pm25_to_aqi(s_mean[h])
