@@ -79,7 +79,7 @@
         </mxCell>
 
         <!-- Kinesis Firehose -->
-        <mxCell id="306" value="Kinesis&#xa;Firehose" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_firehose;" vertex="1" parent="1">
+        <mxCell id="306" value="Kinesis&#xa;Firehose" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;" vertex="1" parent="1">
           <mxGeometry x="366" y="395" width="48" height="48" as="geometry" />
         </mxCell>
 
@@ -170,8 +170,8 @@
         <mxCell id="703" value="forecast_generate&#xa;Lambda (ECR)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
           <mxGeometry x="920" y="275" width="48" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="703n" value="SARIMA(1,1,1)(1,0,1,7)&#xa;3 active stations · 7-day horizon" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;" vertex="1" parent="1">
-          <mxGeometry x="900" y="325" width="89" height="28" as="geometry" />
+        <mxCell id="703n" value="SARIMA(1,1,1)(1,0,1,7)&#xa;3 active stations · 7-day horizon" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="895" y="325" width="130" height="28" as="geometry" />
         </mxCell>
 
         <!-- Amazon ECR -->
@@ -184,7 +184,7 @@
           <mxGeometry x="920" y="430" width="48" height="48" as="geometry" />
         </mxCell>
         <mxCell id="705n" value="ForecastRMSE &gt; 25µg/m³ · MissingStations &lt; 1&#xa;KinesisIteratorAge · BillingEstimate (us-east-1)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="900" y="481" width="90" height="28" as="geometry" />
+          <mxGeometry x="890" y="481" width="150" height="36" as="geometry" />
         </mxCell>
 
         <!-- Amazon SNS -->
@@ -228,37 +228,37 @@
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
         <!-- OpenAQ S3 Archive → batch_sync Lambda (CSV.GZ S3 sync) -->
-        <mxCell id="e01" value="CSV.GZ" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;startArrow=none;fontSize=9;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="201" target="303" parent="1">
+        <mxCell id="e01" value="CSV.GZ" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;startArrow=none;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="201" target="303" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- OpenAQ REST API → streaming_producer Lambda -->
-        <mxCell id="e02" value="REST poll" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="202" target="304" parent="1">
+        <mxCell id="e02" value="REST poll" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="202" target="304" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- Open-Meteo ERA5 → weather_ingest Lambda -->
-        <mxCell id="e03" value="ERA5 JSON" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0284C7;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="203" target="307" parent="1">
+        <mxCell id="e03" value="ERA5 JSON" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0284C7;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="203" target="307" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- EventBridge → batch_sync (daily 01:00 UTC) -->
-        <mxCell id="e04" value="daily 01:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="303" parent="1">
+        <mxCell id="e04" value="daily 01:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="303" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- EventBridge → streaming_producer (every 30 min) -->
-        <mxCell id="e05" value="every 30 min" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="304" parent="1">
+        <mxCell id="e05" value="every 30 min" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="304" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- EventBridge → weather_ingest (daily 02:00 UTC) -->
-        <mxCell id="e06" value="daily 02:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="307" parent="1">
+        <mxCell id="e06" value="daily 02:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="307" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- EventBridge → completeness_check (every hour) -->
-        <mxCell id="e07" value="every hour" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="707" parent="1">
+        <mxCell id="e07" value="every hour" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="707" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="320" y="610" />
@@ -269,17 +269,17 @@
 
         <!-- Secrets Manager → streaming_producer (API key at runtime) -->
         <!-- Route down then left to avoid crossing batch_sync (x=186,y=193-241) -->
-        <mxCell id="e08" value="OPENAQ_API_KEY" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="302" target="304" parent="1">
+        <mxCell id="e08" value="OPENAQ_API_KEY" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="302" target="304" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="454" y="280" />
-              <mxPoint x="234" y="280" />
+              <mxPoint x="430" y="295" />
+              <mxPoint x="234" y="295" />
             </Array>
           </mxGeometry>
         </mxCell>
 
         <!-- batch_sync → S3 (raw/batch/) -->
-        <mxCell id="e09" value="raw/batch/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="303" target="401" parent="1">
+        <mxCell id="e09" value="raw/batch/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="303" target="401" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -294,12 +294,12 @@
         </mxCell>
 
         <!-- Kinesis Firehose → S3 (raw/stream/ GZIP) -->
-        <mxCell id="e12" value="raw/stream/ (GZIP)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="306" target="401" parent="1">
+        <mxCell id="e12" value="raw/stream/ (GZIP)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="306" target="401" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- weather_ingest → S3 (raw/weather/ NDJSON) -->
-        <mxCell id="e13" value="raw/weather/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="307" target="401" parent="1">
+        <mxCell id="e13" value="raw/weather/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="307" target="401" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -314,12 +314,12 @@
         </mxCell>
 
         <!-- Athena ↔ dbt (bidirectional: dbt reads raw, writes Parquet mart CTAS) -->
-        <mxCell id="e16" value="CTAS → Parquet marts" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=9;" edge="1" source="502" target="601" parent="1">
+        <mxCell id="e16" value="CTAS → Parquet marts" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="601" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- dbt writes Parquet → S3 processed/ (loopback via S3 prefix) -->
-        <mxCell id="e16b" value="processed/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1;endArrow=block;endFill=1;fontSize=9;dashed=1;" edge="1" source="601" target="401" parent="1">
+        <mxCell id="e16b" value="processed/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;dashed=1;" edge="1" source="601" target="401" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="765" y="640" />
@@ -329,17 +329,17 @@
         </mxCell>
 
         <!-- Athena → aqi_api Lambda (serves latest mart_daily_aqi) -->
-        <mxCell id="e17" value="mart_daily_aqi" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="502" target="701" parent="1">
+        <mxCell id="e17" value="mart_daily_aqi" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="701" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- Athena → forecast_generate Lambda (mart_lagged_features) -->
-        <mxCell id="e18" value="mart_lagged_features" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="502" target="703" parent="1">
+        <mxCell id="e18" value="mart_lagged_features" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="703" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- completeness_check → Athena (queries row counts per station) -->
-        <mxCell id="e19" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9CA3AF;strokeWidth=1;endArrow=open;endFill=0;dashed=1;fontSize=9;" edge="1" source="707" target="502" parent="1">
+        <mxCell id="e19" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9CA3AF;strokeWidth=1;endArrow=open;endFill=0;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="707" target="502" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -349,12 +349,12 @@
         </mxCell>
 
         <!-- API Gateway → Leaflet Map (GeoJSON) -->
-        <mxCell id="e21" value="GeoJSON" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="702" target="801" parent="1">
+        <mxCell id="e21" value="GeoJSON" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="702" target="801" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- EventBridge → forecast_generate (daily 03:00 UTC) -->
-        <mxCell id="e07b" value="daily 03:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="703" parent="1">
+        <mxCell id="e07b" value="daily 03:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="703" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="320" y="625" />
@@ -365,27 +365,27 @@
         </mxCell>
 
         <!-- ECR → forecast_generate Lambda (container image pull) -->
-        <mxCell id="e22" value="container image" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="704" target="703" parent="1">
+        <mxCell id="e22" value="container image" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="704" target="703" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- forecast_generate → CloudWatch (ForecastRMSE custom metric) -->
-        <mxCell id="e23" value="ForecastRMSE" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E7157B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="703" target="705" parent="1">
+        <mxCell id="e23" value="ForecastRMSE" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E7157B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="703" target="705" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- CloudWatch → SNS (alarm: RMSE > 25µg/m³ or MissingStations) -->
-        <mxCell id="e24" value="alarm" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="705" target="706" parent="1">
+        <mxCell id="e24" value="alarm" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="705" target="706" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- completeness_check → SNS (feed failure alert) -->
-        <mxCell id="e25" value="feed failure" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="707" target="706" parent="1">
+        <mxCell id="e25" value="feed failure" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="707" target="706" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- Athena → QuickSight (SPICE refresh, daily) -->
-        <mxCell id="e26" value="SPICE refresh" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="502" target="802" parent="1">
+        <mxCell id="e26" value="SPICE refresh" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="802" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -409,34 +409,34 @@
         <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontStyle=1;fontColor=#374151;" vertex="1" parent="1">
           <mxGeometry x="165" y="784" width="60" height="18" as="geometry" />
         </mxCell>
-        <mxCell id="leg1" value="Data flow" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1">
+        <mxCell id="leg1" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry"><Array as="points"/><mxPoint x="165" y="815" as="sourcePoint"/><mxPoint x="215" y="815" as="targetPoint"/></mxGeometry>
         </mxCell>
-        <mxCell id="leg1l" value="Data flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="leg1l" value="Data flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
           <mxGeometry x="220" y="808" width="60" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="leg2" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" parent="1">
+        <mxCell id="leg2" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry"><mxPoint x="285" y="815" as="sourcePoint"/><mxPoint x="335" y="815" as="targetPoint"/></mxGeometry>
         </mxCell>
-        <mxCell id="leg2l" value="Schedule trigger" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="leg2l" value="Schedule trigger" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
           <mxGeometry x="340" y="808" width="90" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="leg3" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" parent="1">
+        <mxCell id="leg3" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry"><mxPoint x="435" y="815" as="sourcePoint"/><mxPoint x="485" y="815" as="targetPoint"/></mxGeometry>
         </mxCell>
-        <mxCell id="leg3l" value="Security / secret" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="leg3l" value="Security / secret" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
           <mxGeometry x="490" y="808" width="90" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="leg4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1">
+        <mxCell id="leg4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry"><mxPoint x="165" y="835" as="sourcePoint"/><mxPoint x="215" y="835" as="targetPoint"/></mxGeometry>
         </mxCell>
-        <mxCell id="leg4l" value="Analytics / catalog" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="leg4l" value="Analytics / catalog" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
           <mxGeometry x="220" y="828" width="100" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="leg5" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1">
+        <mxCell id="leg5" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry"><mxPoint x="325" y="835" as="sourcePoint"/><mxPoint x="375" y="835" as="targetPoint"/></mxGeometry>
         </mxCell>
-        <mxCell id="leg5l" value="Integration / alert" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="leg5l" value="Integration / alert" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
           <mxGeometry x="380" y="828" width="100" height="16" as="geometry" />
         </mxCell>
 
