@@ -82,7 +82,7 @@ Open-Meteo ERA5 ────────────────────  �
                                     QuickSight SPICE ──→ 4 Sheets
 ```
 
-Architecture diagram: [docs/architecture.png](architecture.png)
+Architecture diagram: [docs/architecture.drawio](architecture.drawio) (open in GitHub or diagrams.net)
 
 ---
 

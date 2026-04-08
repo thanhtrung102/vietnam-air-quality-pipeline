@@ -25,7 +25,9 @@ All infrastructure is declared in Terraform — the entire environment can be to
 
 *[VI: Dự án này xây dựng pipeline dữ liệu hoàn toàn serverless nạp dữ liệu chất lượng không khí PM2.5 và PM10 từ 21 trạm giám sát OpenAQ ở Hà Nội và TP.HCM vào AWS data lakehouse. Toàn bộ hạ tầng được khai báo trong Terraform — môi trường có thể tái tạo hoàn toàn với hai lệnh.]*
 
-![Architecture](docs/architecture.png)
+[![Architecture Diagram](docs/architecture.drawio)](docs/architecture.drawio)
+
+> Open [docs/architecture.drawio](docs/architecture.drawio) in GitHub or [diagrams.net](https://app.diagrams.net) to view the interactive diagram.
 
 ---
 
