@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -157,12 +161,34 @@ resource "aws_athena_workgroup" "openaq" {
     }
 
     bytes_scanned_cutoff_per_query = 10737418240 # 10 GB safety limit per query
-    # Note: Athena query result reuse (60-min TTL) is not yet exposed by the
-    # AWS Terraform provider. Enable manually: Athena console → Workgroups →
-    # openaq_workgroup → Edit → Result reuse → Enable (60 minutes).
   }
 
   tags = local.common_tags
+}
+
+# ── Post-deploy: Athena query result reuse ────────────────────────────────────
+# The AWS Terraform provider does not expose query result reuse natively.
+# This null_resource calls the AWS CLI once after the workgroup is created/updated.
+# Idempotent: repeated UpdateWorkGroup calls with the same values are a no-op.
+# Requires: AWS CLI installed and caller credentials with athena:UpdateWorkGroup.
+
+resource "null_resource" "athena_result_reuse" {
+  depends_on = [aws_athena_workgroup.openaq]
+
+  triggers = {
+    workgroup_name  = aws_athena_workgroup.openaq.name
+    max_age_minutes = "60"
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["bash", "-c"]
+    command     = <<-EOC
+      aws athena update-work-group \
+        --work-group ${aws_athena_workgroup.openaq.name} \
+        --configuration-updates '{"EnableQueryResultReuse":true,"QueryResultReuseConfiguration":{"MaxAgeInMinutes":60}}' \
+        --region ${var.aws_region}
+    EOC
+  }
 }
 
 # ── Data Sources (current AWS account + region) ───────────────────────────────

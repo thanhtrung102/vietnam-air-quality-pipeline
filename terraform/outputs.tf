@@ -1,3 +1,10 @@
+# ── Region ────────────────────────────────────────────────────────────────────
+
+output "aws_region" {
+  description = "AWS region where all resources are deployed"
+  value       = var.aws_region
+}
+
 # ── S3 ────────────────────────────────────────────────────────────────────────
 
 output "s3_bucket_name" {
