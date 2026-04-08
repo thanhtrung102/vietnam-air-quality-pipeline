@@ -19,15 +19,15 @@
 
 ## Project Overview | Tổng quan Dự án
 
-This project builds a fully serverless data pipeline that ingests PM2.5 and PM10 air quality readings from 21 OpenAQ monitoring stations across Hanoi and Ho Chi Minh City into an AWS data lakehouse. The pipeline enriches raw measurements with Open-Meteo ERA5 meteorological reanalysis, runs a 14-model dbt transformation layer on Amazon Athena, and produces a live Leaflet station map and four-sheet QuickSight analytical dashboard with 7-day SARIMA forecasts.
+This project builds a fully serverless data pipeline that ingests PM2.5 and PM10 air quality readings from 21 OpenAQ monitoring stations across Hanoi and Ho Chi Minh City into an AWS data lakehouse. The pipeline enriches raw measurements with Open-Meteo ERA5 meteorological reanalysis, runs a 17-model dbt transformation layer on Amazon Athena, and produces a live Leaflet station map and four-sheet QuickSight analytical dashboard with 7-day SARIMA forecasts.
 
 All infrastructure is declared in Terraform — the entire environment can be torn down and rebuilt with two commands. There is no persistent compute: every workload runs as an on-demand AWS Lambda function at a total cost of ~$1.61/month.
 
 *[VI: Dự án này xây dựng pipeline dữ liệu hoàn toàn serverless nạp dữ liệu chất lượng không khí PM2.5 và PM10 từ 21 trạm giám sát OpenAQ ở Hà Nội và TP.HCM vào AWS data lakehouse. Toàn bộ hạ tầng được khai báo trong Terraform — môi trường có thể tái tạo hoàn toàn với hai lệnh.]*
 
-[![Architecture Diagram](docs/architecture.drawio)](docs/architecture.drawio)
+<img src="docs/architecture.png" width="100%" alt="Architecture Diagram — Vietnam Air Quality Pipeline on AWS" />
 
-> Open [docs/architecture.drawio](docs/architecture.drawio) in GitHub or [diagrams.net](https://app.diagrams.net) to view the interactive diagram.
+> Source: [docs/architecture.drawio](docs/architecture.drawio) — open in [diagrams.net](https://app.diagrams.net) for the interactive version.
 
 ---
 
