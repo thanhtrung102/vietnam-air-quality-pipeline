@@ -88,10 +88,6 @@
           <mxGeometry x="186" y="450" width="48" height="48" as="geometry" />
         </mxCell>
 
-        <!-- completeness_check Lambda -->
-        <mxCell id="308" value="completeness_check&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="296" y="545" width="48" height="48" as="geometry" />
-        </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- GROUP 2: STORAGE (S3)                                               -->
@@ -165,8 +161,8 @@
           <mxGeometry x="920" y="120" width="48" height="48" as="geometry" />
         </mxCell>
 
-        <!-- API Gateway -->
-        <mxCell id="702" value="API&#xa;Gateway" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
+        <!-- API Gateway HTTP API v2 -->
+        <mxCell id="702" value="API Gateway&#xa;HTTP API v2" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
           <mxGeometry x="1052" y="120" width="48" height="48" as="geometry" />
         </mxCell>
 
@@ -187,7 +183,7 @@
         <mxCell id="705" value="CloudWatch&#xa;(alarms)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
           <mxGeometry x="920" y="430" width="48" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="705n" value="ForecastRMSE &gt; 25µg/m³&#xa;MissingStations &lt; 1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;" vertex="1" parent="1">
+        <mxCell id="705n" value="ForecastRMSE &gt; 25µg/m³ · MissingStations &lt; 1&#xa;KinesisIteratorAge · BillingEstimate (us-east-1)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
           <mxGeometry x="900" y="481" width="90" height="28" as="geometry" />
         </mxCell>
 
@@ -261,8 +257,8 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- EventBridge → completeness_check (daily 00:30 UTC) -->
-        <mxCell id="e07" value="daily 00:30 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="707" parent="1">
+        <!-- EventBridge → completeness_check (every hour) -->
+        <mxCell id="e07" value="every hour" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="707" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="320" y="620" />
@@ -349,6 +345,17 @@
         <!-- API Gateway → Leaflet Map (GeoJSON) -->
         <mxCell id="e21" value="GeoJSON" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" source="702" target="801" parent="1">
           <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EventBridge → forecast_generate (daily 03:00 UTC) -->
+        <mxCell id="e07b" value="daily 03:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="703" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="660" />
+              <mxPoint x="870" y="660" />
+              <mxPoint x="870" y="299" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- ECR → forecast_generate Lambda (container image pull) -->
