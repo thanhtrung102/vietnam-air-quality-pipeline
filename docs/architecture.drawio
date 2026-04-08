@@ -15,7 +15,7 @@
         </mxCell>
 
         <!-- OpenAQ Public S3 Archive (is an AWS S3 bucket — use S3 icon) -->
-        <mxCell id="201" value="OpenAQ&#xa;S3 Archive" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+        <mxCell id="201" value="OpenAQ&#xa;S3 Archive" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
           <mxGeometry x="51" y="105" width="48" height="48" as="geometry" />
         </mxCell>
         <mxCell id="201n" value="us-east-1 · requester-pays" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;" vertex="1" parent="1">
@@ -54,37 +54,37 @@
         </mxCell>
 
         <!-- EventBridge Scheduler (top-center of Ingestion group) -->
-        <mxCell id="301" value="EventBridge&#xa;Scheduler" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" vertex="1" parent="1">
+        <mxCell id="301" value="EventBridge&#xa;Scheduler" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" vertex="1" parent="1">
           <mxGeometry x="296" y="100" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- Secrets Manager (top-right of Ingestion group) -->
-        <mxCell id="302" value="Secrets&#xa;Manager" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#DD344C;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" vertex="1" parent="1">
+        <mxCell id="302" value="Secrets&#xa;Manager" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#DD344C;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" vertex="1" parent="1">
           <mxGeometry x="406" y="193" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- batch_sync Lambda -->
-        <mxCell id="303" value="batch_sync&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+        <mxCell id="303" value="batch_sync&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
           <mxGeometry x="186" y="193" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- streaming_producer Lambda -->
-        <mxCell id="304" value="streaming_producer&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+        <mxCell id="304" value="streaming_producer&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
           <mxGeometry x="186" y="315" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- Kinesis Data Streams -->
-        <mxCell id="305" value="Kinesis&#xa;Data Streams" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_streams;" vertex="1" parent="1">
+        <mxCell id="305" value="Kinesis&#xa;Data Streams" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_streams;" vertex="1" parent="1">
           <mxGeometry x="366" y="305" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- Amazon Data Firehose — stencil confirmed in app.diagrams.net/stencils/aws4.xml as "kinesis data firehose" -->
-        <mxCell id="306" value="Amazon Data&#xa;Firehose" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;" vertex="1" parent="1">
+        <mxCell id="306" value="Amazon Data&#xa;Firehose" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;" vertex="1" parent="1">
           <mxGeometry x="366" y="395" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- weather_ingest Lambda -->
-        <mxCell id="307" value="weather_ingest&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+        <mxCell id="307" value="weather_ingest&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
           <mxGeometry x="186" y="450" width="48" height="48" as="geometry" />
         </mxCell>
 
@@ -98,7 +98,7 @@
         </mxCell>
 
         <!-- Amazon S3 bucket (large, centered) -->
-        <mxCell id="401" value="Amazon S3&#xa;(Data Lake)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+        <mxCell id="401" value="Amazon S3&#xa;(Data Lake)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
           <mxGeometry x="535" y="185" width="64" height="64" as="geometry" />
         </mxCell>
 
@@ -120,12 +120,12 @@
         </mxCell>
 
         <!-- AWS Glue Data Catalog -->
-        <mxCell id="501" value="AWS Glue&#xa;Data Catalog" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" vertex="1" parent="1">
+        <mxCell id="501" value="AWS Glue&#xa;Data Catalog" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" vertex="1" parent="1">
           <mxGeometry x="680" y="170" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- Amazon Athena -->
-        <mxCell id="502" value="Amazon&#xa;Athena" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;" vertex="1" parent="1">
+        <mxCell id="502" value="Amazon&#xa;Athena" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;" vertex="1" parent="1">
           <mxGeometry x="813" y="170" width="48" height="48" as="geometry" />
         </mxCell>
         <mxCell id="502n" value="openaq_workgroup · 10 GB/query" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#8C4FFF;" vertex="1" parent="1">
@@ -157,17 +157,17 @@
         </mxCell>
 
         <!-- aqi_api Lambda -->
-        <mxCell id="701" value="aqi_api&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+        <mxCell id="701" value="aqi_api&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
           <mxGeometry x="920" y="120" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- API Gateway HTTP API v2 -->
-        <mxCell id="702" value="API Gateway&#xa;HTTP API v2" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
+        <mxCell id="702" value="API Gateway&#xa;HTTP API v2" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
           <mxGeometry x="1052" y="120" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- forecast_generate Lambda (ECR container) -->
-        <mxCell id="703" value="forecast_generate&#xa;Lambda (ECR)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+        <mxCell id="703" value="forecast_generate&#xa;Lambda (ECR)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
           <mxGeometry x="920" y="275" width="48" height="48" as="geometry" />
         </mxCell>
         <mxCell id="703n" value="SARIMA(1,1,1)(1,0,1,7)&#xa;3 active stations · 7-day horizon" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
@@ -175,12 +175,12 @@
         </mxCell>
 
         <!-- Amazon ECR -->
-        <mxCell id="704" value="Amazon ECR&#xa;(SARIMA image)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;" vertex="1" parent="1">
+        <mxCell id="704" value="Amazon ECR&#xa;(SARIMA image)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;" vertex="1" parent="1">
           <mxGeometry x="1052" y="275" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- CloudWatch -->
-        <mxCell id="705" value="CloudWatch&#xa;(alarms)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
+        <mxCell id="705" value="CloudWatch&#xa;(alarms)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
           <mxGeometry x="920" y="430" width="48" height="48" as="geometry" />
         </mxCell>
         <mxCell id="705n" value="ForecastRMSE &gt; 25µg/m³ · MissingStations &lt; 1&#xa;KinesisIteratorAge · BillingEstimate (us-east-1)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
@@ -188,12 +188,12 @@
         </mxCell>
 
         <!-- Amazon SNS -->
-        <mxCell id="706" value="Amazon SNS&#xa;(email alerts)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;" vertex="1" parent="1">
+        <mxCell id="706" value="Amazon SNS&#xa;(email alerts)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;" vertex="1" parent="1">
           <mxGeometry x="1052" y="430" width="48" height="48" as="geometry" />
         </mxCell>
 
         <!-- completeness_check Lambda -->
-        <mxCell id="707" value="completeness_check&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+        <mxCell id="707" value="completeness_check&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
           <mxGeometry x="986" y="550" width="48" height="48" as="geometry" />
         </mxCell>
 
@@ -214,7 +214,7 @@
         </mxCell>
 
         <!-- Amazon QuickSight -->
-        <mxCell id="802" value="Amazon&#xa;QuickSight" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.quicksight;" vertex="1" parent="1">
+        <mxCell id="802" value="Amazon&#xa;QuickSight" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.quicksight;" vertex="1" parent="1">
           <mxGeometry x="1287" y="390" width="48" height="48" as="geometry" />
         </mxCell>
         <mxCell id="802n" value="4 sheets: Historical, Seasonal,&#xa;Statistical, Predictive" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
