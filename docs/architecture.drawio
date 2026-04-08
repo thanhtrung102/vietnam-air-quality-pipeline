@@ -78,9 +78,9 @@
           <mxGeometry x="366" y="305" width="48" height="48" as="geometry" />
         </mxCell>
 
-        <!-- Kinesis Firehose -->
-        <mxCell id="306" value="Kinesis&#xa;Firehose" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;" vertex="1" parent="1">
-          <mxGeometry x="366" y="395" width="48" height="48" as="geometry" />
+        <!-- Amazon Data Firehose (no AWS4 icon in draw.io stencil — styled rectangle) -->
+        <mxCell id="306" value="Amazon Data&#xa;Firehose" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3D9FA;strokeColor=#8C4FFF;strokeWidth=2;align=center;fontSize=9;fontStyle=1;fontColor=#5A1F8C;" vertex="1" parent="1">
+          <mxGeometry x="352" y="392" width="80" height="46" as="geometry" />
         </mxCell>
 
         <!-- weather_ingest Lambda -->
