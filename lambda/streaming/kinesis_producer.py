@@ -88,7 +88,7 @@ _cw_client = None   # lazy-initialised CloudWatch client (avoids cold-start cost
 def _get_cw():
     global _cw_client
     if _cw_client is None:
-        _cw_client = boto3.client("cloudwatch", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
+        _cw_client = boto3.client("cloudwatch", region_name=os.environ.get("AWS_REGION"))
     return _cw_client
 
 

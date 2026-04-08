@@ -30,10 +30,6 @@ health_category follows the US EPA 2024 AQI breakpoints:
     write_compression = 'snappy'
 ) }}
 
--- Single scan of mart_daily_air_quality. The former pm25_daily CTE was a
--- redundant second full-table scan. PM2.5 context (pm25_avg, cigarette_equivalent)
--- is now extracted in the composite CTE using conditional aggregation, which
--- correctly handles both cases: PM2.5-dominant and PM10-dominant stations.
 with per_pollutant as (
 
     select

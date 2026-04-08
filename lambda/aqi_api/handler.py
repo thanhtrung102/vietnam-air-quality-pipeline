@@ -44,7 +44,6 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
 
 import boto3
 
@@ -138,7 +137,7 @@ def handler(event, context):
         }
 
     try:
-        client = boto3.client("athena", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
+        client = boto3.client("athena", region_name=os.environ.get("AWS_REGION"))
         cfg    = AthenaConfig(database=database, workgroup=workgroup)
         rows   = run_query(client, QUERY, cfg, max_wait=60)
     except Exception as exc:
