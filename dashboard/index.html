@@ -154,6 +154,8 @@
   // For local dev, set to the path of a static geojson file.
   const API_URL = window.AQI_API_URL || "https://hewunk5h75.execute-api.ap-southeast-1.amazonaws.com/";
 
+  // Used only for the static legend — the authoritative colour for each feature
+  // comes from the API's p.colour field (set by lambda/aqi_api/handler.py).
   const AQI_COLOURS = {
     "Good":                           "#00e400",
     "Moderate":                       "#ffff00",
@@ -218,7 +220,7 @@
   }
 
   function buildPopup(p) {
-    const col = AQI_COLOURS[p.health_category] || "#cccccc";
+    const col = p.colour || "#cccccc";
     const pollutantLabel = escHtml((p.dominant_pollutant || "").replace("pm25","PM2.5").replace("pm10","PM10"));
     const pm25Line = p.pm25_avg != null
       ? `PM2.5: <span>${escHtml(p.pm25_avg)} µg/m³</span><br/>`
@@ -253,7 +255,7 @@
       (geojson.features || []).forEach(f => {
         const p = f.properties;
         const [lon, lat] = f.geometry.coordinates;
-        const colour = p.colour || AQI_COLOURS[p.health_category] || "#cccccc";
+        const colour = p.colour || "#cccccc";
 
         L.circleMarker([lat, lon], {
           radius: radiusForAqi(p.composite_aqi),
