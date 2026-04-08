@@ -19,51 +19,19 @@ Environment variables:
 """
 
 import os
+import sys
 import time
 from datetime import date, timezone, datetime
 
 import boto3
 from botocore.exceptions import ClientError
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
+from athena_utils import AthenaConfig, run_query  # noqa: E402
+
 EXPECTED_STATIONS = int(os.environ.get("EXPECTED_STATIONS", "21"))
 ALERT_THRESHOLD   = int(os.environ.get("ALERT_THRESHOLD",   "18"))
-POLL_INTERVAL     = 2      # seconds between Athena status polls
 MAX_WAIT          = 90     # seconds; leaves buffer before 120s Lambda timeout
-
-
-def _run_athena_query(athena, query: str, database: str, workgroup: str, output_location: str) -> str:
-    """Submit query and return execution ID."""
-    resp = athena.start_query_execution(
-        QueryString=query,
-        QueryExecutionContext={"Database": database},
-        WorkGroup=workgroup,
-        ResultConfiguration={"OutputLocation": output_location},
-    )
-    return resp["QueryExecutionId"]
-
-
-def _wait_for_query(athena, execution_id: str) -> dict:
-    """Poll until query completes; return final status dict."""
-    deadline = time.time() + MAX_WAIT
-    while time.time() < deadline:
-        resp = athena.get_query_execution(QueryExecutionId=execution_id)
-        state = resp["QueryExecution"]["Status"]["State"]
-        if state in ("SUCCEEDED", "FAILED", "CANCELLED"):
-            return resp["QueryExecution"]
-        time.sleep(POLL_INTERVAL)
-    raise TimeoutError(f"Athena query {execution_id} did not complete within {MAX_WAIT}s")
-
-
-def _get_query_result(athena, execution_id: str) -> tuple[str, int]:
-    """Fetch (check_date, station_count) from the completeness query result."""
-    results = athena.get_query_results(QueryExecutionId=execution_id)
-    rows = results["ResultSet"]["Rows"]
-    if len(rows) < 2:
-        return date.today().isoformat(), 0   # no data in mart at all
-    row = rows[1]["Data"]
-    check_date    = row[0]["VarCharValue"]
-    station_count = int(row[1]["VarCharValue"])
-    return check_date, station_count
 
 
 def _emit_metric(cw, missing_count: int) -> None:
@@ -103,16 +71,16 @@ def handler(event, context):
         GROUP BY measurement_date
     """
 
+    cfg = AthenaConfig(database=database, workgroup=workgroup, output_location=output_location)
+
     try:
-        execution_id = _run_athena_query(athena, query, database, workgroup, output_location)
-        execution    = _wait_for_query(athena, execution_id)
+        rows = run_query(athena, query, cfg, max_wait=MAX_WAIT)
 
-        if execution["Status"]["State"] != "SUCCEEDED":
-            reason = execution["Status"].get("StateChangeReason", "unknown")
-            print(f"ERROR: Athena query failed — {reason}")
-            return {"error": reason}
-
-        check_date, active_count = _get_query_result(athena, execution_id)
+        if not rows:
+            check_date, active_count = date.today().isoformat(), 0
+        else:
+            check_date   = rows[0]["check_date"]
+            active_count = int(rows[0]["station_count"])
         missing_count = max(0, EXPECTED_STATIONS - active_count)
 
         data_age_days = (datetime.now(timezone.utc).date() -
@@ -154,8 +122,8 @@ def handler(event, context):
             "alert_threshold": ALERT_THRESHOLD,
         }
 
-    except TimeoutError as exc:
-        print(f"ERROR: {exc}")
+    except (RuntimeError, TimeoutError) as exc:
+        print(f"ERROR: Athena error: {exc}")
         return {"error": str(exc)}
     except ClientError as exc:
         print(f"ERROR: AWS client error: {exc}")

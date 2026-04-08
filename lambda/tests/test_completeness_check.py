@@ -35,21 +35,19 @@ import handler as h  # noqa: E402
 
 def _make_athena_client(check_date: str, station_count: int) -> MagicMock:
     """Return a mock Athena client with a single-row completeness result."""
+    header = {"Data": [{"VarCharValue": "check_date"}, {"VarCharValue": "station_count"}]}
+    data   = {"Data": [{"VarCharValue": check_date},   {"VarCharValue": str(station_count)}]}
+    page   = {"ResultSet": {"Rows": [header, data]}}
+
+    mock_paginator = MagicMock()
+    mock_paginator.paginate.return_value = [page]
+
     client = MagicMock()
     client.start_query_execution.return_value = {"QueryExecutionId": "test-qid"}
     client.get_query_execution.return_value = {
         "QueryExecution": {"Status": {"State": "SUCCEEDED"}}
     }
-    client.get_query_results.return_value = {
-        "ResultSet": {
-            "Rows": [
-                {"Data": [{"VarCharValue": "check_date"},
-                           {"VarCharValue": "station_count"}]},
-                {"Data": [{"VarCharValue": check_date},
-                           {"VarCharValue": str(station_count)}]},
-            ]
-        }
-    }
+    client.get_paginator.return_value = mock_paginator
     return client
 
 
@@ -158,20 +156,20 @@ def test_handler_missing_within_alarm_threshold():
 
 def test_handler_empty_mart():
     """No rows in mart → active=0, missing=21, metric emitted."""
+    # Header row only; run_query returns [] → handler falls back to active=0
+    header = {"Data": [{"VarCharValue": "check_date"}, {"VarCharValue": "station_count"}]}
+    page   = {"ResultSet": {"Rows": [header]}}
+
+    mock_paginator = MagicMock()
+    mock_paginator.paginate.return_value = [page]
+
     client = MagicMock()
     client.start_query_execution.return_value = {"QueryExecutionId": "test-qid"}
     client.get_query_execution.return_value = {
         "QueryExecution": {"Status": {"State": "SUCCEEDED"}}
     }
-    # Only header row, no data rows
-    client.get_query_results.return_value = {
-        "ResultSet": {
-            "Rows": [
-                {"Data": [{"VarCharValue": "check_date"},
-                           {"VarCharValue": "station_count"}]},
-            ]
-        }
-    }
+    client.get_paginator.return_value = mock_paginator
+
     result, cw, _ = _run_handler(client)
 
     assert result["active"]  == 0

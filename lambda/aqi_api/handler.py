@@ -42,10 +42,16 @@ Response shape (GeoJSON FeatureCollection):
 
 import json
 import os
+import sys
 import time
 from datetime import datetime, timezone
 
 import boto3
+
+# local dev: lambda/shared/ is not on sys.path; Lambda runtime: athena_utils.py
+# is copied to the package root by build.sh so the import resolves there.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
+from athena_utils import AthenaConfig, run_query  # noqa: E402
 
 # Partition-pruned query: the inner subquery is bounded to the last 7 days so
 # Athena only scans recent partitions instead of the full historical table.
@@ -112,45 +118,10 @@ def _save_cache(payload: dict) -> None:
         pass  # non-fatal — next invocation will re-query Athena
 
 
-def _run_athena_query(sql: str, database: str, workgroup: str) -> list[dict]:
-    client = boto3.client("athena", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
-
-    response = client.start_query_execution(
-        QueryString=sql,
-        QueryExecutionContext={"Database": database},
-        WorkGroup=workgroup,
-    )
-    qid = response["QueryExecutionId"]
-
-    for _ in range(30):
-        execution = client.get_query_execution(QueryExecutionId=qid)["QueryExecution"]
-        state = execution["Status"]["State"]
-        if state == "SUCCEEDED":
-            break
-        if state in ("FAILED", "CANCELLED"):
-            # StateChangeReason is already in the response we fetched — no second API call
-            reason = execution["Status"].get("StateChangeReason", "unknown")
-            raise RuntimeError(f"Athena query {state}: {reason}")
-        time.sleep(2)
-    else:
-        raise TimeoutError("Athena query did not complete within 60 seconds")
-
-    paginator = client.get_paginator("get_query_results")
-    rows = []
-    headers = None
-    for page in paginator.paginate(QueryExecutionId=qid):
-        for row in page["ResultSet"]["Rows"]:
-            values = [d.get("VarCharValue", "") for d in row["Data"]]
-            if headers is None:
-                headers = values
-            else:
-                rows.append(dict(zip(headers, values)))
-    return rows
-
-
 def handler(event, context):
-    database = os.environ.get("ATHENA_DATABASE", "openaq_mart")
+    database  = os.environ.get("ATHENA_DATABASE",  "openaq_mart")
     workgroup = os.environ.get("ATHENA_WORKGROUP", "openaq_workgroup")
+    bucket    = os.environ.get("S3_BUCKET_NAME",   "")
 
     # Serve from /tmp cache when available (warm invocation, data < 1 h old)
     cached = _load_cache()
@@ -167,7 +138,9 @@ def handler(event, context):
         }
 
     try:
-        rows = _run_athena_query(QUERY, database, workgroup)
+        client = boto3.client("athena", region_name=os.environ.get("AWS_REGION", "ap-southeast-1"))
+        cfg    = AthenaConfig(database=database, workgroup=workgroup)
+        rows   = run_query(client, QUERY, cfg, max_wait=60)
     except Exception as exc:
         return {
             "statusCode": 500,

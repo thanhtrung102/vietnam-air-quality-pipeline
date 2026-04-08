@@ -42,12 +42,16 @@ import json
 import logging
 import math
 import os
+import sys
 import time
 import warnings
 from datetime import date, timedelta
 
 import boto3
 import numpy as np
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
+from athena_utils import AthenaConfig, run_query  # noqa: E402
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -100,39 +104,11 @@ def _aqi_category(aqi: int) -> str:
 
 # ── Athena helpers ────────────────────────────────────────────────────────────
 
-def _run_athena(sql: str) -> list[dict]:
-    client = boto3.client("athena")
-    resp = client.start_query_execution(
-        QueryString=sql,
-        QueryExecutionContext={"Database": ATHENA_DATABASE},
-        ResultConfiguration={
-            "OutputLocation": f"s3://{S3_BUCKET}/athena-results/"
-        },
-        WorkGroup=ATHENA_WORKGROUP,
-    )
-    qid = resp["QueryExecutionId"]
-    for _ in range(150):   # up to 5 minutes
-        execution = client.get_query_execution(QueryExecutionId=qid)["QueryExecution"]
-        state = execution["Status"]["State"]
-        if state == "SUCCEEDED":
-            break
-        if state in ("FAILED", "CANCELLED"):
-            reason = execution["Status"].get("StateChangeReason", "unknown")
-            raise RuntimeError(f"Athena {state}: {reason}")
-        time.sleep(2)
-    else:
-        raise TimeoutError("Athena query timed out after 5 minutes")
-
-    paginator = client.get_paginator("get_query_results")
-    rows, headers = [], None
-    for page in paginator.paginate(QueryExecutionId=qid):
-        for row in page["ResultSet"]["Rows"]:
-            values = [d.get("VarCharValue", "") for d in row["Data"]]
-            if headers is None:
-                headers = values
-            else:
-                rows.append(dict(zip(headers, values)))
-    return rows
+_ATHENA_CFG = AthenaConfig(
+    database=ATHENA_DATABASE,
+    workgroup=ATHENA_WORKGROUP,
+    output_location=f"s3://{S3_BUCKET}/athena-results/",
+)
 
 
 def _fetch_all_series() -> pd.DataFrame:
@@ -148,7 +124,8 @@ def _fetch_all_series() -> pd.DataFrame:
         WHERE avg_pm25 IS NOT NULL
         ORDER BY location_id, measurement_date
     """
-    rows = _run_athena(sql)
+    client = boto3.client("athena")
+    rows = run_query(client, sql, _ATHENA_CFG, max_wait=300)
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)

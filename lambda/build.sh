@@ -55,7 +55,7 @@ PYEOF
 
 echo "==> batch_sync.zip"
 rm -rf "$PACKAGE_DIR" && mkdir -p "$PACKAGE_DIR"
-cp "$LAMBDA_DIR/batch_sync/handler.py" "$PACKAGE_DIR/"
+cp "$LAMBDA_DIR/batch_sync/handler.py"     "$PACKAGE_DIR/"
 zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/batch_sync.zip"
 
 # ── 2. streaming.zip ──────────────────────────────────────────────────────────
@@ -76,7 +76,8 @@ zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/streaming.zip"
 
 echo "==> aqi_api.zip"
 rm -rf "$PACKAGE_DIR" && mkdir -p "$PACKAGE_DIR"
-cp "$LAMBDA_DIR/aqi_api/handler.py" "$PACKAGE_DIR/"
+cp "$LAMBDA_DIR/aqi_api/handler.py"        "$PACKAGE_DIR/"
+cp "$LAMBDA_DIR/shared/athena_utils.py"    "$PACKAGE_DIR/"
 zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/aqi_api.zip"
 
 # ── 4. completeness_check.zip ────────────────────────────────────────────────
@@ -85,6 +86,7 @@ zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/aqi_api.zip"
 echo "==> completeness_check.zip"
 rm -rf "$PACKAGE_DIR" && mkdir -p "$PACKAGE_DIR"
 cp "$LAMBDA_DIR/completeness_check/handler.py" "$PACKAGE_DIR/"
+cp "$LAMBDA_DIR/shared/athena_utils.py"        "$PACKAGE_DIR/"
 zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/completeness_check.zip"
 
 # ── 5. weather_ingest.zip ─────────────────────────────────────────────────────
