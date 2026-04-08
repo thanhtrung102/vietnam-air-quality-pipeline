@@ -74,17 +74,13 @@ _KNOWN_PARAMETERS = frozenset({
     "temperature", "relativehumidity", "um003", "pm1",
 })
 
-# Gap 3: Phase A (log-and-pass) vs Phase B (log-and-block).
-# Set VALIDATION_BLOCK=true in the Lambda env var to switch to Phase B.
-_VALIDATION_BLOCK = os.environ.get("VALIDATION_BLOCK", "false").lower() == "true"
-
 # Gap 4: API retry config
 _API_MAX_RETRIES = 3
 _API_BASE_DELAY  = 5    # seconds
 _API_MAX_DELAY   = 20   # seconds; caps exponential growth
 
 
-# ── Gap 3: Ingestion-time validation ─────────────────────────────────────────
+# ── Ingestion-time validation ────────────────────────────────────────────────
 
 _cw_client = None   # lazy-initialised CloudWatch client (avoids cold-start cost)
 
@@ -121,9 +117,7 @@ def _validate_reading(value: float, parameter: str) -> tuple[bool, str]:
       2. value must be ≥ 0 and < 500 (physical plausibility)
       3. parameter must be in the known set
 
-    In Phase A (VALIDATION_BLOCK=false): invalid readings are logged and
-    metrics are emitted, but the record is still forwarded to Kinesis.
-    In Phase B (VALIDATION_BLOCK=true): invalid readings are dropped.
+    Invalid readings are logged, metrics are emitted, and the record is dropped.
     """
     if value == -999.0:
         return False, "sentinel_value"
@@ -276,15 +270,13 @@ def fetch_latest_measurements(
                 meta      = sensor_cache.get(sensor_id, {})
                 parameter = meta.get("parameter", "")
 
-                # Gap 3: validate reading; emit CloudWatch metric for rejections
+                # validate reading; emit CloudWatch metric for rejections
                 is_valid, reason = _validate_reading(value, parameter)
                 if not is_valid:
                     log.debug("rejected reading station=%s param=%s value=%s reason=%s",
                               station_id, parameter, value, reason)
                     _emit_validation_metric(parameter)
-                    if _VALIDATION_BLOCK:
-                        continue   # Phase B: drop invalid reading
-                    # Phase A: log-and-pass — fall through to append
+                    continue   # drop invalid reading
 
                 dt = reading.get("datetime") or {}
                 dt_str = dt.get("utc", "") if isinstance(dt, dict) else str(dt)
