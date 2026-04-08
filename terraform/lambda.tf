@@ -765,8 +765,8 @@ resource "aws_lambda_function" "forecast_generate" {
   role          = aws_iam_role.lambda_exec.arn
   package_type  = "Image"
   image_uri     = var.forecast_lambda_image_uri
-  timeout       = 900    # 15 minutes — SARIMA + Prophet for 21 stations
-  memory_size   = 3008   # 3 GB — statsmodels + Prophet in-memory model objects
+  timeout       = 900    # 15 minutes — SARIMA for 21 stations (Prophet removed: cmdstanpy incompatibility)
+  memory_size   = 3008   # 3 GB — statsmodels + numpy/pandas/pyarrow in-memory model objects
 
   environment {
     variables = {
