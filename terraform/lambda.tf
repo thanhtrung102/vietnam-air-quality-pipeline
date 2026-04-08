@@ -262,6 +262,7 @@ resource "aws_lambda_function" "batch_sync" {
   environment {
     variables = {
       S3_BUCKET_NAME = local.bucket_name
+      STATION_IDS    = local.station_ids_csv
     }
   }
 
@@ -300,6 +301,7 @@ resource "aws_lambda_function" "streaming_producer" {
       OPENAQ_API_KEY        = var.openaq_api_key
       OPENAQ_SECRET_NAME    = aws_secretsmanager_secret.openaq_api_key.name
       KINESIS_STREAM_NAME   = aws_kinesis_stream.openaq.name
+      STATION_IDS           = local.station_ids_csv
     }
   }
 

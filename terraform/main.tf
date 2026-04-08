@@ -22,6 +22,12 @@ provider "aws" {
 locals {
   bucket_name = "${var.project_name}-${var.s3_bucket_suffix}"
 
+  # Single source of truth for all 21 monitored Vietnamese station IDs.
+  # Used by: Glue partition projections (both tables), batch_sync env var,
+  # streaming_producer env var.  Weather_ingest embeds lat/lon per station
+  # and cannot be driven by this list alone.
+  station_ids_csv = "7441,2539,1285357,2161290,2161291,2161292,2161316,2161317,2161318,2161319,2161320,2161321,2161323,4946811,4946812,4946813,6123215,7440,2446,6068138,6273386"
+
   common_tags = {
     Project   = var.project_name
     ManagedBy = "terraform"

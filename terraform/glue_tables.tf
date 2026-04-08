@@ -29,7 +29,7 @@ resource "aws_glue_catalog_table" "openaq_batch" {
     "skip.header.line.count"       = "1"
     "projection.enabled"           = "true"
     "projection.locationid.type"   = "enum"
-    "projection.locationid.values" = "7441,2539,1285357,2161290,2161291,2161292,2161316,2161317,2161318,2161319,2161320,2161321,2161323,4946811,4946812,4946813,6123215,7440,2446,6068138,6273386"
+    "projection.locationid.values" = local.station_ids_csv
     "projection.year.type"         = "integer"
     "projection.year.range"        = "2016,2030"
     "projection.month.type"        = "integer"
@@ -217,7 +217,7 @@ resource "aws_glue_catalog_table" "weather" {
     "classification"                  = "json"
     "projection.enabled"              = "true"
     "projection.location_id.type"     = "enum"
-    "projection.location_id.values"   = "7441,2539,1285357,2161290,2161291,2161292,2161316,2161317,2161318,2161319,2161320,2161321,2161323,4946811,4946812,4946813,6123215,7440,2446,6068138,6273386"
+    "projection.location_id.values"   = local.station_ids_csv
     "projection.year.type"            = "integer"
     "projection.year.range"           = "2016,2030"
     "projection.month.type"           = "integer"

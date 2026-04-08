@@ -29,13 +29,20 @@ ARCHIVE_PREFIX = "records/csv.gz"
 # connections balance throughput against the 512 MB memory and 900 s timeout.
 MAX_WORKERS = 8
 
-STATION_IDS = [
+_DEFAULT_STATION_IDS = [
     7441, 2539, 1285357,
     2161290, 2161291, 2161292, 2161316, 2161317, 2161318,
     2161319, 2161320, 2161321, 2161323,
     4946811, 4946812, 4946813, 6123215,
     7440, 2446, 6068138, 6273386,
 ]
+# Terraform injects STATION_IDS (comma-separated) from locals.station_ids_csv.
+# The fallback keeps the Lambda functional in local/test environments.
+_raw_ids = os.environ.get("STATION_IDS", "")
+STATION_IDS: list[int] = (
+    [int(x.strip()) for x in _raw_ids.split(",") if x.strip()]
+    if _raw_ids else list(_DEFAULT_STATION_IDS)
+)
 
 
 def _list_source_objects(s3_src, station_id: int, year: str, month: str) -> list[dict]:
