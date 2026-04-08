@@ -19,15 +19,13 @@
 
 ## Project Overview | Tổng quan Dự án
 
-This project builds a fully serverless data pipeline that ingests PM2.5 and PM10 air quality readings from 21 OpenAQ monitoring stations across Hanoi and Ho Chi Minh City into an AWS data lakehouse. The pipeline enriches raw measurements with Open-Meteo ERA5 meteorological reanalysis, runs a 17-model dbt transformation layer on Amazon Athena, and produces a live Leaflet station map and four-sheet QuickSight analytical dashboard with 7-day SARIMA forecasts.
+This project builds a fully serverless data pipeline that ingests PM2.5 and PM10 air quality readings from 21 OpenAQ monitoring stations across Hanoi and Ho Chi Minh City into an AWS data lakehouse. The pipeline enriches raw measurements with Open-Meteo ERA5 meteorological reanalysis, runs a 17-model dbt transformation layer on Amazon Athena, and delivers a live Leaflet station map served via API Gateway with 7-day SARIMA forecasts.
 
 All infrastructure is declared in Terraform — the entire environment can be torn down and rebuilt with two commands. There is no persistent compute: every workload runs as an on-demand AWS Lambda function at a total cost of ~$1.61/month.
 
 *[VI: Dự án này xây dựng pipeline dữ liệu hoàn toàn serverless nạp dữ liệu chất lượng không khí PM2.5 và PM10 từ 21 trạm giám sát OpenAQ ở Hà Nội và TP.HCM vào AWS data lakehouse. Toàn bộ hạ tầng được khai báo trong Terraform — môi trường có thể tái tạo hoàn toàn với hai lệnh.]*
 
-<img src="docs/architecture.png" width="100%" alt="Architecture Diagram — Vietnam Air Quality Pipeline on AWS" />
-
-> Source: [docs/architecture.drawio](docs/architecture.drawio) — open in [diagrams.net](https://app.diagrams.net) for the interactive version.
+> Architecture diagram: [docs/architecture.drawio](docs/architecture.drawio) — open in [diagrams.net](https://app.diagrams.net)
 
 ---
 
@@ -63,7 +61,7 @@ aws lambda invoke --function-name openaq_weather_ingest \
   --payload '{"backfill_days": 365}' --cli-binary-format raw-in-base64-out \
   /tmp/weather.json
 
-# 4. Build all 14 dbt models (53+ tests)
+# 4. Build all 17 dbt models
 cd transform/ && dbt seed --profiles-dir . && dbt build --full-refresh --profiles-dir .
 
 # 5. Build and push forecast Lambda image, then wire it
@@ -87,21 +85,10 @@ aws s3 cp dashboard/index.html s3://$S3_BUCKET_NAME/dashboard/index.html \
 ## Dashboard | Bảng điều khiển
 
 ### Leaflet Station Map
-![Leaflet Map](docs/leaflet_map.png)
 
-21 stations coloured by composite AQI (US EPA palette). Popup shows AQI, PM2.5, dominant pollutant, cigarette equivalent, sensor type, and measurement date.
+The live map is served from `dashboard/index.html` (S3 static site). It fetches GeoJSON from the `aqi_api` Lambda via API Gateway and renders colour-coded station markers using Leaflet.js.
 
-### QuickSight — Sheet 1: Historical Trends
-![QuickSight Sheet 1](docs/quicksight_sheet1.png)
-
-### QuickSight — Sheet 2: Seasonal & Diurnal Patterns
-![QuickSight Sheet 2](docs/quicksight_sheet2.png)
-
-### QuickSight — Sheet 3: Statistical Analysis
-![QuickSight Sheet 3](docs/quicksight_sheet3.png)
-
-### QuickSight — Sheet 4: Predictive Forecasts
-![QuickSight Sheet 4](docs/quicksight_sheet4.png)
+Each marker popup shows: composite AQI, PM2.5 (µg/m³), dominant pollutant, cigarette equivalent, sensor type, and measurement date.
 
 ---
 
@@ -111,8 +98,8 @@ aws s3 cp dashboard/index.html s3://$S3_BUCKET_NAME/dashboard/index.html \
 |--------|-------|
 | Raw rows ingested | ~900,000 hourly readings (2023–present) |
 | Stations | 21 (17 Hanoi, 4 HCMC) |
-| dbt models | 14 (2 staging, 2 intermediate, 13 mart + 1 external) |
-| dbt tests | 53+ — PASS=53 WARN=0 ERROR=0 |
+| dbt models | 17 (2 staging, 2 intermediate, 13 mart) |
+| dbt tests | 85 |
 | Hanoi 3-year mean PM2.5 | ~40 µg/m³ (WHO guideline: 5 µg/m³ annual) |
 | Hanoi WHO compliance | ~2% of days |
 | HCMC WHO compliance | ~37% of days |
@@ -139,5 +126,5 @@ aws s3 cp dashboard/index.html s3://$S3_BUCKET_NAME/dashboard/index.html \
 | Compute | AWS Lambda (Python 3.12) — 5 functions |
 | Forecast | AWS Lambda container (ECR) — SARIMA(1,1,1)(1,0,1,7) via statsmodels |
 | Weather | Open-Meteo ERA5 Archive API (free, no API key) |
-| Dashboard | Leaflet.js (S3 static site) + Amazon QuickSight (4 sheets) |
+| Dashboard | Leaflet.js (S3 static site, served via API Gateway) |
 | Alerts | Amazon SNS + Amazon CloudWatch (ForecastRMSE, MissingStations alarms) |

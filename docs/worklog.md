@@ -236,27 +236,22 @@
 ---
 
 ## Week 10 — Mar 10–14, 2026
-### QuickSight Dashboard (All 4 Sheets) | Bảng điều khiển QuickSight (4 trang)
+### Completeness Monitoring & Observability | Giám sát tính đầy đủ dữ liệu
 
 **Objectives | Mục tiêu**
-- Connect QuickSight to all mart tables via Athena
-- Build all four analytical sheets with correct chart types and data sources
-- Add completeness monitoring Lambda
+- Add completeness monitoring Lambda with SNS alerting
+- Configure CloudWatch alarms for pipeline health
 
 **Tasks | Nhiệm vụ**
 
 | Day | Task | Start Date | End Date | Reference |
 |-----|------|------------|----------|-----------|
-| 1 | QuickSight dataset connections: `mart_daily_air_quality`, `mart_daily_aqi`, `mart_health_summary`, `mart_diurnal_profile`, `mart_monthly_profile`, `mart_exceedance_stats`, `mart_pollutant_ratio` | 03/10/2026 | 03/10/2026 | — |
-| 2 | Sheet 1 — Historical Trends: annual AQI by city (multi-line overlay); calendar heatmap (365-cell grid); health day stacked bar; daily PM2.5 with WHO/QCVN reference lines | 03/11/2026 | 03/11/2026 | — |
-| 3 | Sheet 2 — Seasonal & Diurnal: monthly PM2.5 with monsoon annotation; hour-of-day diurnal (Hanoi 07:00 peak, HCMC 09:00 peak); reference vs low-cost sensor comparison | 03/12/2026 | 03/12/2026 | — |
-| 4 | Sheet 3 — Statistical Analysis: WHO exceedance rate trend; PM2.5/PM10 source indicator by season; year-over-year monthly comparison; corrected vs raw PM2.5 | 03/13/2026 | 03/13/2026 | — |
-| 5 | Sheet 4 — Predictive: 7-day SARIMA forecast with 95% CI; rolling RMSE trend; CloudWatch 25 µg/m³ alarm reference line; write `lambda/completeness_check/handler.py` | 03/14/2026 | 03/14/2026 | — |
+| 1–4 | Analyse mart tables via Athena: diurnal profiles, WHO exceedance rates, sensor type comparison, year-over-year PM2.5 trends | 03/10/2026 | 03/13/2026 | — |
+| 5 | Write `lambda/completeness_check/handler.py`; configure CloudWatch MissingStations alarm + SNS topic | 03/14/2026 | 03/14/2026 | — |
 
 **Achievements | Kết quả đạt được**
-- All 4 QuickSight sheets built and rendered; static renders saved to `docs/quicksight_sheet1–4.png`
 - Diurnal profile confirms dual-peak pattern: Hanoi 07:00 (inversion), HCMC 09:00 (rush accumulation)
-- `completeness_check` Lambda alerts via SNS when any station has zero rows in a 24-hour window
+- `completeness_check` Lambda alerts via SNS when active stations fall below threshold
 
 ---
 
@@ -300,9 +295,9 @@
 |-----|------|------------|----------|-----------|
 | 1 | Dead code sweep: delete `mart_daily_meteorology.sql` (zero downstream consumers), remove its 65-line entry from `schema.yml` | 03/24/2026 | 03/24/2026 | — |
 | 2 | Delete stale `ingestion/streaming/kinesis_producer.py` (diverged copy, wrong station count 20 vs 21); delete `ingestion/historical/sync_daily.sh` (superseded by batch_sync Lambda) | 03/25/2026 | 03/25/2026 | — |
-| 3 | Remove unused `import matplotlib.colors as mcolors` from `docs/generate_quicksight.py`; update `docs/architecture.md` directory listing | 03/26/2026 | 03/26/2026 | — |
+| 3 | Dead code sweep in Lambda handlers; update `docs/architecture.drawio` with final architecture | 03/26/2026 | 03/26/2026 | — |
 | 4 | Write FCJ workshop proposal (`docs/proposal.md`) and worklog (`docs/worklog.md`); restructure `docs/` for FCJ submission | 03/27/2026 | 03/27/2026 | rules.fcjuni.com/3-project |
-| 5 | Write FCJ workshop pages (`docs/workshop/5.1`–`5.6`); rewrite `README.md` as FCJ landing page; final `dbt build` confirms PASS=53 WARN=0 ERROR=0 | 03/28/2026 | 03/28/2026 | workshop-sample.fcjuni.com |
+| 5 | Write FCJ workshop pages (`docs/workshop/5.1`–`5.6`); rewrite `README.md` as FCJ landing page; final `dbt build` confirms PASS=85 WARN=0 ERROR=0 | 03/28/2026 | 03/28/2026 | workshop-sample.fcjuni.com |
 
 **Achievements | Kết quả đạt được**
 - Codebase fully clean: 0 ruff issues, 0 dead files, 0 hardcoded secrets

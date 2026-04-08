@@ -6,11 +6,11 @@
 
 ## 1. Executive Summary | Tóm tắt
 
-This project builds a fully serverless data pipeline that ingests PM2.5 and PM10 measurements from 21 OpenAQ monitoring stations across Hanoi and Ho Chi Minh City into an AWS data lakehouse, enriches them with Open-Meteo ERA5 meteorological reanalysis, and delivers a live Leaflet station map and four-sheet QuickSight analytical dashboard with 7-day SARIMA forecasts.
+This project builds a fully serverless data pipeline that ingests PM2.5 and PM10 measurements from 21 OpenAQ monitoring stations across Hanoi and Ho Chi Minh City into an AWS data lakehouse, enriches them with Open-Meteo ERA5 meteorological reanalysis, and delivers a live Leaflet station map with 7-day SARIMA forecasts.
 
 All infrastructure is provisioned as code with Terraform. There is no persistent compute — every workload runs as an on-demand Lambda function. The pipeline answers four operational questions about air quality trends, seasonal patterns, pollution sources, and forecast accuracy.
 
-*[VI: Dự án xây dựng pipeline dữ liệu hoàn toàn serverless, nạp dữ liệu PM2.5 và PM10 từ 21 trạm giám sát OpenAQ ở Hà Nội và TP.HCM vào data lakehouse AWS, làm giàu bằng dữ liệu khí tượng ERA5, và cung cấp bản đồ Leaflet trực tiếp cùng bảng điều khiển phân tích QuickSight 4 trang với dự báo SARIMA 7 ngày.]*
+*[VI: Dự án xây dựng pipeline dữ liệu hoàn toàn serverless, nạp dữ liệu PM2.5 và PM10 từ 21 trạm giám sát OpenAQ ở Hà Nội và TP.HCM vào data lakehouse AWS, làm giàu bằng dữ liệu khí tượng ERA5, và cung cấp bản đồ Leaflet trực tiếp với dự báo SARIMA 7 ngày.]*
 
 ---
 
@@ -79,7 +79,6 @@ Open-Meteo ERA5 ────────────────────  �
                                          aqi_api Lambda
                                               ↓
                                     API Gateway ──→ Leaflet Map
-                                    QuickSight SPICE ──→ 4 Sheets
 ```
 
 Architecture diagram: [docs/architecture.drawio](architecture.drawio) (open in GitHub or diagrams.net)
@@ -94,8 +93,8 @@ The project was built in four sequential phases:
 |-------|-------|--------|
 | **0 — Infrastructure** | Terraform provisioning of S3, Glue, Athena, Kinesis, IAM, EventBridge | All base AWS resources live |
 | **1 — Ingestion** | Historical batch sync + streaming producer + ERA5 weather backfill | ~900K rows in S3, queryable in Athena |
-| **2 — Transformation** | dbt seed + full build (2 staging, 2 intermediate, 13 analytical mart models) | 14 total models; 53+ tests passing |
-| **3 — Forecast & Dashboard** | SARIMA Lambda container + ECR push; Leaflet map + QuickSight sheets | 7-day forecast for 3 active stations; live map and 4-sheet dashboard |
+| **2 — Transformation** | dbt seed + full build (2 staging, 2 intermediate, 13 analytical mart models) | 17 total models; 85 tests passing |
+| **3 — Forecast & Dashboard** | SARIMA Lambda container + ECR push; Leaflet map via API Gateway | 7-day forecast for active stations; live AQI map |
 
 ---
 
@@ -112,7 +111,7 @@ The project was built in four sequential phases:
 | 7 | Feb 17–21 | Feature engineering (lagged features, cyclical encoding, Tết flag) |
 | 8 | Feb 24–28 | SARIMA forecast Lambda; Docker build; ECR push; first forecast run |
 | 9 | Mar 3–7 | AQI API Lambda; Leaflet map deployed; end-to-end test |
-| 10 | Mar 10–14 | All 4 QuickSight sheets; completeness_check Lambda |
+| 10 | Mar 10–14 | completeness_check Lambda; CloudWatch alarms |
 | 11 | Mar 17–21 | Security hardening: Secrets Manager, XSS escaping, CloudWatch alarms |
 | 12 | Mar 24–28 | Code quality (ruff, dead code sweep); FCJ workshop documentation |
 
@@ -155,13 +154,9 @@ Key cost driver is S3 storage. Athena queries are effectively free at this data 
 
 | Output | Status | Evidence |
 |--------|--------|---------|
-| Leaflet station map with live AQI | ✅ Built | [docs/leaflet_map.png](leaflet_map.png) |
-| QuickSight Sheet 1 — Historical Trends | ✅ Built | [docs/quicksight_sheet1.png](quicksight_sheet1.png) |
-| QuickSight Sheet 2 — Seasonal & Diurnal | ✅ Built | [docs/quicksight_sheet2.png](quicksight_sheet2.png) |
-| QuickSight Sheet 3 — Statistical Analysis | ✅ Built | [docs/quicksight_sheet3.png](quicksight_sheet3.png) |
-| QuickSight Sheet 4 — Predictive Forecasts | ✅ Built | [docs/quicksight_sheet4.png](quicksight_sheet4.png) |
-| 7-day SARIMA forecast (3 active stations) | ✅ Built | 21 rows/run; ~12 µg/m³ RMSE Hanoi |
-| dbt test suite | ✅ 53+ tests passing | `dbt build` → PASS=53 WARN=0 ERROR=0 |
+| Leaflet station map with live AQI | ✅ Built | `dashboard/index.html` → API Gateway → `aqi_api` Lambda |
+| 7-day SARIMA forecast (active stations) | ✅ Built | 21 rows/run; ~12 µg/m³ RMSE Hanoi |
+| dbt test suite | ✅ 85 tests passing | `dbt build` → PASS=85 WARN=0 ERROR=0 |
 | Terraform IaC | ✅ Complete | `terraform apply` provisions all resources |
 
 ### Key findings
