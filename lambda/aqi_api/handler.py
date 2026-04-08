@@ -89,7 +89,7 @@ AQI_COLOURS = {
 
 # /tmp cache — persists across warm invocations within the same execution environment
 _CACHE_FILE = "/tmp/aqi_geojson_cache.json"
-CACHE_TTL_SECONDS = 3600  # 1 hour; mart rebuilds daily so hourly staleness is fine
+CACHE_TTL_SECONDS = int(os.environ.get("CACHE_TTL_SECONDS", "3600"))  # default 1 h
 
 
 def _load_cache() -> dict | None:

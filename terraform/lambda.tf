@@ -486,6 +486,7 @@ resource "aws_lambda_function" "aqi_api" {
       S3_BUCKET_NAME    = local.bucket_name
       ATHENA_DATABASE   = "openaq_mart"
       ATHENA_WORKGROUP  = "openaq_workgroup"
+      CACHE_TTL_SECONDS = "3600"
     }
   }
 
