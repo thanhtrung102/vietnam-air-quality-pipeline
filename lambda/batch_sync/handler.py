@@ -16,7 +16,7 @@ loop. Each thread creates its own boto3 session for thread safety.
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import boto3
 from botocore.exceptions import ClientError
@@ -123,28 +123,38 @@ def _sync_station(station_id: int, dst_bucket: str, dst_region: str, year: str, 
 def handler(event, context):
     dst_bucket = os.environ["S3_BUCKET_NAME"]
     dst_region = os.environ.get("AWS_REGION", "ap-southeast-1")
+    # Sync the last SYNC_MONTHS months (default 3) to catch archive data that
+    # arrives with a lag of up to ~10 months after the measurement date.
+    sync_months = int(os.environ.get("SYNC_MONTHS", "3"))
     now = datetime.now(timezone.utc)
-    year = str(now.year)
-    month = str(now.month).zfill(2)
+    cur = date(now.year, now.month, 1)
+    months_to_sync = []
+    for _ in range(sync_months):
+        months_to_sync.append(cur)
+        cur = date(cur.year - (1 if cur.month == 1 else 0),
+                   12 if cur.month == 1 else cur.month - 1, 1)
 
     success = 0
     failed = []
     total_copied = 0
     total_skipped = 0
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        futures = {
-            pool.submit(_sync_station, station_id, dst_bucket, dst_region, year, month): station_id
-            for station_id in STATION_IDS
-        }
-        for future in as_completed(futures):
-            result = future.result()
-            if result["error"]:
-                failed.append(str(result["station_id"]))
-            else:
-                success += 1
-                total_copied += result["copied"]
-                total_skipped += result["skipped"]
+    for period in months_to_sync:
+        year  = str(period.year)
+        month = str(period.month).zfill(2)
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            futures = {
+                pool.submit(_sync_station, station_id, dst_bucket, dst_region, year, month): station_id
+                for station_id in STATION_IDS
+            }
+            for future in as_completed(futures):
+                result = future.result()
+                if result["error"]:
+                    failed.append(str(result["station_id"]))
+                else:
+                    success += 1
+                    total_copied += result["copied"]
+                    total_skipped += result["skipped"]
 
     print(
         f"Batch sync complete: success={success} failed={len(failed)} "

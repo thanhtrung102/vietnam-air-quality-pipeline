@@ -263,6 +263,7 @@ resource "aws_lambda_function" "batch_sync" {
     variables = {
       S3_BUCKET_NAME = local.bucket_name
       STATION_IDS    = local.station_ids_csv
+      SYNC_MONTHS    = "3"
     }
   }
 
@@ -568,7 +569,7 @@ resource "aws_lambda_function" "completeness_check" {
       ATHENA_DATABASE     = "openaq_mart"
       ATHENA_WORKGROUP    = "openaq_workgroup"
       EXPECTED_STATIONS   = "21"
-      ALERT_THRESHOLD     = "18"          # < 18 = alert (85% coverage floor)
+      ALERT_THRESHOLD     = "3"           # < 3 = alert; only ~5 VN stations actively report to OpenAQ as of 2026
       SNS_ALERT_TOPIC_ARN = aws_sns_topic.openaq_alerts.arn
     }
   }
@@ -679,7 +680,7 @@ resource "aws_scheduler_schedule" "weather_daily" {
     mode = "OFF"
   }
 
-  # 02:00 UTC daily — after ERA5 reanalysis lag and well before dbt 03:00 run
+  # 02:00 UTC daily — before dbt runner (02:30) so weather data is ready for the mart
   schedule_expression = "cron(0 2 * * ? *)"
 
   target {
@@ -710,6 +711,170 @@ resource "aws_iam_role_policy" "scheduler_invoke_weather" {
       Resource = aws_lambda_function.weather_ingest.arn
     }]
   })
+}
+
+# ── dbt runner: CodeBuild project + EventBridge Scheduler ────────────────────
+# dbt-athena is too large for a Lambda zip. A CodeBuild project running the
+# official dbt-athena Docker image executes `dbt run` daily.
+#
+# Schedule: 02:30 UTC — after weather_ingest (02:00) and before forecast (03:00).
+# The project reads the transform/ source from S3 (uploaded by CI or manually).
+
+resource "aws_codebuild_project" "dbt_runner" {
+  name          = "openaq-dbt-runner"
+  service_role  = aws_iam_role.dbt_runner.arn
+  build_timeout = 30  # minutes; dbt run takes ~16 min
+
+  artifacts {
+    type = "NO_ARTIFACTS"
+  }
+
+  environment {
+    compute_type = "BUILD_GENERAL1_SMALL"
+    image        = "ghcr.io/dbt-labs/dbt-athena:1.10.0"
+    type         = "LINUX_CONTAINER"
+
+    environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.aws_region
+    }
+    environment_variable {
+      name  = "S3_STAGING_DIR"
+      value = "s3://${local.bucket_name}/dbt-staging/"
+    }
+    environment_variable {
+      name  = "S3_DATA_DIR"
+      value = "s3://${local.bucket_name}/processed/"
+    }
+    environment_variable {
+      name  = "ATHENA_WORKGROUP"
+      value = "openaq_workgroup"
+    }
+  }
+
+  source {
+    type      = "S3"
+    location  = "${local.bucket_name}/codebuild-source.zip"
+    buildspec = <<-EOT
+      version: 0.2
+      phases:
+        build:
+          commands:
+            - cd transform
+            - dbt run --profiles-dir . --project-dir .
+    EOT
+  }
+
+  logs_config {
+    cloudwatch_logs {
+      group_name  = "/aws/codebuild/openaq-dbt-runner"
+      stream_name = ""
+    }
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_log_group" "dbt_runner" {
+  name              = "/aws/codebuild/openaq-dbt-runner"
+  retention_in_days = 14
+  tags              = local.common_tags
+}
+
+# IAM role for the CodeBuild dbt runner
+resource "aws_iam_role" "dbt_runner" {
+  name = "openaq_dbt_runner_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "codebuild.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy" "dbt_runner" {
+  name = "openaq_dbt_runner_policy"
+  role = aws_iam_role.dbt_runner.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AthenaAndGlue"
+        Effect = "Allow"
+        Action = [
+          "athena:StartQueryExecution", "athena:GetQueryExecution",
+          "athena:GetQueryResults", "athena:StopQueryExecution",
+          "glue:GetDatabase", "glue:GetTable", "glue:GetTables",
+          "glue:GetPartitions", "glue:CreateTable", "glue:UpdateTable",
+          "glue:DeleteTable", "glue:CreatePartition", "glue:BatchCreatePartition",
+          "glue:UpdatePartition", "glue:DeletePartition", "glue:BatchDeletePartition",
+        ]
+        Resource = [
+          "arn:aws:athena:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:workgroup/openaq_workgroup",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_mart",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_mart/*",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_raw",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_raw/*",
+        ]
+      },
+      {
+        Sid    = "S3ReadWrite"
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+        Resource = [
+          "arn:aws:s3:::${local.bucket_name}",
+          "arn:aws:s3:::${local.bucket_name}/*",
+        ]
+      },
+      {
+        Sid    = "Logs"
+        Effect = "Allow"
+        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/openaq-dbt-runner:*"
+      },
+    ]
+  })
+}
+
+# EventBridge Scheduler IAM policy to start CodeBuild builds
+resource "aws_iam_role_policy" "scheduler_invoke_dbt" {
+  name = "openaq_scheduler_invoke_dbt"
+  role = aws_iam_role.scheduler.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "StartDbtBuild"
+      Effect   = "Allow"
+      Action   = "codebuild:StartBuild"
+      Resource = aws_codebuild_project.dbt_runner.arn
+    }]
+  })
+}
+
+resource "aws_scheduler_schedule" "dbt_daily" {
+  name       = "openaq_dbt_daily"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  # 02:30 UTC daily — after weather_ingest (02:00) and before forecast (03:00)
+  schedule_expression = "cron(30 2 * * ? *)"
+
+  target {
+    arn      = aws_codebuild_project.dbt_runner.arn
+    role_arn = aws_iam_role.scheduler.arn
+    input    = jsonencode({})
+  }
 }
 
 # ── ECR Repository: forecast_generate container image (Phase 5) ───────────────
@@ -752,7 +917,7 @@ resource "aws_ecr_lifecycle_policy" "forecast" {
 
 # ── Lambda: openaq_forecast_generate (Phase 5) ────────────────────────────────
 # Container image Lambda. Created only when forecast_lambda_image_uri is non-empty.
-# Runs after weather_ingest (02:00 UTC) and dbt (assumed ~02:30 UTC): scheduled 03:00 UTC.
+# Runs after weather_ingest (02:00 UTC) and dbt runner (02:30 UTC): scheduled 03:00 UTC.
 # 3 GB memory for statsmodels + Prophet; 15 min timeout for 21 stations × 2 models.
 
 resource "aws_cloudwatch_log_group" "forecast_generate" {
