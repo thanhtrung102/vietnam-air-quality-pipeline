@@ -1,328 +1,362 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" modified="2026-04-08T00:00:00.000Z" agent="draw.io" version="21.7.5" type="device">
+<mxfile host="app.diagrams.net" agent="draw.io">
   <diagram id="vn-aq-pipeline" name="Vietnam Air Quality Pipeline">
-    <mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="3496" dy="1927" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- EXTERNAL DATA SOURCES (left, outside AWS)                          -->
+        <!-- EXTERNAL DATA SOURCES                                               -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="ext-title" value="External Data Sources" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=1;fontSize=11;fontColor=#374151;" vertex="1" parent="1">
-          <mxGeometry x="5" y="10" width="145" height="25" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1636" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=1;fontSize=11;fontColor=#374151;" value="External Data Sources" vertex="1">
+          <mxGeometry height="25" width="145" x="-152.5" as="geometry" />
         </mxCell>
 
-        <!-- OpenAQ Public S3 Archive (is an AWS S3 bucket — use S3 icon) -->
-        <mxCell id="201" value="OpenAQ&#xa;S3 Archive" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
-          <mxGeometry x="51" y="105" width="48" height="48" as="geometry" />
+        <!-- OpenAQ Public S3 Archive (us-east-1, requester-pays) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1637" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" value="OpenAQ&#xa;S3 Archive" vertex="1">
+          <mxGeometry height="48" width="48" x="-104" y="80" as="geometry" />
         </mxCell>
-        <mxCell id="201n" value="us-east-1 · requester-pays" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;" vertex="1" parent="1">
-          <mxGeometry x="10" y="185" width="130" height="16" as="geometry" />
+        <mxCell id="ext-s3-note" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;" value="us-east-1 · requester-pays" vertex="1">
+          <mxGeometry height="16" width="130" x="-114" y="140" as="geometry" />
+        </mxCell>
+
+        <!-- OpenAQ SNS — fires on every new archive file; batch_sync subscribes directly (cross-region) -->
+        <mxCell id="sns-new" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#FF9900;strokeWidth=2;align=center;fontSize=10;fontStyle=1;" value="OpenAQ SNS&#xa;(us-east-1)" vertex="1">
+          <mxGeometry height="40" width="100" x="-130" y="403" as="geometry" />
         </mxCell>
 
         <!-- OpenAQ REST API v3 -->
-        <mxCell id="202" value="OpenAQ&#xa;REST API v3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#374151;strokeWidth=2;align=center;fontSize=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="30" y="285" width="100" height="46" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1639" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#374151;strokeWidth=2;align=center;fontSize=10;fontStyle=1;" value="OpenAQ&#xa;REST API v3" vertex="1">
+          <mxGeometry height="46" width="100" x="-130" y="307" as="geometry" />
         </mxCell>
 
-        <!-- Open-Meteo ERA5 -->
-        <mxCell id="203" value="Open-Meteo&#xa;ERA5 Archive" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;strokeWidth=2;align=center;fontSize=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="30" y="445" width="100" height="46" as="geometry" />
+        <!-- Open-Meteo ERA5 Reanalysis -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1640" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;strokeWidth=2;align=center;fontSize=10;fontStyle=1;" value="Open-Meteo&#xa;ERA5 Archive" vertex="1">
+          <mxGeometry height="46" width="100" x="-130" y="503" as="geometry" />
         </mxCell>
 
-        <!-- User (outside region, right) -->
-        <mxCell id="204" value="Users" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#232F3E;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.user;" vertex="1" parent="1">
-          <mxGeometry x="1435" y="300" width="48" height="48" as="geometry" />
+        <!-- Users (far right, outside region) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1641" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#232F3E;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.user;" value="" vertex="1">
+          <mxGeometry height="48" width="48" x="1450" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1730" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Users" vertex="1">
+          <mxGeometry height="30" width="60" x="1444" y="320" as="geometry" />
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- AWS REGION: ap-southeast-1                                         -->
+        <!-- AWS REGION: ap-southeast-1                                          -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="100" value="AWS Region: ap-southeast-1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_region;strokeColor=#147EBA;fillColor=#E6F2F8;verticalLabelPosition=top;align=left;verticalAlign=bottom;spacingLeft=28;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="150" y="5" width="1265" height="855" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1642" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_region;strokeColor=#147EBA;fillColor=#E6F2F8;verticalLabelPosition=top;align=left;verticalAlign=bottom;spacingLeft=28;fontStyle=1;fontSize=12;" value="AWS Region: ap-southeast-1" vertex="1">
+          <mxGeometry height="855" width="1315" x="100" y="5" as="geometry" />
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- GROUP 1: INGESTION                                                  -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="101" value="Ingestion" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_compute;strokeColor=#FF9900;fillColor=#FFFBF0;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="165" y="55" width="315" height="560" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1643" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_compute;strokeColor=#FF9900;fillColor=#FFFBF0;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" value="Ingestion" vertex="1">
+          <mxGeometry height="560" width="360" x="120" y="55" as="geometry" />
         </mxCell>
 
-        <!-- EventBridge Scheduler (top-center of Ingestion group) -->
-        <mxCell id="301" value="EventBridge&#xa;Scheduler" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" vertex="1" parent="1">
-          <mxGeometry x="296" y="100" width="48" height="48" as="geometry" />
+        <!-- EventBridge Scheduler -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1644" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" value="EventBridge&#xa;Scheduler" vertex="1">
+          <mxGeometry height="48" width="48" x="332" y="80" as="geometry" />
         </mxCell>
 
-        <!-- Secrets Manager (top-right of Ingestion group) -->
-        <mxCell id="302" value="Secrets&#xa;Manager" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#DD344C;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" vertex="1" parent="1">
-          <mxGeometry x="406" y="193" width="48" height="48" as="geometry" />
+        <!-- Secrets Manager -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1645" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#DD344C;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" value="Secrets&#xa;Manager" vertex="1">
+          <mxGeometry height="48" width="48" x="396" y="170" as="geometry" />
         </mxCell>
 
         <!-- batch_sync Lambda -->
-        <mxCell id="303" value="batch_sync&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="186" y="193" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1646" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="batch_sync&#xa;Lambda" vertex="1">
+          <mxGeometry height="48" width="48" x="140" y="80" as="geometry" />
         </mxCell>
 
         <!-- streaming_producer Lambda -->
-        <mxCell id="304" value="streaming_producer&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="186" y="315" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1647" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="streaming_producer&#xa;Lambda" vertex="1">
+          <mxGeometry height="48" width="48" x="140" y="305" as="geometry" />
         </mxCell>
 
-        <!-- Kinesis Data Streams -->
-        <mxCell id="305" value="Kinesis&#xa;Data Streams" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_streams;" vertex="1" parent="1">
-          <mxGeometry x="366" y="305" width="48" height="48" as="geometry" />
+        <!-- SQS Dead Letter Queue — captures unhandled streaming_producer Lambda failures -->
+        <mxCell id="dlq-new" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;" value="SQS DLQ" vertex="1">
+          <mxGeometry height="40" width="40" x="258" y="380" as="geometry" />
         </mxCell>
 
-        <!-- Amazon Data Firehose — stencil confirmed in app.diagrams.net/stencils/aws4.xml as "kinesis data firehose" -->
-        <mxCell id="306" value="Amazon Data&#xa;Firehose" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;" vertex="1" parent="1">
-          <mxGeometry x="366" y="395" width="48" height="48" as="geometry" />
+        <!-- Kinesis Data Streams (ON_DEMAND) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1648" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_streams;" value="Kinesis&#xa;Data Streams" vertex="1">
+          <mxGeometry height="48" width="48" x="366" y="305" as="geometry" />
+        </mxCell>
+
+        <!-- Amazon Data Firehose -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1649" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;" value="Amazon Data&#xa;Firehose" vertex="1">
+          <mxGeometry height="48" width="48" x="366" y="395" as="geometry" />
         </mxCell>
 
         <!-- weather_ingest Lambda -->
-        <mxCell id="307" value="weather_ingest&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="186" y="450" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1650" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="weather_ingest&#xa;Lambda" vertex="1">
+          <mxGeometry height="48" width="48" x="140" y="502" as="geometry" />
         </mxCell>
-
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- GROUP 2: STORAGE (S3)                                               -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="102" value="Storage" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_storage;strokeColor=#3F8624;fillColor=#F0F9F0;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="490" y="55" width="155" height="560" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1651" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_storage;strokeColor=#3F8624;fillColor=#F0F9F0;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" value="Storage" vertex="1">
+          <mxGeometry height="560" width="155" x="490" y="55" as="geometry" />
         </mxCell>
 
-        <!-- Amazon S3 bucket (large, centered) -->
-        <mxCell id="401" value="Amazon S3&#xa;(Data Lake)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
-          <mxGeometry x="535" y="185" width="64" height="64" as="geometry" />
+        <!-- Amazon S3 (Data Lake) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1652" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#3F8624;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" value="Amazon S3&#xa;(Data Lake)" vertex="1">
+          <mxGeometry height="64" width="64" x="535" y="185" as="geometry" />
         </mxCell>
 
-        <mxCell id="401n" value="raw/batch/ · raw/stream/&#xa;raw/weather/ · processed/" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#3F8624;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="495" y="285" width="145" height="30" as="geometry" />
+        <!-- S3 prefix note -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1653" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#3F8624;whiteSpace=wrap;" value="raw/batch/ · raw/stream/&#xa;raw/weather/ · processed/" vertex="1">
+          <mxGeometry height="30" width="145" x="495" y="285" as="geometry" />
         </mxCell>
 
-        <!-- Glue + Partition Projection note -->
-        <mxCell id="401g" value="Partition Projection&#xa;(no Crawlers)" style="text;html=1;strokeColor=#8C4FFF;fillColor=#F3F0FF;rounded=1;align=center;fontSize=9;fontColor=#8C4FFF;whiteSpace=wrap;strokeWidth=1;" vertex="1" parent="1">
-          <mxGeometry x="497" y="365" width="140" height="32" as="geometry" />
+        <!-- Partition Projection note -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1654" parent="1" style="text;html=1;strokeColor=#8C4FFF;fillColor=#F3F0FF;rounded=1;align=center;fontSize=9;fontColor=#8C4FFF;whiteSpace=wrap;strokeWidth=1;" value="Partition Projection&#xa;(no Crawlers)" vertex="1">
+          <mxGeometry height="32" width="140" x="497" y="365" as="geometry" />
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- GROUP 3: CATALOG & QUERY                                            -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="103" value="Catalog &amp; Query" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_analytics;strokeColor=#8C4FFF;fillColor=#F3F0FF;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="655" y="55" width="235" height="340" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1655" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_analytics;strokeColor=#8C4FFF;fillColor=#F3F0FF;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" value="Catalog &amp; Query" vertex="1">
+          <mxGeometry height="340" width="235" x="655" y="55" as="geometry" />
         </mxCell>
 
         <!-- AWS Glue Data Catalog -->
-        <mxCell id="501" value="AWS Glue&#xa;Data Catalog" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" vertex="1" parent="1">
-          <mxGeometry x="680" y="170" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1656" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" value="AWS Glue&#xa;Data Catalog" vertex="1">
+          <mxGeometry height="48" width="48" x="680" y="184" as="geometry" />
         </mxCell>
 
         <!-- Amazon Athena -->
-        <mxCell id="502" value="Amazon&#xa;Athena" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;" vertex="1" parent="1">
-          <mxGeometry x="813" y="170" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1657" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;" value="Amazon&#xa;Athena" vertex="1">
+          <mxGeometry height="48" width="48" x="813" y="184" as="geometry" />
         </mxCell>
-        <mxCell id="502n" value="openaq_workgroup · 10 GB/query" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#8C4FFF;" vertex="1" parent="1">
-          <mxGeometry x="785" y="222" width="106" height="16" as="geometry" />
+
+        <!-- Athena workgroup note -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1658" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#8C4FFF;" value="openaq_workgroup · 10 GB/query" vertex="1">
+          <mxGeometry height="16" width="106" x="776" y="160" as="geometry" />
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- GROUP 4: TRANSFORM (dbt)                                            -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="104" value="Transform" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFBF0;strokeColor=#FF9900;strokeWidth=2;verticalAlign=top;fontStyle=1;fontSize=11;spacingTop=5;" vertex="1" parent="1">
-          <mxGeometry x="655" y="405" width="235" height="210" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1659" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFBF0;strokeColor=#FF9900;strokeWidth=2;verticalAlign=top;fontStyle=1;fontSize=11;spacingTop=5;" value="Transform" vertex="1">
+          <mxGeometry height="210" width="235" x="655" y="405" as="geometry" />
         </mxCell>
 
-        <mxCell id="601" value="dbt-athena-community 1.10.0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FF9900;strokeWidth=1;align=center;fontSize=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="668" y="435" width="209" height="30" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1660" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FF9900;strokeWidth=1;align=center;fontSize=10;fontStyle=1;" value="dbt-athena-community 1.10.0" vertex="1">
+          <mxGeometry height="30" width="209" x="668" y="435" as="geometry" />
         </mxCell>
 
-        <mxCell id="601a" value="14 models · 53+ tests · PASS=53 WARN=0 ERROR=0&#xa;Staging → Intermediate → 13 Mart tables&#xa;US EPA 2024 AQI · corrected_pm25 (÷1.50)&#xa;is_outlier_station filter · SARIMA features" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#374151;whiteSpace=wrap;spacingLeft=5;" vertex="1" parent="1">
-          <mxGeometry x="660" y="472" width="222" height="60" as="geometry" />
+        <!-- FIXED: 14 → 17 models (2 stg + 2 int + 13 mart); 2 seeds (vn_stations, vn_holidays) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1661" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#374151;whiteSpace=wrap;spacingLeft=5;" value="17 models · 2 seeds · 53+ tests · PASS=53 WARN=0 ERROR=0&#xa;Staging → Intermediate → 13 Mart tables&#xa;US EPA 2024 AQI · corrected_pm25 (÷1.50)&#xa;is_outlier_station filter · SARIMA features" vertex="1">
+          <mxGeometry height="60" width="222" x="660" y="472" as="geometry" />
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- GROUP 5: SERVING & MONITORING                                       -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="105" value="Serving &amp; Monitoring" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_compute;strokeColor=#E7157B;fillColor=#FFF0F5;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="900" y="55" width="310" height="560" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1662" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_compute;strokeColor=#E7157B;fillColor=#FFF0F5;verticalLabelPosition=top;align=center;verticalAlign=bottom;fontStyle=1;fontSize=11;" value="Serving &amp; Monitoring" vertex="1">
+          <mxGeometry height="560" width="310" x="900" y="55" as="geometry" />
         </mxCell>
 
         <!-- aqi_api Lambda -->
-        <mxCell id="701" value="aqi_api&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="920" y="120" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1663" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="aqi_api&#xa;Lambda" vertex="1">
+          <mxGeometry height="48" width="48" x="920" y="120" as="geometry" />
         </mxCell>
 
         <!-- API Gateway HTTP API v2 -->
-        <mxCell id="702" value="API Gateway&#xa;HTTP API v2" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
-          <mxGeometry x="1052" y="120" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1664" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" value="API Gateway&#xa;HTTP API v2" vertex="1">
+          <mxGeometry height="48" width="48" x="1052" y="120" as="geometry" />
         </mxCell>
 
         <!-- forecast_generate Lambda (ECR container) -->
-        <mxCell id="703" value="forecast_generate&#xa;Lambda (ECR)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="920" y="275" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1665" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="forecast_generate&#xa;Lambda (ECR)" vertex="1">
+          <mxGeometry height="48" width="48" x="920" y="275" as="geometry" />
         </mxCell>
-        <mxCell id="703n" value="SARIMA(1,1,1)(1,0,1,7)&#xa;3 active stations · 7-day horizon" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="895" y="325" width="130" height="28" as="geometry" />
+
+        <!-- SARIMA note -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1666" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" value="SARIMA(1,1,1)(1,0,1,7)&#xa;3 active stations · 7-day horizon" vertex="1">
+          <mxGeometry height="28" width="130" x="969" y="260" as="geometry" />
         </mxCell>
 
         <!-- Amazon ECR -->
-        <mxCell id="704" value="Amazon ECR&#xa;(SARIMA image)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;" vertex="1" parent="1">
-          <mxGeometry x="1052" y="275" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1667" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;" value="Amazon ECR&#xa;(SARIMA image)" vertex="1">
+          <mxGeometry height="48" width="48" x="1130" y="275" as="geometry" />
         </mxCell>
 
-        <!-- CloudWatch -->
-        <mxCell id="705" value="CloudWatch&#xa;(alarms)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
-          <mxGeometry x="920" y="430" width="48" height="48" as="geometry" />
-        </mxCell>
-        <mxCell id="705n" value="ForecastRMSE &gt; 25µg/m³ · MissingStations &lt; 1&#xa;KinesisIteratorAge · BillingEstimate (us-east-1)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="890" y="481" width="150" height="36" as="geometry" />
+        <!-- CloudWatch (alarms) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1668" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" value="CloudWatch&#xa;(alarms)" vertex="1">
+          <mxGeometry height="48" width="48" x="920" y="438" as="geometry" />
         </mxCell>
 
-        <!-- Amazon SNS -->
-        <mxCell id="706" value="Amazon SNS&#xa;(email alerts)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;" vertex="1" parent="1">
-          <mxGeometry x="1052" y="430" width="48" height="48" as="geometry" />
+        <!-- FIXED: MissingStations < 1 → > 3 (threshold = 3, GreaterThanThreshold); billing → SNS us-east-1 -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1669" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" value="ForecastRMSE &gt; 25µg/m³ · MissingStations &gt; 3&#xa;KinesisIteratorAge · BillingEstimate → SNS (us-east-1)" vertex="1">
+          <mxGeometry height="36" width="160" x="960" y="414" as="geometry" />
+        </mxCell>
+
+        <!-- Amazon SNS (ap-southeast-1: ForecastRMSE, MissingStations, KinesisIteratorAge) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1670" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF4F8B;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;" value="Amazon SNS&#xa;(email alerts)" vertex="1">
+          <mxGeometry height="48" width="48" x="1140" y="438" as="geometry" />
         </mxCell>
 
         <!-- completeness_check Lambda -->
-        <mxCell id="707" value="completeness_check&#xa;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="986" y="550" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1671" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="completeness_check&#xa;Lambda" vertex="1">
+          <mxGeometry height="48" width="48" x="921" y="537" as="geometry" />
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- GROUP 6: DASHBOARD (inside region, right side)                      -->
+        <!-- GROUP 6: DASHBOARD                                                  -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="106" value="Dashboard" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F0FFF4;strokeColor=#3F8624;strokeWidth=2;verticalAlign=top;fontStyle=1;fontSize=11;spacingTop=5;" vertex="1" parent="1">
-          <mxGeometry x="1222" y="55" width="178" height="560" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1672" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F0FFF4;strokeColor=#3F8624;strokeWidth=2;verticalAlign=top;fontStyle=1;fontSize=11;spacingTop=5;" value="Dashboard" vertex="1">
+          <mxGeometry height="560" width="178" x="1222" y="55" as="geometry" />
         </mxCell>
 
         <!-- Leaflet.js Station Map -->
-        <mxCell id="801" value="Leaflet.js&#xa;Station Map" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#3F8624;strokeWidth=2;align=center;fontSize=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1232" y="150" width="158" height="50" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1673" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#3F8624;strokeWidth=2;align=center;fontSize=10;fontStyle=1;" value="Leaflet.js&#xa;Station Map" vertex="1">
+          <mxGeometry height="50" width="158" x="1232" y="150" as="geometry" />
         </mxCell>
-        <mxCell id="801n" value="S3 static website · 21 stations&#xa;AQI colour markers · escHtml() XSS protection" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="1228" y="204" width="166" height="28" as="geometry" />
+
+        <!-- Leaflet note -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1674" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" value="S3 static website · 21 stations&#xa;AQI colour markers · escHtml() XSS protection" vertex="1">
+          <mxGeometry height="28" width="166" x="1228" y="114" as="geometry" />
         </mxCell>
 
         <!-- Amazon QuickSight -->
-        <mxCell id="802" value="Amazon&#xa;QuickSight" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.quicksight;" vertex="1" parent="1">
-          <mxGeometry x="1287" y="390" width="48" height="48" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1675" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.quicksight;" value="Amazon&#xa;QuickSight" vertex="1">
+          <mxGeometry height="48" width="48" x="1287" y="390" as="geometry" />
         </mxCell>
-        <mxCell id="802n" value="4 sheets: Historical, Seasonal,&#xa;Statistical, Predictive" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="1228" y="443" width="166" height="28" as="geometry" />
+
+        <!-- QuickSight note -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1676" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" value="4 sheets: Historical, Seasonal,&#xa;Statistical, Predictive" vertex="1">
+          <mxGeometry height="28" width="166" x="1228" y="470" as="geometry" />
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- EDGES — DATA FLOW ARROWS                                            -->
-        <!-- Legend: solid black = data; dashed orange = schedule trigger;       -->
+        <!-- Legend: solid black = data; dashed orange = schedule/event trigger; -->
         <!--         dashed red = secret/security; dashed gray = query/monitor   -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <!-- OpenAQ S3 Archive → batch_sync Lambda (CSV.GZ S3 sync) -->
-        <mxCell id="e01" value="CSV.GZ" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;startArrow=none;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="201" target="303" parent="1">
+        <!-- e01: OpenAQ S3 Archive → batch_sync (CSV.GZ historical sync) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1677" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1637" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;startArrow=none;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1646" value="CSV.GZ">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- OpenAQ REST API → streaming_producer Lambda -->
-        <mxCell id="e02" value="REST poll" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="202" target="304" parent="1">
+        <!-- e-sns: OpenAQ SNS → batch_sync (event-driven trigger, cross-region) -->
+        <!-- Fires on every new archive file; EventBridge cron is catch-all -->
+        <mxCell id="sns-e1" edge="1" parent="1" source="sns-new" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1646" value="SNS event / new file">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="423" />
+              <mxPoint x="100" y="104" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- e02: OpenAQ REST API → streaming_producer (REST poll) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1678" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1639" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1647" value="REST poll">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Open-Meteo ERA5 → weather_ingest Lambda -->
-        <mxCell id="e03" value="ERA5 JSON" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0284C7;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="203" target="307" parent="1">
+        <!-- e03: Open-Meteo ERA5 → weather_ingest (ERA5 JSON) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1679" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1640" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0284C7;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1650" value="ERA5 JSON">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- EventBridge → batch_sync (daily 01:00 UTC) -->
-        <!-- Route: EB bottom → down to y=178 (gap between EB and batch_sync) → right to batch_sync right → enter right -->
-        <mxCell id="e04" value="daily 01:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="301" target="303" parent="1">
+        <!-- e04: EventBridge → batch_sync (daily 01:00 UTC) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1680" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1644" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1646" value="daily 01:00 UTC">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="320" y="186" />
-              <mxPoint x="234" y="186" />
+              <mxPoint x="356" y="186" />
+              <mxPoint x="188" y="186" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- EventBridge → streaming_producer (every 30 min) -->
-        <!-- Route: EB bottom → down to y=280 (gap between batch_sync label and Kinesis DS) → right to SP → enter right -->
-        <mxCell id="e05" value="every 30 min" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="301" target="304" parent="1">
+        <!-- e05: EventBridge → streaming_producer (every 30 min) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1681" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1644" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1647" value="every 30 min">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="320" y="280" />
-              <mxPoint x="234" y="280" />
+              <mxPoint x="356" y="295" />
+              <mxPoint x="188" y="295" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- EventBridge → weather_ingest (daily 02:00 UTC) -->
-        <!-- Route: EB bottom → left to x=250 (column between Lambdas and Kinesis) → down to WI level → enter left -->
-        <!-- Label midpoint lands at (250,308) — gap between batch_sync label and streaming_producer top -->
-        <mxCell id="e06" value="daily 02:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="301" target="307" parent="1">
+        <!-- e06: EventBridge → weather_ingest (daily 02:00 UTC) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1682" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1644" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1650" value="daily 02:00 UTC">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="250" y="148" />
-              <mxPoint x="250" y="474" />
+              <mxPoint x="356" y="134" />
+              <mxPoint x="274" y="134" />
+              <mxPoint x="274" y="526" />
+              <mxPoint x="188" y="526" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- EventBridge → completeness_check (every hour) -->
-        <mxCell id="e07" value="every hour" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="707" parent="1">
+        <!-- e07: EventBridge → completeness_check (every hour) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1683" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1644" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1671" value="every hour">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="320" y="610" />
-              <mxPoint x="1010" y="610" />
+              <mxPoint x="356" y="610" />
+              <mxPoint x="945" y="610" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- Secrets Manager → streaming_producer (API key at runtime) -->
-        <!-- Route down then left to avoid crossing batch_sync (x=186,y=193-241) -->
-        <!-- Label offset +80px right to separate from e05 "every 30 min" label -->
-        <mxCell id="e08" value="OPENAQ_API_KEY" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="302" target="304" parent="1">
+        <!-- e08: Secrets Manager → streaming_producer (OPENAQ_API_KEY at runtime) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1684" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1645" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1647" value="OPENAQ_API_KEY">
           <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" as="offset" />
             <Array as="points">
-              <mxPoint x="430" y="295" />
-              <mxPoint x="234" y="295" />
+              <mxPoint x="420" y="295" />
+              <mxPoint x="188" y="295" />
             </Array>
-            <mxPoint x="80" y="0" as="offset" />
           </mxGeometry>
         </mxCell>
 
-        <!-- batch_sync → S3 (raw/batch/) -->
-        <!-- Route below Secrets Manager (x=406-454, y=193-241) — waypoints at y=258 -->
-        <mxCell id="e09" value="raw/batch/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="303" target="401" parent="1">
+        <!-- e09: batch_sync → S3 (raw/batch/) — routes below Secrets Manager -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1685" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1646" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="t3R8mon-jf1XpVx0l8EL-1652" value="raw/batch/">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
+              <mxPoint x="234" y="104" />
               <mxPoint x="234" y="258" />
               <mxPoint x="535" y="258" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- streaming_producer → Kinesis Data Streams -->
-        <mxCell id="e10" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" source="304" target="305" parent="1">
+        <!-- e10: streaming_producer → Kinesis Data Streams -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1686" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1647" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;" target="t3R8mon-jf1XpVx0l8EL-1648" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Kinesis Data Streams → Kinesis Firehose -->
-        <mxCell id="e11" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" source="305" target="306" parent="1">
+        <!-- e-dlq: streaming_producer → SQS DLQ (Lambda failures, dead-letter) -->
+        <mxCell id="dlq-e1" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1647" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="dlq-new" value="Lambda failures">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Kinesis Firehose → S3 (raw/stream/ GZIP) -->
-        <!-- Explicit waypoints to keep label in white space between groups -->
-        <mxCell id="e12" value="raw/stream/ (GZIP)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="306" target="401" parent="1">
+        <!-- e11: Kinesis Data Streams → Amazon Data Firehose -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1687" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1648" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;" target="t3R8mon-jf1XpVx0l8EL-1649" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- e12: Firehose → S3 (raw/stream/ GZIP) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1688" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1649" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1652" value="raw/stream/ (GZIP)">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="490" y="419" />
@@ -331,152 +365,178 @@
           </mxGeometry>
         </mxCell>
 
-        <!-- weather_ingest → S3 (raw/weather/ NDJSON) -->
-        <!-- Route via x=540 column, entering S3 from left at 70% height — separates from e12 label -->
-        <mxCell id="e13" value="raw/weather/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" edge="1" source="307" target="401" parent="1">
+        <!-- e13: weather_ingest → S3 (raw/weather/) — separate path from e12 -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1689" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1650" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1652" value="raw/weather/">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="540" y="474" />
+              <mxPoint x="540" y="526" />
               <mxPoint x="540" y="230" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- S3 → Glue (serves as schema layer via partition projection) -->
-        <mxCell id="e14" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" source="401" target="501" parent="1">
+        <!-- e14: S3 → Glue (partition projection schema) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1690" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1652" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;" target="t3R8mon-jf1XpVx0l8EL-1656" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Glue → Athena (catalog resolves partitions) -->
-        <mxCell id="e15" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" source="501" target="502" parent="1">
+        <!-- e15: Glue → Athena (catalog resolves partitions) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1691" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1656" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;" target="t3R8mon-jf1XpVx0l8EL-1657" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Athena ↔ dbt (bidirectional: dbt reads raw, writes Parquet mart CTAS) -->
-        <mxCell id="e16" value="CTAS → Parquet marts" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="601" parent="1">
+        <!-- e16: Athena ↔ dbt (bidirectional: reads raw, writes CTAS Parquet marts) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1692" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1657" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1660" value="CTAS → Parquet marts">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- dbt writes Parquet → S3 processed/ (loopback via S3 prefix) -->
-        <mxCell id="e16b" value="processed/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;dashed=1;" edge="1" source="601" target="401" parent="1">
+        <!-- e16b: dbt → S3 (processed/ Parquet marts via CTAS) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1693" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1660" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1652" value="processed/">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="765" y="640" />
-              <mxPoint x="567" y="640" />
+              <mxPoint x="772" y="670" />
+              <mxPoint x="567" y="670" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- Athena → aqi_api Lambda (serves latest mart_daily_aqi) -->
-        <mxCell id="e17" value="mart_daily_aqi" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="701" parent="1">
+        <!-- e17: Athena → aqi_api (queries mart_daily_aqi) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1694" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1657" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1663" value="mart_daily_aqi">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Athena → forecast_generate Lambda (mart_lagged_features) -->
-        <mxCell id="e18" value="mart_lagged_features" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="703" parent="1">
+        <!-- e18: Athena → forecast_generate (reads mart_lagged_features) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1695" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1657" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1665" value="mart_lagged_features">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- completeness_check → Athena (queries row counts per station) -->
-        <mxCell id="e19" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9CA3AF;strokeWidth=1;endArrow=open;endFill=0;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="707" target="502" parent="1">
+        <!-- e19: completeness_check → Athena (queries mart_daily_aqi row counts) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1696" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1671" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9CA3AF;strokeWidth=1;endArrow=open;endFill=0;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1657" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- aqi_api Lambda → API Gateway -->
-        <mxCell id="e20" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" source="701" target="702" parent="1">
+        <!-- e20: aqi_api → API Gateway (Lambda integration) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1697" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1663" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;" target="t3R8mon-jf1XpVx0l8EL-1664" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- API Gateway → Leaflet Map (GeoJSON) -->
-        <mxCell id="e21" value="GeoJSON" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="702" target="801" parent="1">
+        <!-- e21: API Gateway → Leaflet Map (GeoJSON) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1698" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1664" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1673" value="GeoJSON">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- EventBridge → forecast_generate (daily 03:00 UTC) -->
-        <mxCell id="e07b" value="daily 03:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="703" parent="1">
+        <!-- e07b: EventBridge → forecast_generate (daily 03:00 UTC, after weather+dbt) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1699" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1644" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1665" value="daily 03:00 UTC">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="320" y="625" />
+              <mxPoint x="356" y="625" />
               <mxPoint x="870" y="625" />
               <mxPoint x="870" y="299" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- ECR → forecast_generate Lambda (container image pull) -->
-        <mxCell id="e22" value="container image" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="704" target="703" parent="1">
+        <!-- e22: ECR → forecast_generate (container image pull) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1700" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1667" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1665" value="container image">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- forecast_generate → CloudWatch (ForecastRMSE custom metric) -->
-        <mxCell id="e23" value="ForecastRMSE" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E7157B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="703" target="705" parent="1">
+        <!-- e23: forecast_generate → CloudWatch (ForecastRMSE custom metric) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1701" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1665" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E7157B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1668" value="ForecastRMSE">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- CloudWatch → SNS (alarm: RMSE > 25µg/m³ or MissingStations) -->
-        <mxCell id="e24" value="alarm" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="705" target="706" parent="1">
+        <!-- e24: CloudWatch → SNS (alarm: RMSE > 25 or MissingStations > 3 or KinesisAge) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1702" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1668" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1670" value="alarm">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- completeness_check → SNS (feed failure alert) -->
-        <mxCell id="e25" value="feed failure" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="707" target="706" parent="1">
+        <!-- e25: completeness_check → SNS (feed failure alert) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1703" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1671" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1670" value="feed failure">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Athena → QuickSight (SPICE refresh, daily) -->
-        <mxCell id="e26" value="SPICE refresh" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="502" target="802" parent="1">
+        <!-- e26: Athena → QuickSight (SPICE refresh, daily) -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1704" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1657" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" target="t3R8mon-jf1XpVx0l8EL-1675" value="SPICE refresh">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- User → Leaflet Map -->
-        <mxCell id="e27" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#374151;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" source="204" target="801" parent="1">
+        <!-- e27: User → Leaflet Map -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1705" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1641" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#374151;strokeWidth=1.5;endArrow=block;endFill=1;" target="t3R8mon-jf1XpVx0l8EL-1673" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- User → QuickSight -->
-        <mxCell id="e28" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#374151;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" source="204" target="802" parent="1">
+        <!-- e28: User → QuickSight -->
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1706" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1641" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#374151;strokeWidth=1.5;endArrow=block;endFill=1;" target="t3R8mon-jf1XpVx0l8EL-1675" value="">
           <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- e-fc-s3: forecast_generate → S3 (writes mart_daily_forecast/ Parquet directly) -->
+        <!-- mart_forecast_accuracy (dbt) reads this external Athena table; QuickSight Sheet 4 uses it -->
+        <mxCell id="fc-s3-e1" edge="1" parent="1" source="t3R8mon-jf1XpVx0l8EL-1665" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.65;entryY=1;entryDx=0;entryDy=0;" target="t3R8mon-jf1XpVx0l8EL-1652" value="mart_daily_forecast/">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="944" y="690" />
+              <mxPoint x="577" y="690" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- LEGEND                                                              -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
 
-        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F9FAFB;strokeColor=#D1D5DB;strokeWidth=1;" vertex="1" parent="1">
-          <mxGeometry x="155" y="780" width="530" height="65" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1707" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F9FAFB;strokeColor=#D1D5DB;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="65" width="530" x="155" y="780" as="geometry" />
         </mxCell>
-        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontStyle=1;fontColor=#374151;" vertex="1" parent="1">
-          <mxGeometry x="165" y="784" width="60" height="18" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1708" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontStyle=1;fontColor=#374151;" value="Legend" vertex="1">
+          <mxGeometry height="18" width="60" x="165" y="784" as="geometry" />
         </mxCell>
-        <mxCell id="leg1" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry"><Array as="points"/><mxPoint x="165" y="815" as="sourcePoint"/><mxPoint x="215" y="815" as="targetPoint"/></mxGeometry>
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1709" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#232F3E;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="165" y="815" as="sourcePoint" />
+            <mxPoint x="215" y="815" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="leg1l" value="Data flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
-          <mxGeometry x="220" y="808" width="60" height="16" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1710" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="Data flow" vertex="1">
+          <mxGeometry height="16" width="60" x="220" y="808" as="geometry" />
         </mxCell>
-        <mxCell id="leg2" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry"><mxPoint x="285" y="815" as="sourcePoint"/><mxPoint x="335" y="815" as="targetPoint"/></mxGeometry>
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1711" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="285" y="815" as="sourcePoint" />
+            <mxPoint x="335" y="815" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="leg2l" value="Schedule trigger" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
-          <mxGeometry x="340" y="808" width="90" height="16" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1712" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="Schedule / event trigger" vertex="1">
+          <mxGeometry height="16" width="110" x="340" y="808" as="geometry" />
         </mxCell>
-        <mxCell id="leg3" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry"><mxPoint x="435" y="815" as="sourcePoint"/><mxPoint x="485" y="815" as="targetPoint"/></mxGeometry>
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1713" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="455" y="815" as="sourcePoint" />
+            <mxPoint x="505" y="815" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="leg3l" value="Security / secret" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
-          <mxGeometry x="490" y="808" width="90" height="16" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1714" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="Security / secret / failure" vertex="1">
+          <mxGeometry height="16" width="115" x="510" y="808" as="geometry" />
         </mxCell>
-        <mxCell id="leg4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry"><mxPoint x="165" y="835" as="sourcePoint"/><mxPoint x="215" y="835" as="targetPoint"/></mxGeometry>
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1715" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8C4FFF;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="165" y="835" as="sourcePoint" />
+            <mxPoint x="215" y="835" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="leg4l" value="Analytics / catalog" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
-          <mxGeometry x="220" y="828" width="100" height="16" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1716" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="Analytics / catalog" vertex="1">
+          <mxGeometry height="16" width="100" x="220" y="828" as="geometry" />
         </mxCell>
-        <mxCell id="leg5" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry"><mxPoint x="325" y="835" as="sourcePoint"/><mxPoint x="375" y="835" as="targetPoint"/></mxGeometry>
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1717" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF4F8B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="325" y="835" as="sourcePoint" />
+            <mxPoint x="375" y="835" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="leg5l" value="Integration / alert" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" vertex="1" parent="1">
-          <mxGeometry x="380" y="828" width="100" height="16" as="geometry" />
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1718" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" value="Integration / alert" vertex="1">
+          <mxGeometry height="16" width="100" x="380" y="828" as="geometry" />
         </mxCell>
 
       </root>
