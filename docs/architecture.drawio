@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" modified="2026-04-08T00:00:00.000Z" agent="draw.io" version="21.7.5" type="device">
   <diagram id="vn-aq-pipeline" name="Vietnam Air Quality Pipeline">
-    <mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -261,15 +261,21 @@
         <mxCell id="e07" value="every hour" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="707" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="320" y="620" />
-              <mxPoint x="1010" y="620" />
+              <mxPoint x="320" y="610" />
+              <mxPoint x="1010" y="610" />
             </Array>
           </mxGeometry>
         </mxCell>
 
         <!-- Secrets Manager → streaming_producer (API key at runtime) -->
+        <!-- Route down then left to avoid crossing batch_sync (x=186,y=193-241) -->
         <mxCell id="e08" value="OPENAQ_API_KEY" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DD344C;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="302" target="304" parent="1">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="454" y="280" />
+              <mxPoint x="234" y="280" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- batch_sync → S3 (raw/batch/) -->
@@ -316,8 +322,8 @@
         <mxCell id="e16b" value="processed/" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3F8624;strokeWidth=1;endArrow=block;endFill=1;fontSize=9;dashed=1;" edge="1" source="601" target="401" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="765" y="750" />
-              <mxPoint x="567" y="750" />
+              <mxPoint x="765" y="640" />
+              <mxPoint x="567" y="640" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -351,8 +357,8 @@
         <mxCell id="e07b" value="daily 03:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" source="301" target="703" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="320" y="660" />
-              <mxPoint x="870" y="660" />
+              <mxPoint x="320" y="625" />
+              <mxPoint x="870" y="625" />
               <mxPoint x="870" y="299" />
             </Array>
           </mxGeometry>
