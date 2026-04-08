@@ -79,7 +79,7 @@
         <mxCell id="t3R8mon-jf1XpVx0l8EL-1657" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;" value="Amazon&#xa;Athena" vertex="1">
           <mxGeometry height="48" width="48" x="813" y="184" as="geometry" />
         </mxCell>
-        <mxCell id="t3R8mon-jf1XpVx0l8EL-1658" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#8C4FFF;" value="openaq_workgroup · 10 GB/query" vertex="1">
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1658" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#8C4FFF;" value="openaq_workgroup · 10 GB/query · result reuse 60 min" vertex="1">
           <mxGeometry height="16" width="106" x="776" y="160" as="geometry" />
         </mxCell>
         <mxCell id="t3R8mon-jf1XpVx0l8EL-1659" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFBF0;strokeColor=#FF9900;strokeWidth=2;verticalAlign=top;fontStyle=1;fontSize=11;spacingTop=5;" value="Transform" vertex="1">
@@ -103,7 +103,7 @@
         <mxCell id="t3R8mon-jf1XpVx0l8EL-1665" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="forecast_generate&#xa;Lambda (ECR)" vertex="1">
           <mxGeometry height="48" width="48" x="920" y="275" as="geometry" />
         </mxCell>
-        <mxCell id="t3R8mon-jf1XpVx0l8EL-1666" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" value="SARIMA(1,1,1)(1,0,1,7)&#xa;3 active stations · 7-day horizon" vertex="1">
+        <mxCell id="t3R8mon-jf1XpVx0l8EL-1666" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#6B7280;whiteSpace=wrap;" value="SARIMA(1,1,1)(1,0,1,7)&#xa;21 stations · 7-day horizon" vertex="1">
           <mxGeometry height="28" width="130" x="968" y="249" as="geometry" />
         </mxCell>
         <mxCell id="t3R8mon-jf1XpVx0l8EL-1667" parent="1" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#FF9900;labelBackgroundColor=none;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;spacingTop=2;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;" value="Amazon ECR&#xa;(SARIMA image)" vertex="1">
