@@ -243,18 +243,37 @@
         </mxCell>
 
         <!-- EventBridge → batch_sync (daily 01:00 UTC) -->
-        <mxCell id="e04" value="daily 01:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="303" parent="1">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Route: EB bottom → down to y=178 (gap between EB and batch_sync) → right to batch_sync right → enter right -->
+        <mxCell id="e04" value="daily 01:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="301" target="303" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="178" />
+              <mxPoint x="234" y="178" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- EventBridge → streaming_producer (every 30 min) -->
-        <mxCell id="e05" value="every 30 min" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="304" parent="1">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Route: EB bottom → down to y=280 (gap between batch_sync label and Kinesis DS) → right to SP → enter right -->
+        <mxCell id="e05" value="every 30 min" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="301" target="304" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="280" />
+              <mxPoint x="234" y="280" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- EventBridge → weather_ingest (daily 02:00 UTC) -->
-        <mxCell id="e06" value="daily 02:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;" edge="1" source="301" target="307" parent="1">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Route: EB bottom → left to x=250 (column between Lambdas and Kinesis) → down to WI level → enter left -->
+        <!-- Label midpoint lands at (250,308) — gap between batch_sync label and streaming_producer top -->
+        <mxCell id="e06" value="daily 02:00 UTC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#FF9900;strokeWidth=1.5;endArrow=block;endFill=1;dashed=1;fontSize=9;labelBackgroundColor=#ffffff;labelBorderColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="301" target="307" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="148" />
+              <mxPoint x="250" y="474" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- EventBridge → completeness_check (every hour) -->
