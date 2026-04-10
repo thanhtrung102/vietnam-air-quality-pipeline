@@ -88,3 +88,48 @@ output "openaq_api_key_secret_name" {
   description = "Secrets Manager secret name for the OpenAQ API key (Gap 2)"
   value       = aws_secretsmanager_secret.openaq_api_key.name
 }
+
+# ── QuickSight (Phase 2) ──────────────────────────────────────────────────────
+
+output "quicksight_data_source_arn" {
+  description = "ARN of the QuickSight Athena data source (shared by all SPICE datasets)"
+  value       = aws_quicksight_data_source.athena.arn
+}
+
+output "quicksight_dataset_ids" {
+  description = "Map of dataset name → dataset_id for all nine SPICE datasets"
+  value = {
+    daily_aqi            = aws_quicksight_data_set.daily_aqi.data_set_id
+    health_summary       = aws_quicksight_data_set.health_summary.data_set_id
+    annual_monthly_trend = aws_quicksight_data_set.annual_monthly_trend.data_set_id
+    monthly_profile      = aws_quicksight_data_set.monthly_profile.data_set_id
+    diurnal_profile      = aws_quicksight_data_set.diurnal_profile.data_set_id
+    aq_weather_daily     = aws_quicksight_data_set.aq_weather_daily.data_set_id
+    exceedance_stats     = aws_quicksight_data_set.exceedance_stats.data_set_id
+    pollutant_ratio      = aws_quicksight_data_set.pollutant_ratio.data_set_id
+    forecast_accuracy    = aws_quicksight_data_set.forecast_accuracy.data_set_id
+  }
+}
+
+output "quicksight_dataset_arns" {
+  description = "Map of dataset name → ARN (used in aws_quicksight_analysis data_set_identifiers)"
+  value = {
+    daily_aqi            = aws_quicksight_data_set.daily_aqi.arn
+    health_summary       = aws_quicksight_data_set.health_summary.arn
+    annual_monthly_trend = aws_quicksight_data_set.annual_monthly_trend.arn
+    monthly_profile      = aws_quicksight_data_set.monthly_profile.arn
+    diurnal_profile      = aws_quicksight_data_set.diurnal_profile.arn
+    aq_weather_daily     = aws_quicksight_data_set.aq_weather_daily.arn
+    exceedance_stats     = aws_quicksight_data_set.exceedance_stats.arn
+    pollutant_ratio      = aws_quicksight_data_set.pollutant_ratio.arn
+    forecast_accuracy    = aws_quicksight_data_set.forecast_accuracy.arn
+  }
+}
+
+output "quicksight_service_role_arn" {
+  description = "ARN of the QuickSight service role (grant this in the QuickSight console under Security & Permissions)"
+  value       = aws_iam_role.quicksight_service.arn
+}
+
+# Phase 3 & 4 outputs (aws_quicksight_analysis, template, dashboard) are added
+# after the analysis resource is uncommented in quicksight_analysis.tf.

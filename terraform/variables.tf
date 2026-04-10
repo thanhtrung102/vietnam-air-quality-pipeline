@@ -56,6 +56,11 @@ variable "lambda_weather_zip_path" {
   default     = "../lambda/weather_ingest.zip"
 }
 
+variable "quicksight_admin_email" {
+  description = "Email address to register as a QuickSight Author (must match an IAM user's email or be a valid address for QuickSight managed users)"
+  type        = string
+}
+
 variable "forecast_lambda_image_uri" {
   description = <<-EOT
     ECR image URI for the forecast_generate container Lambda.
