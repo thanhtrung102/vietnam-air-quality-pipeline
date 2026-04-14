@@ -755,14 +755,7 @@ resource "aws_codebuild_project" "dbt_runner" {
   source {
     type      = "S3"
     location  = "${local.bucket_name}/codebuild-source.zip"
-    buildspec = <<-EOT
-      version: 0.2
-      phases:
-        build:
-          commands:
-            - cd transform
-            - dbt run --profiles-dir . --project-dir .
-    EOT
+    buildspec = "transform/buildspec_dbt.yml"
   }
 
   logs_config {
@@ -871,9 +864,12 @@ resource "aws_scheduler_schedule" "dbt_daily" {
   schedule_expression = "cron(30 2 * * ? *)"
 
   target {
-    arn      = aws_codebuild_project.dbt_runner.arn
+    # Universal SDK target: EventBridge Scheduler invokes codebuild:StartBuild.
+    # CodeBuild project ARNs are not valid direct EventBridge targets — the
+    # aws-sdk universal target is required for CodeBuild.
+    arn      = "arn:aws:scheduler:::aws-sdk:codebuild:startBuild"
     role_arn = aws_iam_role.scheduler.arn
-    input    = jsonencode({})
+    input    = jsonencode({ ProjectName = aws_codebuild_project.dbt_runner.name })
   }
 }
 

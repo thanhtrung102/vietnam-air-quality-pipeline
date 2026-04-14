@@ -1,0 +1,34 @@
+version: 0.2
+
+# dbt transform buildspec — rebuilds all openaq_mart tables from raw/batch/.
+#
+# Runtime image: ghcr.io/dbt-labs/dbt-athena:1.10.0 (set in CodeBuild project)
+# dbt-athena-community is pre-installed in the image — no pip install needed.
+#
+# Triggered by EventBridge Scheduler at 02:30 UTC daily, 90 minutes after
+# batch_sync Lambda (01:00 UTC) has finished syncing the archive.
+#
+# Source: s3://openaq-pipeline-thanhtrung102/codebuild-source.zip
+#   Re-upload when models or seeds change:
+#     zip -r codebuild-source.zip . --exclude '.git/*' 'transform/dbt_packages/*'
+#     aws s3 cp codebuild-source.zip s3://openaq-pipeline-thanhtrung102/
+
+phases:
+  pre_build:
+    commands:
+      - cd transform
+      # Install dbt_utils package (packages.yml: dbt-labs/dbt_utils >=1.0.0)
+      - dbt deps --profiles-dir . --project-dir .
+
+  build:
+    commands:
+      # Seeds before marts: vn_stations and vn_holidays are referenced by
+      # int_measurements_enriched and mart_daily_aqi.
+      - dbt seed --profiles-dir . --project-dir . --select vn_stations vn_holidays
+      - dbt run  --profiles-dir . --project-dir .
+
+  post_build:
+    commands:
+      # Non-blocking tests: failures appear in CloudWatch but don't fail the build.
+      - dbt test --profiles-dir . --project-dir . --store-failures || echo "WARN dbt tests had failures"
+      - echo "dbt run complete at $(date -u)"
