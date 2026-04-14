@@ -1,7 +1,7 @@
-# ── QuickSight SPICE Datasets (Phase 2.2 & 2.3) ───────────────────────────────
+# ── QuickSight Datasets (Phase 2.2 & 2.3) — DIRECT_QUERY mode ──────────────────
 #
-# Nine datasets, one per mart table, all backed by SPICE (in-memory cache).
-# SPICE eliminates per-query Athena cost on dashboard loads.
+# Nine datasets, one per mart table, all using DIRECT_QUERY (live Athena queries).
+# Real-time: each dashboard load queries Athena directly — no refresh lag.
 # Each dataset refreshes daily at 04:00 UTC — after dbt completes (~02:45 UTC).
 #
 # Dataset → Sheet mapping (revised 4-sheet design):
@@ -48,7 +48,7 @@ resource "aws_quicksight_data_set" "daily_aqi" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-daily-aqi"
   name           = "OpenAQ – Daily Composite AQI"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-daily-aqi"
@@ -120,20 +120,6 @@ resource "aws_quicksight_data_set" "daily_aqi" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "daily_aqi" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.daily_aqi.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval    = "DAILY"
-      time_of_the_day = "04:00"
-      timezone    = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 2: ds_health_summary
@@ -145,7 +131,7 @@ resource "aws_quicksight_data_set" "health_summary" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-health-summary"
   name           = "OpenAQ – Annual Health Summary by City"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-health-summary"
@@ -229,20 +215,6 @@ resource "aws_quicksight_data_set" "health_summary" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "health_summary" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.health_summary.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval    = "DAILY"
-      time_of_the_day = "04:00"
-      timezone    = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 3: ds_annual_monthly_trend
@@ -254,7 +226,7 @@ resource "aws_quicksight_data_set" "annual_monthly_trend" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-annual-monthly-trend"
   name           = "OpenAQ – Annual Monthly PM2.5 Trend"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-annual-monthly-trend"
@@ -314,20 +286,6 @@ resource "aws_quicksight_data_set" "annual_monthly_trend" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "annual_monthly_trend" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.annual_monthly_trend.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval    = "DAILY"
-      time_of_the_day = "04:00"
-      timezone    = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 4: ds_monthly_profile
@@ -339,7 +297,7 @@ resource "aws_quicksight_data_set" "monthly_profile" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-monthly-profile"
   name           = "OpenAQ – Monthly Climatological Profile"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-monthly-profile"
@@ -415,20 +373,6 @@ resource "aws_quicksight_data_set" "monthly_profile" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "monthly_profile" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.monthly_profile.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval    = "DAILY"
-      time_of_the_day = "04:00"
-      timezone    = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 5: ds_diurnal_profile
@@ -440,7 +384,7 @@ resource "aws_quicksight_data_set" "diurnal_profile" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-diurnal-profile"
   name           = "OpenAQ – Diurnal (Hour-of-Day) Profile"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-diurnal-profile"
@@ -512,20 +456,6 @@ resource "aws_quicksight_data_set" "diurnal_profile" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "diurnal_profile" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.diurnal_profile.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval    = "DAILY"
-      time_of_the_day = "04:00"
-      timezone    = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 6: ds_exceedance_stats
@@ -537,7 +467,7 @@ resource "aws_quicksight_data_set" "exceedance_stats" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-exceedance-stats"
   name           = "OpenAQ – Monthly Exceedance Statistics"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-exceedance-stats"
@@ -601,20 +531,6 @@ resource "aws_quicksight_data_set" "exceedance_stats" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "exceedance_stats" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.exceedance_stats.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval    = "DAILY"
-      time_of_the_day = "04:00"
-      timezone    = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 7: ds_pollutant_ratio
@@ -626,7 +542,7 @@ resource "aws_quicksight_data_set" "pollutant_ratio" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-pollutant-ratio"
   name           = "OpenAQ – PM2.5 / PM10 Pollutant Ratio"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-pollutant-ratio"
@@ -682,20 +598,6 @@ resource "aws_quicksight_data_set" "pollutant_ratio" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "pollutant_ratio" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.pollutant_ratio.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval    = "DAILY"
-      time_of_the_day = "04:00"
-      timezone    = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 8: ds_forecast_accuracy
@@ -712,7 +614,7 @@ resource "aws_quicksight_data_set" "forecast_accuracy" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-forecast-accuracy"
   name           = "OpenAQ – Forecast vs Actuals & Rolling RMSE"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-forecast-accuracy"
@@ -812,20 +714,6 @@ resource "aws_quicksight_data_set" "forecast_accuracy" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "forecast_accuracy" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.forecast_accuracy.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval        = "DAILY"
-      time_of_the_day = "04:00"
-      timezone        = "UTC"
-    }
-  }
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset 9: ds_aq_weather_daily
@@ -844,7 +732,7 @@ resource "aws_quicksight_data_set" "aq_weather_daily" {
   aws_account_id = data.aws_caller_identity.current.account_id
   data_set_id    = "openaq-aq-weather-daily"
   name           = "OpenAQ – AQ + Weather Daily"
-  import_mode    = "SPICE"
+  import_mode    = "DIRECT_QUERY"
 
   physical_table_map {
     physical_table_map_id = "mart-aq-weather-daily"
@@ -981,17 +869,3 @@ resource "aws_quicksight_data_set" "aq_weather_daily" {
   tags = local.common_tags
 }
 
-resource "aws_quicksight_refresh_schedule" "aq_weather_daily" {
-  aws_account_id = data.aws_caller_identity.current.account_id
-  data_set_id    = aws_quicksight_data_set.aq_weather_daily.data_set_id
-  schedule_id    = "daily-04utc"
-
-  schedule {
-    refresh_type = "FULL_REFRESH"
-    schedule_frequency {
-      interval        = "DAILY"
-      time_of_the_day = "04:00"
-      timezone        = "UTC"
-    }
-  }
-}

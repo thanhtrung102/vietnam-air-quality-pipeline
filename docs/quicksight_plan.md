@@ -10,10 +10,10 @@ public health communication best practices, and mart capability audit.
 | Phase | Description | Status |
 |-------|-------------|--------|
 | 1 | IAM — service role + user ARN local | **DONE** (`quicksight_iam.tf`) |
-| 2 | Data source + 9 SPICE datasets + refresh schedules | **DONE** (`quicksight_datasource.tf`, `quicksight_datasets.tf`) |
-| 3 | Analysis — 4 sheets built in console, exported to Terraform | **PENDING** (console work required first) |
-| 4 | Published dashboard via template | **PENDING** (Phase 3 must complete first) |
-| 5 | Deployment + monitoring | **PENDING** |
+| 2 | Data source + 9 datasets (DIRECT_QUERY, live Athena) | **DONE** (`quicksight_datasource.tf`, `quicksight_datasets.tf`) |
+| 3 | Analysis — 4 sheets created via `create_analysis.py` + boto3 | **DONE** (`quicksight_analysis.tf`, `create_analysis.py`) |
+| 4 | Published dashboard via template | **DONE** (`quicksight_dashboard.tf`) |
+| 5 | Deployment + monitoring | **DONE** |
 
 ---
 
@@ -80,11 +80,11 @@ weather driver analysis on Sheet 2.
 
 ---
 
-## Phase 3 — Analysis: 4 Sheets (PENDING)
+## Phase 3 — Analysis: 4 Sheets (DONE)
 
-File: `terraform/quicksight_analysis.tf` (resource commented out — see instructions)
+File: `terraform/quicksight_analysis.tf` + `terraform/create_analysis.py`
 
-Phase 3 requires a **console-first workflow** because QuickSight visual definitions
+Phase 3 used a **Python/boto3 workflow** instead of the console because QuickSight visual definitions
 (field assignments, axis configs, color rules, reference lines) cannot feasibly be
 authored in HCL from scratch. The workflow is:
 

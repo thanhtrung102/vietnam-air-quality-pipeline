@@ -1,0 +1,2778 @@
+{
+  "DataSetIdentifierDeclarations": [
+    {
+      "Identifier": "forecast-accuracy",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-forecast-accuracy"
+    },
+    {
+      "Identifier": "daily-aqi",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-daily-aqi"
+    },
+    {
+      "Identifier": "health-summary",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-health-summary"
+    },
+    {
+      "Identifier": "diurnal-profile",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-diurnal-profile"
+    },
+    {
+      "Identifier": "exceedance-stats",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-exceedance-stats"
+    },
+    {
+      "Identifier": "annual-monthly-trend",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-annual-monthly-trend"
+    },
+    {
+      "Identifier": "aq-weather-daily",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-aq-weather-daily"
+    },
+    {
+      "Identifier": "pollutant-ratio",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-pollutant-ratio"
+    },
+    {
+      "Identifier": "monthly-profile",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-monthly-profile"
+    }
+  ],
+  "Sheets": [
+    {
+      "SheetId": "sheet-1",
+      "Name": "Executive Health Scorecard",
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s1-fc-city",
+            "Title": "City",
+            "SourceFilterId": "filter-s1-fc-city",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {
+                  "FontSize": {
+                    "Relative": "MEDIUM"
+                  }
+                }
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        }
+      ],
+      "Visuals": [
+        {
+          "KPIVisual": {
+            "VisualId": "s1-kpi-cigarette",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Cigarettes/Day Equivalent (Annual Avg)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s1-kpi-cigarette-v",
+                      "Column": {
+                        "DataSetIdentifier": "health-summary",
+                        "ColumnName": "avg_cigarette_equivalent"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "AVERAGE"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "KPIVisual": {
+            "VisualId": "s1-kpi-who-compliance",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "WHO Compliance Rate (%)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s1-kpi-who-compliance-v",
+                      "Column": {
+                        "DataSetIdentifier": "health-summary",
+                        "ColumnName": "who_compliance_pct"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "AVERAGE"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "KPIVisual": {
+            "VisualId": "s1-kpi-avg-pm25",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Annual Mean PM2.5 (\u00b5g/m\u00b3)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s1-kpi-avg-pm25-v",
+                      "Column": {
+                        "DataSetIdentifier": "health-summary",
+                        "ColumnName": "avg_pm25"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "AVERAGE"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "KPIVisual": {
+            "VisualId": "s1-kpi-unhealthy-days",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Unhealthy+ Days (AQI > 150)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s1-kpi-unhealthy-days-v",
+                      "Column": {
+                        "DataSetIdentifier": "health-summary",
+                        "ColumnName": "unhealthy_days"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "SUM"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "KPIVisual": {
+            "VisualId": "s1-kpi-hazardous-days",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Hazardous Days"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s1-kpi-hazardous-days-v",
+                      "Column": {
+                        "DataSetIdentifier": "health-summary",
+                        "ColumnName": "hazardous_days"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "SUM"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s1-bar-health-days",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Health Day Breakdown by City (Stacked) \u2014 Good/Moderate/USG/Unhealthy+"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s1-bar-hd-city",
+                        "Column": {
+                          "DataSetIdentifier": "health-summary",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-bar-hd-good",
+                        "Column": {
+                          "DataSetIdentifier": "health-summary",
+                          "ColumnName": "good_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-bar-hd-mod",
+                        "Column": {
+                          "DataSetIdentifier": "health-summary",
+                          "ColumnName": "moderate_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-bar-hd-usg",
+                        "Column": {
+                          "DataSetIdentifier": "health-summary",
+                          "ColumnName": "usg_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-bar-hd-unheal",
+                        "Column": {
+                          "DataSetIdentifier": "health-summary",
+                          "ColumnName": "unhealthy_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-bar-hd-vunheal",
+                        "Column": {
+                          "DataSetIdentifier": "health-summary",
+                          "ColumnName": "very_unhealthy_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-bar-hd-haz",
+                        "Column": {
+                          "DataSetIdentifier": "health-summary",
+                          "ColumnName": "hazardous_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": []
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "STACKED"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s1-line-pm25-trend",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Annual Mean PM2.5 Trend by City (\u00b5g/m\u00b3)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s1-ln-year",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-ln-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s1-ln-city",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE",
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 40.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "LINE"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "2030 Target: 40 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                },
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 15.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "LINE"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "WHO AQG: 15 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s1-line-who-exc",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Annual WHO Exceedance Rate (%) \u2014 City Trend"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s1-we-year",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s1-we-rate",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "who_exceedance_rate"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s1-we-city",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        }
+      ],
+      "Layouts": [
+        {
+          "Configuration": {
+            "GridLayout": {
+              "Elements": [
+                {
+                  "ElementId": "s1-kpi-cigarette",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 7,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s1-kpi-who-compliance",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 7,
+                  "ColumnSpan": 7,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s1-kpi-avg-pm25",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 14,
+                  "ColumnSpan": 7,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s1-kpi-unhealthy-days",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 21,
+                  "ColumnSpan": 7,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s1-kpi-hazardous-days",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 28,
+                  "ColumnSpan": 8,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s1-bar-health-days",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 36,
+                  "RowIndex": 6,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s1-line-pm25-trend",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 18,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s1-line-who-exc",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 18,
+                  "ColumnSpan": 18,
+                  "RowIndex": 18,
+                  "RowSpan": 12
+                }
+              ],
+              "CanvasSizeOptions": {
+                "ScreenCanvasSizeOptions": {
+                  "ResizeOption": "RESPONSIVE"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "ContentType": "INTERACTIVE"
+    },
+    {
+      "SheetId": "sheet-2",
+      "Name": "Seasonal & Weather Drivers",
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s2-fc-city",
+            "Title": "City",
+            "SourceFilterId": "filter-s2-fc-city",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {
+                  "FontSize": {
+                    "Relative": "MEDIUM"
+                  }
+                }
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        },
+        {
+          "Dropdown": {
+            "FilterControlId": "s2-fc-season",
+            "Title": "Season",
+            "SourceFilterId": "filter-s2-fc-season",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {
+                  "FontSize": {
+                    "Relative": "MEDIUM"
+                  }
+                }
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        }
+      ],
+      "Visuals": [
+        {
+          "BarChartVisual": {
+            "VisualId": "s2-bar-monthly",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Monthly PM2.5 Profile (\u00b5g/m\u00b3) \u2014 Seasonal Rhythm"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s2-bm-mon",
+                        "Column": {
+                          "DataSetIdentifier": "monthly-profile",
+                          "ColumnName": "month_of_year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-bm-val",
+                        "Column": {
+                          "DataSetIdentifier": "monthly-profile",
+                          "ColumnName": "avg_value"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-bm-city",
+                        "Column": {
+                          "DataSetIdentifier": "monthly-profile",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 15.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "BAR"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "WHO 24h: 15 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                },
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 50.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "BAR"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "QCVN: 50 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s2-line-diurnal",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Diurnal PM2.5 Pattern by Hour (UTC+7) \u2014 Hanoi vs HCMC"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s2-ld-hr",
+                        "Column": {
+                          "DataSetIdentifier": "diurnal-profile",
+                          "ColumnName": "hour_of_day"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-ld-val",
+                        "Column": {
+                          "DataSetIdentifier": "diurnal-profile",
+                          "ColumnName": "avg_value"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-ld-city",
+                        "Column": {
+                          "DataSetIdentifier": "diurnal-profile",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s2-bar-inversion",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Avg PM2.5 by Inversion Risk (0=Dispersed, 1=Trapped)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s2-bi-inv",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "inversion_risk"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-bi-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-bi-city",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s2-bar-wetscav",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Avg PM2.5 by Wet Scavenging (0=Dry, 1=Rain-Washed)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s2-bw-wet",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "wet_scavenging"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-bw-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-bw-city",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s2-bar-wind-pm25",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Avg Wind Speed & PM2.5 by City \u2014 Dispersion vs Pollution"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-sw-city",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-sw-wind",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_wind_speed"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-sw-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": []
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s2-bar-pm-ratio",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "PM2.5/PM10 Ratio by City \u2014 Source Attribution"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-pr-city",
+                        "Column": {
+                          "DataSetIdentifier": "pollutant-ratio",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-pr-ratio",
+                        "Column": {
+                          "DataSetIdentifier": "pollutant-ratio",
+                          "ColumnName": "pm25_pm10_ratio"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-pr-src",
+                        "Column": {
+                          "DataSetIdentifier": "pollutant-ratio",
+                          "ColumnName": "source_indicator"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        }
+      ],
+      "Layouts": [
+        {
+          "Configuration": {
+            "GridLayout": {
+              "Elements": [
+                {
+                  "ElementId": "s2-bar-monthly",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 0,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s2-line-diurnal",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 18,
+                  "ColumnSpan": 18,
+                  "RowIndex": 0,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s2-bar-inversion",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 12,
+                  "RowIndex": 12,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s2-bar-wetscav",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 12,
+                  "ColumnSpan": 12,
+                  "RowIndex": 12,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s2-bar-wind-pm25",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 24,
+                  "ColumnSpan": 12,
+                  "RowIndex": 12,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s2-bar-pm-ratio",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 36,
+                  "RowIndex": 23,
+                  "RowSpan": 10
+                }
+              ],
+              "CanvasSizeOptions": {
+                "ScreenCanvasSizeOptions": {
+                  "ResizeOption": "RESPONSIVE"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "ContentType": "INTERACTIVE"
+    },
+    {
+      "SheetId": "sheet-3",
+      "Name": "Compliance & Target Trajectory",
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s3-fc-city",
+            "Title": "City",
+            "SourceFilterId": "filter-s3-fc-city",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {
+                  "FontSize": {
+                    "Relative": "MEDIUM"
+                  }
+                }
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        },
+        {
+          "Dropdown": {
+            "FilterControlId": "s3-fc-year",
+            "Title": "Year",
+            "SourceFilterId": "filter-s3-fc-year",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {
+                  "FontSize": {
+                    "Relative": "MEDIUM"
+                  }
+                }
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        }
+      ],
+      "Visuals": [
+        {
+          "LineChartVisual": {
+            "VisualId": "s3-line-who-exc",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "WHO PM2.5 Exceedance Rate (%) \u2014 Annual Trend by City"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s3-we-year",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s3-we-rate",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "who_exceedance_rate"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s3-we-city",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE",
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 20.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "LINE"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "Target \u2264 20%"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s3-line-qcvn-exc",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "QCVN Exceedance Rate (%) \u2014 Annual Trend by City"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s3-qe-year",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s3-qe-rate",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "qcvn_exceedance_rate"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s3-qe-city",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "HeatMapVisual": {
+            "VisualId": "s3-heatmap-yoy",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Year-over-Year Monthly PM2.5 Heatmap (\u00b5g/m\u00b3) \u2014 Hanoi"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "HeatMapAggregatedFieldWells": {
+                  "Rows": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s3-hm-year",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "year"
+                        }
+                      }
+                    }
+                  ],
+                  "Columns": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s3-hm-mon",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "month_of_year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s3-hm-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "annual-monthly-trend",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "ColorScale": {
+                "Colors": [
+                  {
+                    "Color": "#1A9641"
+                  },
+                  {
+                    "Color": "#FFFFBF"
+                  },
+                  {
+                    "Color": "#D7191C"
+                  }
+                ],
+                "ColorFillType": "GRADIENT",
+                "NullValueColor": {
+                  "Color": "#D9D9D9"
+                }
+              }
+            },
+            "ColumnHierarchies": [],
+            "Actions": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s3-bar-p95",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "p95 PM2.5 Episode Severity by Month (\u00b5g/m\u00b3) \u2014 Worst-Day Trend"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s3-p95-mon",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "month_of_year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s3-p95-val",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "p95_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s3-p95-city",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 15.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "BAR"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "WHO 15 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                },
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 50.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "BAR"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "QCVN 50 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        }
+      ],
+      "Layouts": [
+        {
+          "Configuration": {
+            "GridLayout": {
+              "Elements": [
+                {
+                  "ElementId": "s3-line-who-exc",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 0,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s3-line-qcvn-exc",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 18,
+                  "ColumnSpan": 18,
+                  "RowIndex": 0,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s3-heatmap-yoy",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 12,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s3-bar-p95",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 18,
+                  "ColumnSpan": 18,
+                  "RowIndex": 12,
+                  "RowSpan": 12
+                }
+              ],
+              "CanvasSizeOptions": {
+                "ScreenCanvasSizeOptions": {
+                  "ResizeOption": "RESPONSIVE"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "ContentType": "INTERACTIVE"
+    },
+    {
+      "SheetId": "sheet-4",
+      "Name": "Forecast Monitor",
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s4-fc-loc",
+            "Title": "Station",
+            "SourceFilterId": "filter-s4-fc-loc",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {
+                  "FontSize": {
+                    "Relative": "MEDIUM"
+                  }
+                }
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        },
+        {
+          "Dropdown": {
+            "FilterControlId": "s4-fc-model",
+            "Title": "Model",
+            "SourceFilterId": "filter-s4-fc-model",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {
+                  "FontSize": {
+                    "Relative": "MEDIUM"
+                  }
+                }
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        }
+      ],
+      "Visuals": [
+        {
+          "KPIVisual": {
+            "VisualId": "s4-kpi-rmse-sarima",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "SARIMA Holdout RMSE (\u00b5g/m\u00b3)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s4-kpi-rmse-sarima-v",
+                      "Column": {
+                        "DataSetIdentifier": "forecast-accuracy",
+                        "ColumnName": "holdout_rmse"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "AVERAGE"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "KPIVisual": {
+            "VisualId": "s4-kpi-rmse-prophet",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Prophet Holdout RMSE (\u00b5g/m\u00b3)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s4-kpi-rmse-prophet-v",
+                      "Column": {
+                        "DataSetIdentifier": "forecast-accuracy",
+                        "ColumnName": "holdout_rmse"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "AVERAGE"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "KPIVisual": {
+            "VisualId": "s4-kpi-rolling-rmse",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Rolling RMSE 30d (\u00b5g/m\u00b3)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s4-kpi-rolling-rmse-v",
+                      "Column": {
+                        "DataSetIdentifier": "forecast-accuracy",
+                        "ColumnName": "rolling_rmse_30d"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "AVERAGE"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "KPIVisual": {
+            "VisualId": "s4-kpi-bias",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Rolling Bias 30d (\u00b5g/m\u00b3)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "Values": [
+                  {
+                    "NumericalMeasureField": {
+                      "FieldId": "s4-kpi-bias-v",
+                      "Column": {
+                        "DataSetIdentifier": "forecast-accuracy",
+                        "ColumnName": "rolling_bias_30d"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "AVERAGE"
+                      }
+                    }
+                  }
+                ],
+                "TargetValues": [],
+                "TrendGroups": []
+              },
+              "SortConfiguration": {},
+              "KPIOptions": {
+                "ProgressBar": {
+                  "Visibility": "HIDDEN"
+                },
+                "TrendArrows": {
+                  "Visibility": "VISIBLE"
+                },
+                "SecondaryValue": {
+                  "Visibility": "VISIBLE"
+                },
+                "PrimaryValueDisplayType": "ACTUAL"
+              }
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s4-line-forecast",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "7-Day PM2.5 Forecast by Model"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "s4-lf-date",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "forecast_date"
+                        },
+                        "DateGranularity": "DAY",
+                        "HierarchyId": "s4-lf-date"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s4-lf-fc",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "forecast_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s4-lf-model",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "model"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE",
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 15.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "LINE"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "WHO AQG: 15 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                },
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 50.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "LINE"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "QCVN: 50 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "s4-lf-date",
+                  "DrillDownFilters": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s4-line-ci",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Forecast 95% CI Bounds (Lower / Upper)"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "s4-ci-date",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "forecast_date"
+                        },
+                        "DateGranularity": "DAY",
+                        "HierarchyId": "s4-ci-date"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s4-ci-low",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "ci_lower_95"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s4-ci-high",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "ci_upper_95"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": []
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE"
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "s4-ci-date",
+                  "DrillDownFilters": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s4-scatter-fcvact",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Actual vs Forecast PM2.5 by Model \u2014 Bias Diagnostic"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s4-sv-model",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "model"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s4-sv-act",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "actual_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s4-sv-fc",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "forecast_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": []
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED"
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s4-line-rolling-rmse",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Rolling RMSE 30d \u2014 Model Skill Over Time"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "s4-rr-date",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "forecast_date"
+                        },
+                        "DateGranularity": "DAY",
+                        "HierarchyId": "s4-rr-date"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s4-rr-rmse",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "rolling_rmse_30d"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s4-rr-model",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "model"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Type": "LINE",
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 25.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "LINE"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "Alarm: 25 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "s4-rr-date",
+                  "DrillDownFilters": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s4-bar-rmse-model",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Holdout RMSE by Model & Station \u2014 SARIMA vs Prophet"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s4-bm-loc",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "location_name"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s4-bm-rmse",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "holdout_rmse"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s4-bm-model",
+                        "Column": {
+                          "DataSetIdentifier": "forecast-accuracy",
+                          "ColumnName": "model"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {},
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": [
+                {
+                  "Status": "ENABLED",
+                  "DataConfiguration": {
+                    "StaticConfiguration": {
+                      "Value": 25.0
+                    },
+                    "AxisBinding": "PRIMARY_YAXIS",
+                    "SeriesType": "BAR"
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
+                  },
+                  "LabelConfiguration": {
+                    "ValueLabelConfiguration": {
+                      "RelativePosition": "BEFORE_CUSTOM_LABEL",
+                      "FormatConfiguration": {
+                        "NumberDisplayFormatConfiguration": {
+                          "DecimalPlacesConfiguration": {
+                            "DecimalPlaces": 0
+                          }
+                        }
+                      }
+                    },
+                    "CustomLabelConfiguration": {
+                      "CustomLabel": "Alarm: 25 \u00b5g/m\u00b3"
+                    },
+                    "FontConfiguration": {
+                      "FontSize": {
+                        "Relative": "MEDIUM"
+                      }
+                    },
+                    "HorizontalPosition": "LEFT",
+                    "VerticalPosition": "BELOW"
+                  }
+                }
+              ]
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        }
+      ],
+      "Layouts": [
+        {
+          "Configuration": {
+            "GridLayout": {
+              "Elements": [
+                {
+                  "ElementId": "s4-kpi-rmse-sarima",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 9,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s4-kpi-rmse-prophet",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 9,
+                  "ColumnSpan": 9,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s4-kpi-rolling-rmse",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 18,
+                  "ColumnSpan": 9,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s4-kpi-bias",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 27,
+                  "ColumnSpan": 9,
+                  "RowIndex": 0,
+                  "RowSpan": 6
+                },
+                {
+                  "ElementId": "s4-line-forecast",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 6,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s4-line-ci",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 18,
+                  "ColumnSpan": 18,
+                  "RowIndex": 6,
+                  "RowSpan": 12
+                },
+                {
+                  "ElementId": "s4-scatter-fcvact",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 12,
+                  "RowIndex": 18,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s4-line-rolling-rmse",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 12,
+                  "ColumnSpan": 12,
+                  "RowIndex": 18,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s4-bar-rmse-model",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 24,
+                  "ColumnSpan": 12,
+                  "RowIndex": 18,
+                  "RowSpan": 11
+                }
+              ],
+              "CanvasSizeOptions": {
+                "ScreenCanvasSizeOptions": {
+                  "ResizeOption": "RESPONSIVE"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "ContentType": "INTERACTIVE"
+    }
+  ],
+  "CalculatedFields": [],
+  "ParameterDeclarations": [],
+  "FilterGroups": [
+    {
+      "FilterGroupId": "fg-s1-city",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "filter-s1-fc-city",
+            "Column": {
+              "DataSetIdentifier": "health-summary",
+              "ColumnName": "city"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "SelectAllOptions": "FILTER_ALL_VALUES",
+                "NullOption": "NON_NULLS_ONLY"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "sheet-1",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    },
+    {
+      "FilterGroupId": "fg-s2-city",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "filter-s2-fc-city",
+            "Column": {
+              "DataSetIdentifier": "monthly-profile",
+              "ColumnName": "city"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "SelectAllOptions": "FILTER_ALL_VALUES",
+                "NullOption": "NON_NULLS_ONLY"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "sheet-2",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    },
+    {
+      "FilterGroupId": "fg-s2-season",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "filter-s2-fc-season",
+            "Column": {
+              "DataSetIdentifier": "monthly-profile",
+              "ColumnName": "season"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "SelectAllOptions": "FILTER_ALL_VALUES",
+                "NullOption": "NON_NULLS_ONLY"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "sheet-2",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    },
+    {
+      "FilterGroupId": "fg-s3-city",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "filter-s3-fc-city",
+            "Column": {
+              "DataSetIdentifier": "exceedance-stats",
+              "ColumnName": "city"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "SelectAllOptions": "FILTER_ALL_VALUES",
+                "NullOption": "NON_NULLS_ONLY"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "sheet-3",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    },
+    {
+      "FilterGroupId": "fg-s3-year",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "filter-s3-fc-year",
+            "Column": {
+              "DataSetIdentifier": "exceedance-stats",
+              "ColumnName": "year"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "SelectAllOptions": "FILTER_ALL_VALUES",
+                "NullOption": "NON_NULLS_ONLY"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "sheet-3",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    },
+    {
+      "FilterGroupId": "fg-s4-loc",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "filter-s4-fc-loc",
+            "Column": {
+              "DataSetIdentifier": "forecast-accuracy",
+              "ColumnName": "location_name"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "SelectAllOptions": "FILTER_ALL_VALUES",
+                "NullOption": "NON_NULLS_ONLY"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "sheet-4",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    },
+    {
+      "FilterGroupId": "fg-s4-model",
+      "Filters": [
+        {
+          "CategoryFilter": {
+            "FilterId": "filter-s4-fc-model",
+            "Column": {
+              "DataSetIdentifier": "forecast-accuracy",
+              "ColumnName": "model"
+            },
+            "Configuration": {
+              "FilterListConfiguration": {
+                "MatchOperator": "CONTAINS",
+                "SelectAllOptions": "FILTER_ALL_VALUES",
+                "NullOption": "NON_NULLS_ONLY"
+              }
+            }
+          }
+        }
+      ],
+      "ScopeConfiguration": {
+        "SelectedSheets": {
+          "SheetVisualScopingConfigurations": [
+            {
+              "SheetId": "sheet-4",
+              "Scope": "ALL_VISUALS"
+            }
+          ]
+        }
+      },
+      "Status": "ENABLED",
+      "CrossDataset": "SINGLE_DATASET"
+    }
+  ],
+  "Options": {
+    "WeekStart": "MONDAY"
+  }
+}
