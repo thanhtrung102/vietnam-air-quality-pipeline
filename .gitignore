@@ -18,6 +18,10 @@ logs/
 
 # OS
 .DS_Store
+Thumbs.db
+
+# Pip cache
+pip/
 
 # Virtual environment
 .venv/
