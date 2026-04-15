@@ -33,19 +33,19 @@ All infrastructure is declared in Terraform — the entire environment can be to
 
 ## Workshop Sections | Các phần Workshop
 
-| # | Section | Description |
-|---|---------|-------------|
-| — | [Worklog](docs/worklog.md) | 12-week internship log with objectives, tasks, and achievements |
-| — | [Proposal](docs/proposal.md) | Problem statement, architecture, timeline, budget, risks, outcomes |
-| 5.1 | [Introduction](docs/workshop/5.1-introduction.md) | What you will build, architecture overview, learning objectives |
-| 5.2 | [Prerequisites](docs/workshop/5.2-prerequisites.md) | IAM permissions, tool installation, project setup |
-| 5.3 | [Storage & Catalog Stack](docs/workshop/5.3-storage-catalog.md) | Terraform deploy, Glue partition projection, Athena workgroup |
-| 5.4 | [Data Ingestion Pipeline](docs/workshop/5.4-ingestion.md) | Historical batch sync, streaming producer, weather backfill, validation |
-| 5.5 | [Transformation, Forecast & Security](docs/workshop/5.5-transform-security.md) | dbt build, forecast Lambda container, IAM design, CloudWatch |
-| 5.6 | [Cleanup](docs/workshop/5.6-cleanup.md) | Full resource teardown with verification checklist |
-| — | [Events Participated](docs/events.md) | Events attended during the internship with role and takeaways |
-| — | [Self-evaluation](docs/self-evaluation.md) | Self-assessment across 8 professional criteria with reflection |
-| — | [Sharing & Feedback](docs/feedback.md) | Program impressions, satisfaction level, and recommendations |
+| FCJ § | Section | Description |
+|-------|---------|-------------|
+| 1.2 | [Worklog](docs/worklog.md) | 12-week internship log with objectives, tasks, and achievements |
+| 1.3 | [Proposal](docs/proposal.md) | Problem statement, architecture, timeline, budget, risks, outcomes |
+| 1.4 | [Events Participated](docs/events.md) | Events attended during the internship with role and takeaways |
+| 1.5 / 5.1 | [Introduction](docs/workshop/5.1-introduction.md) | What you will build, architecture overview, learning objectives |
+| 1.5 / 5.2 | [Prerequisites](docs/workshop/5.2-prerequisites.md) | IAM permissions, tool installation, project setup |
+| 1.5 / 5.3 | [Storage & Catalog Stack](docs/workshop/5.3-storage-catalog.md) | Terraform deploy, Glue partition projection, Athena workgroup |
+| 1.5 / 5.4 | [Data Ingestion Pipeline](docs/workshop/5.4-ingestion.md) | Historical batch sync, streaming producer, weather backfill, validation |
+| 1.5 / 5.5 | [Transformation, Forecast & Security](docs/workshop/5.5-transform-security.md) | dbt build, forecast Lambda container, IAM design, CloudWatch |
+| 1.5 / 5.6 | [Cleanup](docs/workshop/5.6-cleanup.md) | Full resource teardown with verification checklist |
+| 1.6 | [Self-evaluation](docs/self-evaluation.md) | Self-assessment across 8 professional criteria with reflection |
+| 1.7 | [Sharing & Feedback](docs/feedback.md) | Program impressions, satisfaction level, and recommendations |
 
 ---
 
@@ -136,7 +136,7 @@ Each marker popup shows: composite AQI, PM2.5 (µg/m³), dominant pollutant, cig
 | Secrets | AWS Secrets Manager (`openaq/api_key`) |
 | Transform | dbt-core + dbt-athena-community 1.10.0 |
 | Orchestration | AWS EventBridge Scheduler |
-| Compute | AWS Lambda (Python 3.12) — 5 functions |
+| Compute | AWS Lambda (Python 3.12) — 6 functions |
 | Forecast | AWS Lambda container (ECR) — SARIMA(1,1,1)(1,0,1,7) via statsmodels |
 | Weather | Open-Meteo ERA5 Archive API (free, no API key) |
 | Dashboard | Leaflet.js (S3 static site, served via API Gateway) |
