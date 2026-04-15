@@ -35,9 +35,13 @@ select
     province,
     measurement_date,
 
-    -- Conditional aggregation pivot: one row per station-day with both pollutants
+    -- Conditional aggregation pivot: one row per station-day with all pollutants
     round(max(case when parameter = 'pm25' then avg_value end), 4) as pm25_avg,
     round(max(case when parameter = 'pm10' then avg_value end), 4) as pm10_avg,
+    -- pm1 is reported by AirGradient low-cost sensors only; NULL for reference stations.
+    -- pm1/pm25 ratio < 0.7 → secondary aerosol (ammonium sulfate/nitrate) dominant;
+    -- pm1/pm25 ratio > 0.85 → fresh combustion particles dominant.
+    round(max(case when parameter = 'pm1'  then avg_value end), 4) as pm1_avg,
 
     -- Ratio: NULL when either pollutant is missing or PM10 is zero
     case
@@ -68,7 +72,7 @@ select
     end as source_indicator
 
 from {{ ref('mart_daily_air_quality') }}
-where parameter in ('pm25', 'pm10')
+where parameter in ('pm25', 'pm10', 'pm1')
   and is_outlier_station = 0
 
 group by

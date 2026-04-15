@@ -540,6 +540,131 @@ def build_sheet2() -> dict:
             color_fields=[cat_dim("s2-pr-src", pr, "source_indicator")],
             arrangement="CLUSTERED",
         ),
+
+        # Panel D — Wind direction sector vs PM2.5
+        # wind_sector is a calculated field (defined in build_definition):
+        #   NE (0-90)  = continental dry-season flow from China/Yunnan -> high PM
+        #   SW (180-270) = maritime monsoon -> clean air
+        bar_visual(
+            "s2-bar-wind-sector",
+            "Avg PM2.5 by Wind Direction Sector — Continental vs Maritime Flow",
+            wd,
+            category_fields=[cat_dim("s2-ws-sector", wd, "wind_sector")],
+            value_fields=[num_meas("s2-ws-pm25", wd, "avg_pm25", "AVERAGE")],
+            color_fields=[cat_dim("s2-ws-city", wd, "city")],
+            arrangement="CLUSTERED",
+        ),
+
+        # Panel D2 — Corrected vs raw PM2.5 monthly trend
+        # Exposes the magnitude of humidity-driven sensor bias over time.
+        # Uses inline dict (required when date_dim sets HierarchyId — the
+        # line_visual helper must declare ColumnHierarchies to match).
+        {
+            "LineChartVisual": {
+                "VisualId": "s2-line-corr-vs-raw",
+                "Title": title("Corrected vs Raw PM2.5 Monthly Average (µg/m³) — Sensor Bias"),
+                "Subtitle": {"Visibility": "HIDDEN"},
+                "ChartConfiguration": {
+                    "FieldWells": {
+                        "LineChartAggregatedFieldWells": {
+                            "Category": [date_dim("s2-cr-date", wd, "measurement_date", "MONTH")],
+                            "Values": [
+                                num_meas("s2-cr-raw",  wd, "avg_pm25",       "AVERAGE"),
+                                num_meas("s2-cr-corr", wd, "corrected_pm25", "AVERAGE"),
+                            ],
+                            "Colors": [],
+                            "SmallMultiples": [],
+                        }
+                    },
+                    "Type": "LINE",
+                    "ReferenceLines": [],
+                },
+                "Actions": [],
+                "ColumnHierarchies": [date_hierarchy("s2-cr-date")],
+            }
+        },
+
+        # Panel E — Relative humidity vs PM2.5 monthly time series
+        # High RH (>80%) drives hygroscopic PM2.5 growth (+30-60% measured mass).
+        # Seasonal co-variation of RH and PM2.5 reveals humidity-driven episodes.
+        # (Scatter replaced with line: scatter visuals are unreliable via the API.)
+        {
+            "LineChartVisual": {
+                "VisualId": "s2-line-rh-pm25",
+                "Title": title("Relative Humidity & PM2.5 Monthly Trend — Hygroscopic Growth"),
+                "Subtitle": {"Visibility": "HIDDEN"},
+                "ChartConfiguration": {
+                    "FieldWells": {
+                        "LineChartAggregatedFieldWells": {
+                            "Category": [date_dim("s2-rh-date", wd, "measurement_date", "MONTH")],
+                            "Values": [
+                                num_meas("s2-rh-rh",   wd, "avg_rh_2m", "AVERAGE"),
+                                num_meas("s2-rh-pm25", wd, "avg_pm25",  "AVERAGE"),
+                            ],
+                            "Colors": [],
+                            "SmallMultiples": [],
+                        }
+                    },
+                    "Type": "LINE",
+                    "ReferenceLines": [],
+                },
+                "Actions": [],
+                "ColumnHierarchies": [date_hierarchy("s2-rh-date")],
+            }
+        },
+
+        # Panel F — Surface pressure vs PM2.5 monthly time series
+        # High pressure (>1015 hPa) = anticyclone subsidence = suppressed BLH = stagnant air.
+        # (Scatter replaced with line: scatter visuals are unreliable via the API.)
+        {
+            "LineChartVisual": {
+                "VisualId": "s2-line-pressure-pm25",
+                "Title": title("Surface Pressure & PM2.5 Monthly Trend — Anticyclone Episodes"),
+                "Subtitle": {"Visibility": "HIDDEN"},
+                "ChartConfiguration": {
+                    "FieldWells": {
+                        "LineChartAggregatedFieldWells": {
+                            "Category": [date_dim("s2-sp-date", wd, "measurement_date", "MONTH")],
+                            "Values": [
+                                num_meas("s2-sp-hpa",  wd, "avg_surface_pressure_hpa", "AVERAGE"),
+                                num_meas("s2-sp-pm25", wd, "avg_pm25",                 "AVERAGE"),
+                            ],
+                            "Colors": [],
+                            "SmallMultiples": [],
+                        }
+                    },
+                    "Type": "LINE",
+                    "ReferenceLines": [],
+                },
+                "Actions": [],
+                "ColumnHierarchies": [date_hierarchy("s2-sp-date")],
+            }
+        },
+
+        # Panel G — Calm wind hours by month (stagnation climatology)
+        # Uses inline dict to declare ColumnHierarchies for the date field.
+        {
+            "BarChartVisual": {
+                "VisualId": "s2-bar-calm-wind",
+                "Title": title("Avg Calm-Wind Hours per Day by Month (wind < 1 m/s) — Stagnation Climatology"),
+                "Subtitle": {"Visibility": "HIDDEN"},
+                "ChartConfiguration": {
+                    "FieldWells": {
+                        "BarChartAggregatedFieldWells": {
+                            "Category": [date_dim("s2-cw-date", wd, "measurement_date", "MONTH")],
+                            "Values": [num_meas("s2-cw-hrs", wd, "calm_wind_hours", "AVERAGE")],
+                            "Colors": [cat_dim("s2-cw-city", wd, "city")],
+                            "SmallMultiples": [],
+                        }
+                    },
+                    "Orientation": "VERTICAL",
+                    "BarsArrangement": "CLUSTERED",
+                    "ReferenceLines": [],
+                },
+                "Actions": [],
+                "ColumnHierarchies": [date_hierarchy("s2-cw-date")],
+            }
+        },
     ]
 
     filter_controls = [
@@ -564,8 +689,15 @@ def build_sheet2() -> dict:
                             {"ElementId": "s2-bar-inversion",  "ElementType": "VISUAL", "ColumnIndex": 0,  "ColumnSpan": 12, "RowIndex": 12, "RowSpan": 11},
                             {"ElementId": "s2-bar-wetscav",    "ElementType": "VISUAL", "ColumnIndex": 12, "ColumnSpan": 12, "RowIndex": 12, "RowSpan": 11},
                             {"ElementId": "s2-bar-wind-pm25",  "ElementType": "VISUAL", "ColumnIndex": 24, "ColumnSpan": 12, "RowIndex": 12, "RowSpan": 11},
-                            # Row 3: PM ratio
+                            # Row 3: PM ratio (source attribution)
                             {"ElementId": "s2-bar-pm-ratio", "ElementType": "VISUAL", "ColumnIndex": 0,  "ColumnSpan": 36, "RowIndex": 23, "RowSpan": 10},
+                            # Row 4: wind sector + corrected-vs-raw + calm wind hours
+                            {"ElementId": "s2-bar-wind-sector",   "ElementType": "VISUAL", "ColumnIndex": 0,  "ColumnSpan": 12, "RowIndex": 33, "RowSpan": 11},
+                            {"ElementId": "s2-line-corr-vs-raw",  "ElementType": "VISUAL", "ColumnIndex": 12, "ColumnSpan": 12, "RowIndex": 33, "RowSpan": 11},
+                            {"ElementId": "s2-bar-calm-wind",     "ElementType": "VISUAL", "ColumnIndex": 24, "ColumnSpan": 12, "RowIndex": 33, "RowSpan": 11},
+                            # Row 5: RH monthly trend + surface pressure monthly trend
+                            {"ElementId": "s2-line-rh-pm25",       "ElementType": "VISUAL", "ColumnIndex": 0,  "ColumnSpan": 18, "RowIndex": 44, "RowSpan": 11},
+                            {"ElementId": "s2-line-pressure-pm25", "ElementType": "VISUAL", "ColumnIndex": 18, "ColumnSpan": 18, "RowIndex": 44, "RowSpan": 11},
                         ],
                         "CanvasSizeOptions": {"ScreenCanvasSizeOptions": {"ResizeOption": "RESPONSIVE"}},
                     }
@@ -629,6 +761,26 @@ def build_sheet3() -> dict:
                 ref_line_val(50.0, "QCVN 50 µg/m³", "#E07B39"),
             ],
         ),
+
+        # WHO vs QCVN exceedance split stacked bar — regulatory framing.
+        # Uses calculated fields (defined in build_definition):
+        #   compliant_days  = total_days - who_exceedance_days
+        #   who_only_days   = who_exceedance_days - qcvn_exceedance_days
+        #   qcvn_exceedance_days (raw column)
+        # Three stacked segments: Compliant / WHO-only / Also QCVN
+        # Shows how far above the Vietnamese legal standard the city sits vs WHO.
+        bar_visual(
+            "s3-bar-exceedance-split",
+            "Annual Day Count: Compliant / WHO-Only Exceedance / Also QCVN Exceedance",
+            es,
+            category_fields=[num_dim("s3-sp-year", es, "year")],
+            value_fields=[
+                num_meas("s3-sp-comp",   es, "compliant_days",      "SUM"),
+                num_meas("s3-sp-who",    es, "who_only_days",        "SUM"),
+                num_meas("s3-sp-qcvn",   es, "qcvn_exceedance_days", "SUM"),
+            ],
+            arrangement="STACKED",
+        ),
     ]
 
     filter_controls = [
@@ -646,12 +798,14 @@ def build_sheet3() -> dict:
                 "Configuration": {
                     "GridLayout": {
                         "Elements": [
-                            # Row 1: WHO + QCVN exceedance
+                            # Row 1: WHO + QCVN exceedance trend lines
                             {"ElementId": "s3-line-who-exc",  "ElementType": "VISUAL", "ColumnIndex": 0,  "ColumnSpan": 18, "RowIndex": 0, "RowSpan": 12},
                             {"ElementId": "s3-line-qcvn-exc", "ElementType": "VISUAL", "ColumnIndex": 18, "ColumnSpan": 18, "RowIndex": 0, "RowSpan": 12},
-                            # Row 2: heatmap + p95 bar
+                            # Row 2: YoY heatmap + p95 episode severity
                             {"ElementId": "s3-heatmap-yoy",  "ElementType": "VISUAL", "ColumnIndex": 0,  "ColumnSpan": 18, "RowIndex": 12, "RowSpan": 12},
                             {"ElementId": "s3-bar-p95",       "ElementType": "VISUAL", "ColumnIndex": 18, "ColumnSpan": 18, "RowIndex": 12, "RowSpan": 12},
+                            # Row 3: WHO vs QCVN regulatory split (full width)
+                            {"ElementId": "s3-bar-exceedance-split", "ElementType": "VISUAL", "ColumnIndex": 0, "ColumnSpan": 36, "RowIndex": 24, "RowSpan": 11},
                         ],
                         "CanvasSizeOptions": {"ScreenCanvasSizeOptions": {"ResizeOption": "RESPONSIVE"}},
                     }
@@ -850,7 +1004,36 @@ def build_definition() -> dict:
             build_sheet3(),
             build_sheet4(),
         ],
-        "CalculatedFields": [],
+        "CalculatedFields": [
+            # ── aq-weather-daily ──────────────────────────────────────────────
+            # Wind direction binned into 4 cardinal sectors for the sector bar chart.
+            # NULL avg_wind_dir (weather fetch failed) shown as "Unknown".
+            {
+                "DataSetIdentifier": "aq-weather-daily",
+                "Name": "wind_sector",
+                "Expression": (
+                    "ifelse(isNull({avg_wind_dir}), 'Unknown',"
+                    " ifelse({avg_wind_dir} < 90, 'NE (0-90)',"
+                    " ifelse({avg_wind_dir} < 180, 'SE (90-180)',"
+                    " ifelse({avg_wind_dir} < 270, 'SW (180-270)', 'NW (270-360)'))))"
+                ),
+            },
+            # ── exceedance-stats ──────────────────────────────────────────────
+            # Days that met WHO standard (total minus any exceedance).
+            {
+                "DataSetIdentifier": "exceedance-stats",
+                "Name": "compliant_days",
+                "Expression": "{total_days} - {who_exceedance_days}",
+            },
+            # Days that exceeded WHO (15 µg/m³) but stayed under QCVN (50 µg/m³).
+            # These are days where Vietnam is legally compliant but still unhealthy
+            # by international standards.
+            {
+                "DataSetIdentifier": "exceedance-stats",
+                "Name": "who_only_days",
+                "Expression": "{who_exceedance_days} - {qcvn_exceedance_days}",
+            },
+        ],
         "ParameterDeclarations": [],
         "FilterGroups": build_filter_groups(),
         "Options": {
@@ -897,44 +1080,57 @@ def main():
 
     qs = boto3.client("quicksight", region_name=REGION)
 
-    # Delete existing analysis if present (soft delete, 7-day recovery)
+    # Prefer update_analysis over delete+create: QuickSight's CreateAnalysis
+    # is unreliable when the same analysis ID was recently soft-deleted, and
+    # scatter visuals / complex definitions occasionally trigger InternalFailure
+    # on create but succeed on update. Update in-place preserves history and
+    # avoids the delete→recreate race condition.
     print("Checking for existing analysis...")
+    exists = False
     try:
-        qs.describe_analysis(AwsAccountId=ACCOUNT_ID, AnalysisId=ANALYSIS_ID)
-        print("Existing analysis found - deleting...")
-        qs.delete_analysis(
-            AwsAccountId=ACCOUNT_ID,
-            AnalysisId=ANALYSIS_ID,
-            RecoveryWindowInDays=7,
-        )
-        print("Deleted (recoverable for 7 days).")
+        r = qs.describe_analysis(AwsAccountId=ACCOUNT_ID, AnalysisId=ANALYSIS_ID)
+        status = r["Analysis"].get("Status", "")
+        if status == "DELETED":
+            print("Analysis is soft-deleted — restoring first...")
+            qs.restore_analysis(AwsAccountId=ACCOUNT_ID, AnalysisId=ANALYSIS_ID)
+            import time; time.sleep(5)
+        exists = True
+        print("Existing analysis found — updating in-place.")
     except ClientError as e:
         if e.response["Error"]["Code"] not in ("ResourceNotFoundException", "404"):
             raise
+        print("No existing analysis — creating fresh.")
 
-    print("Creating analysis...")
     try:
-        resp = qs.create_analysis(
-            AwsAccountId=ACCOUNT_ID,
-            AnalysisId=ANALYSIS_ID,
-            Name=ANALYSIS_NAME,
-            Definition=definition,
-            Permissions=PERMISSIONS,
-        )
-        status = resp.get("CreationStatus", "?")
-        arn    = resp.get("Arn", "?")
-        print(f"  Status : {status}")
-        print(f"  ARN    : {arn}")
+        if exists:
+            resp = qs.update_analysis(
+                AwsAccountId=ACCOUNT_ID,
+                AnalysisId=ANALYSIS_ID,
+                Name=ANALYSIS_NAME,
+                Definition=definition,
+            )
+            print(f"  UpdateStatus : {resp.get('UpdateStatus', '?')}")
+            print(f"  ARN          : {resp.get('Arn', '?')}")
+        else:
+            resp = qs.create_analysis(
+                AwsAccountId=ACCOUNT_ID,
+                AnalysisId=ANALYSIS_ID,
+                Name=ANALYSIS_NAME,
+                Definition=definition,
+                Permissions=PERMISSIONS,
+            )
+            print(f"  CreationStatus : {resp.get('CreationStatus', '?')}")
+            print(f"  ARN            : {resp.get('Arn', '?')}")
+            print()
+            print("Next steps (first-time only):")
+            print(f"  terraform import aws_quicksight_analysis.openaq \\")
+            print(f"    {ACCOUNT_ID}/{ANALYSIS_ID}")
         print()
-        print("Analysis created successfully.")
-        print()
-        print("Next steps:")
-        print(f"  terraform import aws_quicksight_analysis.openaq \\")
-        print(f"    {ACCOUNT_ID}/{ANALYSIS_ID}")
+        print("Analysis updated successfully.")
     except ClientError as e:
         print(f"API error: {e}", file=sys.stderr)
-        # Try to get more detail from the analysis errors endpoint
         try:
+            import time; time.sleep(3)
             detail = qs.describe_analysis(
                 AwsAccountId=ACCOUNT_ID, AnalysisId=ANALYSIS_ID
             )

@@ -587,6 +587,12 @@ resource "aws_quicksight_data_set" "pollutant_ratio" {
         name = "source_indicator"
         type = "STRING"
       }
+      # pm1 is reported by AirGradient sensors only; NULL for reference stations.
+      # pm1/pm25 ratio extends source attribution beyond coarse/fine split.
+      input_columns {
+        name = "pm1_avg"
+        type = "DECIMAL"
+      }
     }
   }
 

@@ -1,10 +1,6 @@
 {
   "DataSetIdentifierDeclarations": [
     {
-      "Identifier": "forecast-accuracy",
-      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-forecast-accuracy"
-    },
-    {
       "Identifier": "daily-aqi",
       "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-daily-aqi"
     },
@@ -13,57 +9,38 @@
       "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-health-summary"
     },
     {
-      "Identifier": "diurnal-profile",
-      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-diurnal-profile"
-    },
-    {
-      "Identifier": "exceedance-stats",
-      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-exceedance-stats"
-    },
-    {
       "Identifier": "annual-monthly-trend",
       "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-annual-monthly-trend"
+    },
+    {
+      "Identifier": "monthly-profile",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-monthly-profile"
+    },
+    {
+      "Identifier": "diurnal-profile",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-diurnal-profile"
     },
     {
       "Identifier": "aq-weather-daily",
       "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-aq-weather-daily"
     },
     {
+      "Identifier": "exceedance-stats",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-exceedance-stats"
+    },
+    {
       "Identifier": "pollutant-ratio",
       "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-pollutant-ratio"
     },
     {
-      "Identifier": "monthly-profile",
-      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-monthly-profile"
+      "Identifier": "forecast-accuracy",
+      "DataSetArn": "arn:aws:quicksight:ap-southeast-1:703668403514:dataset/openaq-forecast-accuracy"
     }
   ],
   "Sheets": [
     {
       "SheetId": "sheet-1",
       "Name": "Executive Health Scorecard",
-      "FilterControls": [
-        {
-          "Dropdown": {
-            "FilterControlId": "s1-fc-city",
-            "Title": "City",
-            "SourceFilterId": "filter-s1-fc-city",
-            "DisplayOptions": {
-              "SelectAllOptions": {
-                "Visibility": "VISIBLE"
-              },
-              "TitleOptions": {
-                "Visibility": "VISIBLE",
-                "FontConfiguration": {
-                  "FontSize": {
-                    "Relative": "MEDIUM"
-                  }
-                }
-              }
-            },
-            "Type": "MULTI_SELECT"
-          }
-        }
-      ],
       "Visuals": [
         {
           "KPIVisual": {
@@ -93,10 +70,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -142,10 +118,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -191,10 +166,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -240,10 +214,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -289,10 +262,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -410,12 +382,13 @@
                       }
                     }
                   ],
-                  "Colors": []
+                  "Colors": [],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
-              "BarsArrangement": "STACKED"
+              "BarsArrangement": "STACKED",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
@@ -471,10 +444,10 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Type": "LINE",
               "ReferenceLines": [
                 {
@@ -482,13 +455,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 40.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "LINE"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#E07B39"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -503,14 +470,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "2030 Target: 40 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
                   }
                 },
                 {
@@ -518,13 +482,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 15.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "LINE"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#D13212"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -539,14 +497,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "WHO AQG: 15 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
                   }
                 }
               ]
@@ -605,14 +560,34 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
-              "Type": "LINE"
+              "Type": "LINE",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
+          }
+        }
+      ],
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s1-fc-city",
+            "Title": "City",
+            "SourceFilterId": "filter-s1-fc-city",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {}
+              }
+            },
+            "Type": "MULTI_SELECT"
           }
         }
       ],
@@ -694,56 +669,11 @@
             }
           }
         }
-      ],
-      "ContentType": "INTERACTIVE"
+      ]
     },
     {
       "SheetId": "sheet-2",
       "Name": "Seasonal & Weather Drivers",
-      "FilterControls": [
-        {
-          "Dropdown": {
-            "FilterControlId": "s2-fc-city",
-            "Title": "City",
-            "SourceFilterId": "filter-s2-fc-city",
-            "DisplayOptions": {
-              "SelectAllOptions": {
-                "Visibility": "VISIBLE"
-              },
-              "TitleOptions": {
-                "Visibility": "VISIBLE",
-                "FontConfiguration": {
-                  "FontSize": {
-                    "Relative": "MEDIUM"
-                  }
-                }
-              }
-            },
-            "Type": "MULTI_SELECT"
-          }
-        },
-        {
-          "Dropdown": {
-            "FilterControlId": "s2-fc-season",
-            "Title": "Season",
-            "SourceFilterId": "filter-s2-fc-season",
-            "DisplayOptions": {
-              "SelectAllOptions": {
-                "Visibility": "VISIBLE"
-              },
-              "TitleOptions": {
-                "Visibility": "VISIBLE",
-                "FontConfiguration": {
-                  "FontSize": {
-                    "Relative": "MEDIUM"
-                  }
-                }
-              }
-            },
-            "Type": "MULTI_SELECT"
-          }
-        }
-      ],
       "Visuals": [
         {
           "BarChartVisual": {
@@ -795,10 +725,10 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
               "BarsArrangement": "CLUSTERED",
               "ReferenceLines": [
@@ -807,13 +737,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 15.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "BAR"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#D13212"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -828,14 +752,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "WHO 24h: 15 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
                   }
                 },
                 {
@@ -843,13 +764,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 50.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "BAR"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#E07B39"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -864,14 +779,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "QCVN: 50 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
                   }
                 }
               ]
@@ -930,11 +842,12 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
-              "Type": "LINE"
+              "Type": "LINE",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
@@ -990,12 +903,13 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
-              "BarsArrangement": "CLUSTERED"
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
@@ -1051,12 +965,13 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
-              "BarsArrangement": "CLUSTERED"
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
@@ -1114,12 +1029,13 @@
                       }
                     }
                   ],
-                  "Colors": []
+                  "Colors": [],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
-              "BarsArrangement": "CLUSTERED"
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
@@ -1175,15 +1091,401 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
-              "BarsArrangement": "CLUSTERED"
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s2-bar-wind-sector",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Avg PM2.5 by Wind Direction Sector \u2014 Continental vs Maritime Flow"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-ws-sector",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "wind_sector"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-ws-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-ws-city",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ],
+                  "SmallMultiples": []
+                }
+              },
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": []
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s2-line-corr-vs-raw",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Corrected vs Raw PM2.5 Monthly Average (\u00b5g/m\u00b3) \u2014 Sensor Bias"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "s2-cr-date",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "measurement_date"
+                        },
+                        "DateGranularity": "MONTH",
+                        "HierarchyId": "s2-cr-date"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-cr-raw",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-cr-corr",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "corrected_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [],
+                  "SmallMultiples": []
+                }
+              },
+              "Type": "LINE",
+              "ReferenceLines": []
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "s2-cr-date",
+                  "DrillDownFilters": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s2-line-rh-pm25",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Relative Humidity & PM2.5 Monthly Trend \u2014 Hygroscopic Growth"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "s2-rh-date",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "measurement_date"
+                        },
+                        "DateGranularity": "MONTH",
+                        "HierarchyId": "s2-rh-date"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-rh-rh",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_rh_2m"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-rh-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [],
+                  "SmallMultiples": []
+                }
+              },
+              "Type": "LINE",
+              "ReferenceLines": []
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "s2-rh-date",
+                  "DrillDownFilters": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "LineChartVisual": {
+            "VisualId": "s2-line-pressure-pm25",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Surface Pressure & PM2.5 Monthly Trend \u2014 Anticyclone Episodes"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "LineChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "s2-sp-date",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "measurement_date"
+                        },
+                        "DateGranularity": "MONTH",
+                        "HierarchyId": "s2-sp-date"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-sp-hpa",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_surface_pressure_hpa"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-sp-pm25",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "avg_pm25"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [],
+                  "SmallMultiples": []
+                }
+              },
+              "Type": "LINE",
+              "ReferenceLines": []
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "s2-sp-date",
+                  "DrillDownFilters": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s2-bar-calm-wind",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Avg Calm-Wind Hours per Day by Month (wind < 1 m/s) \u2014 Stagnation Climatology"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "DateDimensionField": {
+                        "FieldId": "s2-cw-date",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "measurement_date"
+                        },
+                        "DateGranularity": "MONTH",
+                        "HierarchyId": "s2-cw-date"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s2-cw-hrs",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "calm_wind_hours"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "AVERAGE"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [
+                    {
+                      "CategoricalDimensionField": {
+                        "FieldId": "s2-cw-city",
+                        "Column": {
+                          "DataSetIdentifier": "aq-weather-daily",
+                          "ColumnName": "city"
+                        }
+                      }
+                    }
+                  ],
+                  "SmallMultiples": []
+                }
+              },
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": []
+            },
+            "Actions": [],
+            "ColumnHierarchies": [
+              {
+                "DateTimeHierarchy": {
+                  "HierarchyId": "s2-cw-date",
+                  "DrillDownFilters": []
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s2-fc-city",
+            "Title": "City",
+            "SourceFilterId": "filter-s2-fc-city",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {}
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        },
+        {
+          "Dropdown": {
+            "FilterControlId": "s2-fc-season",
+            "Title": "Season",
+            "SourceFilterId": "filter-s2-fc-season",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {}
+              }
+            },
+            "Type": "MULTI_SELECT"
           }
         }
       ],
@@ -1239,6 +1541,46 @@
                   "ColumnSpan": 36,
                   "RowIndex": 23,
                   "RowSpan": 10
+                },
+                {
+                  "ElementId": "s2-bar-wind-sector",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 12,
+                  "RowIndex": 33,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s2-line-corr-vs-raw",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 12,
+                  "ColumnSpan": 12,
+                  "RowIndex": 33,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s2-bar-calm-wind",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 24,
+                  "ColumnSpan": 12,
+                  "RowIndex": 33,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s2-line-rh-pm25",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 44,
+                  "RowSpan": 11
+                },
+                {
+                  "ElementId": "s2-line-pressure-pm25",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 18,
+                  "ColumnSpan": 18,
+                  "RowIndex": 44,
+                  "RowSpan": 11
                 }
               ],
               "CanvasSizeOptions": {
@@ -1249,56 +1591,11 @@
             }
           }
         }
-      ],
-      "ContentType": "INTERACTIVE"
+      ]
     },
     {
       "SheetId": "sheet-3",
       "Name": "Compliance & Target Trajectory",
-      "FilterControls": [
-        {
-          "Dropdown": {
-            "FilterControlId": "s3-fc-city",
-            "Title": "City",
-            "SourceFilterId": "filter-s3-fc-city",
-            "DisplayOptions": {
-              "SelectAllOptions": {
-                "Visibility": "VISIBLE"
-              },
-              "TitleOptions": {
-                "Visibility": "VISIBLE",
-                "FontConfiguration": {
-                  "FontSize": {
-                    "Relative": "MEDIUM"
-                  }
-                }
-              }
-            },
-            "Type": "MULTI_SELECT"
-          }
-        },
-        {
-          "Dropdown": {
-            "FilterControlId": "s3-fc-year",
-            "Title": "Year",
-            "SourceFilterId": "filter-s3-fc-year",
-            "DisplayOptions": {
-              "SelectAllOptions": {
-                "Visibility": "VISIBLE"
-              },
-              "TitleOptions": {
-                "Visibility": "VISIBLE",
-                "FontConfiguration": {
-                  "FontSize": {
-                    "Relative": "MEDIUM"
-                  }
-                }
-              }
-            },
-            "Type": "MULTI_SELECT"
-          }
-        }
-      ],
       "Visuals": [
         {
           "LineChartVisual": {
@@ -1350,10 +1647,10 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Type": "LINE",
               "ReferenceLines": [
                 {
@@ -1361,13 +1658,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 20.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "LINE"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#E07B39"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -1382,14 +1673,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "Target \u2264 20%"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
                   }
                 }
               ]
@@ -1448,11 +1736,12 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
-              "Type": "LINE"
+              "Type": "LINE",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
@@ -1511,7 +1800,16 @@
                   ]
                 }
               },
-              "SortConfiguration": {},
+              "SortConfiguration": {
+                "HeatMapRowSort": [],
+                "HeatMapColumnSort": [],
+                "HeatMapRowItemsLimitConfiguration": {
+                  "OtherCategories": "EXCLUDE"
+                },
+                "HeatMapColumnItemsLimitConfiguration": {
+                  "OtherCategories": "EXCLUDE"
+                }
+              },
               "ColorScale": {
                 "Colors": [
                   {
@@ -1530,8 +1828,8 @@
                 }
               }
             },
-            "ColumnHierarchies": [],
-            "Actions": []
+            "Actions": [],
+            "ColumnHierarchies": []
           }
         },
         {
@@ -1584,10 +1882,10 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
               "BarsArrangement": "CLUSTERED",
               "ReferenceLines": [
@@ -1596,13 +1894,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 15.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "BAR"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#D13212"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -1617,14 +1909,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "WHO 15 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
                   }
                 },
                 {
@@ -1632,13 +1921,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 50.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "BAR"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#E07B39"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -1653,20 +1936,129 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "QCVN 50 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
                   }
                 }
               ]
             },
             "Actions": [],
             "ColumnHierarchies": []
+          }
+        },
+        {
+          "BarChartVisual": {
+            "VisualId": "s3-bar-exceedance-split",
+            "Title": {
+              "Visibility": "VISIBLE",
+              "FormatText": {
+                "PlainText": "Annual Day Count: Compliant / WHO-Only Exceedance / Also QCVN Exceedance"
+              }
+            },
+            "Subtitle": {
+              "Visibility": "HIDDEN"
+            },
+            "ChartConfiguration": {
+              "FieldWells": {
+                "BarChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "NumericalDimensionField": {
+                        "FieldId": "s3-sp-year",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "year"
+                        }
+                      }
+                    }
+                  ],
+                  "Values": [
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s3-sp-comp",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "compliant_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s3-sp-who",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "who_only_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMeasureField": {
+                        "FieldId": "s3-sp-qcvn",
+                        "Column": {
+                          "DataSetIdentifier": "exceedance-stats",
+                          "ColumnName": "qcvn_exceedance_days"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    }
+                  ],
+                  "Colors": [],
+                  "SmallMultiples": []
+                }
+              },
+              "Orientation": "VERTICAL",
+              "BarsArrangement": "STACKED",
+              "ReferenceLines": []
+            },
+            "Actions": [],
+            "ColumnHierarchies": []
+          }
+        }
+      ],
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s3-fc-city",
+            "Title": "City",
+            "SourceFilterId": "filter-s3-fc-city",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {}
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        },
+        {
+          "Dropdown": {
+            "FilterControlId": "s3-fc-year",
+            "Title": "Year",
+            "SourceFilterId": "filter-s3-fc-year",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {}
+              }
+            },
+            "Type": "MULTI_SELECT"
           }
         }
       ],
@@ -1706,6 +2098,14 @@
                   "ColumnSpan": 18,
                   "RowIndex": 12,
                   "RowSpan": 12
+                },
+                {
+                  "ElementId": "s3-bar-exceedance-split",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 36,
+                  "RowIndex": 24,
+                  "RowSpan": 11
                 }
               ],
               "CanvasSizeOptions": {
@@ -1716,56 +2116,11 @@
             }
           }
         }
-      ],
-      "ContentType": "INTERACTIVE"
+      ]
     },
     {
       "SheetId": "sheet-4",
       "Name": "Forecast Monitor",
-      "FilterControls": [
-        {
-          "Dropdown": {
-            "FilterControlId": "s4-fc-loc",
-            "Title": "Station",
-            "SourceFilterId": "filter-s4-fc-loc",
-            "DisplayOptions": {
-              "SelectAllOptions": {
-                "Visibility": "VISIBLE"
-              },
-              "TitleOptions": {
-                "Visibility": "VISIBLE",
-                "FontConfiguration": {
-                  "FontSize": {
-                    "Relative": "MEDIUM"
-                  }
-                }
-              }
-            },
-            "Type": "MULTI_SELECT"
-          }
-        },
-        {
-          "Dropdown": {
-            "FilterControlId": "s4-fc-model",
-            "Title": "Model",
-            "SourceFilterId": "filter-s4-fc-model",
-            "DisplayOptions": {
-              "SelectAllOptions": {
-                "Visibility": "VISIBLE"
-              },
-              "TitleOptions": {
-                "Visibility": "VISIBLE",
-                "FontConfiguration": {
-                  "FontSize": {
-                    "Relative": "MEDIUM"
-                  }
-                }
-              }
-            },
-            "Type": "MULTI_SELECT"
-          }
-        }
-      ],
       "Visuals": [
         {
           "KPIVisual": {
@@ -1795,10 +2150,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -1844,10 +2198,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -1893,10 +2246,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -1942,10 +2294,9 @@
                     }
                   }
                 ],
-                "TargetValues": [],
-                "TrendGroups": []
+                "TrendGroups": [],
+                "TargetValues": []
               },
-              "SortConfiguration": {},
               "KPIOptions": {
                 "ProgressBar": {
                   "Visibility": "HIDDEN"
@@ -2015,10 +2366,10 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Type": "LINE",
               "ReferenceLines": [
                 {
@@ -2026,13 +2377,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 15.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "LINE"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#D13212"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -2047,14 +2392,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "WHO AQG: 15 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
                   }
                 },
                 {
@@ -2062,13 +2404,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 50.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "LINE"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#E07B39"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -2083,14 +2419,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "QCVN: 50 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#E07B39"
                   }
                 }
               ]
@@ -2160,11 +2493,12 @@
                       }
                     }
                   ],
-                  "Colors": []
+                  "Colors": [],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
-              "Type": "LINE"
+              "Type": "LINE",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": [
@@ -2229,12 +2563,13 @@
                       }
                     }
                   ],
-                  "Colors": []
+                  "Colors": [],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
-              "BarsArrangement": "CLUSTERED"
+              "BarsArrangement": "CLUSTERED",
+              "ReferenceLines": []
             },
             "Actions": [],
             "ColumnHierarchies": []
@@ -2292,10 +2627,10 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Type": "LINE",
               "ReferenceLines": [
                 {
@@ -2303,13 +2638,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 25.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "LINE"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#D13212"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -2324,14 +2653,11 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "Alarm: 25 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
                   }
                 }
               ]
@@ -2397,10 +2723,10 @@
                         }
                       }
                     }
-                  ]
+                  ],
+                  "SmallMultiples": []
                 }
               },
-              "SortConfiguration": {},
               "Orientation": "VERTICAL",
               "BarsArrangement": "CLUSTERED",
               "ReferenceLines": [
@@ -2409,13 +2735,7 @@
                   "DataConfiguration": {
                     "StaticConfiguration": {
                       "Value": 25.0
-                    },
-                    "AxisBinding": "PRIMARY_YAXIS",
-                    "SeriesType": "BAR"
-                  },
-                  "StyleConfiguration": {
-                    "Pattern": "DASHED",
-                    "Color": "#D13212"
+                    }
                   },
                   "LabelConfiguration": {
                     "ValueLabelConfiguration": {
@@ -2430,20 +2750,53 @@
                     },
                     "CustomLabelConfiguration": {
                       "CustomLabel": "Alarm: 25 \u00b5g/m\u00b3"
-                    },
-                    "FontConfiguration": {
-                      "FontSize": {
-                        "Relative": "MEDIUM"
-                      }
-                    },
-                    "HorizontalPosition": "LEFT",
-                    "VerticalPosition": "BELOW"
+                    }
+                  },
+                  "StyleConfiguration": {
+                    "Pattern": "DASHED",
+                    "Color": "#D13212"
                   }
                 }
               ]
             },
             "Actions": [],
             "ColumnHierarchies": []
+          }
+        }
+      ],
+      "FilterControls": [
+        {
+          "Dropdown": {
+            "FilterControlId": "s4-fc-loc",
+            "Title": "Station",
+            "SourceFilterId": "filter-s4-fc-loc",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {}
+              }
+            },
+            "Type": "MULTI_SELECT"
+          }
+        },
+        {
+          "Dropdown": {
+            "FilterControlId": "s4-fc-model",
+            "Title": "Model",
+            "SourceFilterId": "filter-s4-fc-model",
+            "DisplayOptions": {
+              "SelectAllOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "TitleOptions": {
+                "Visibility": "VISIBLE",
+                "FontConfiguration": {}
+              }
+            },
+            "Type": "MULTI_SELECT"
           }
         }
       ],
@@ -2533,11 +2886,26 @@
             }
           }
         }
-      ],
-      "ContentType": "INTERACTIVE"
+      ]
     }
   ],
-  "CalculatedFields": [],
+  "CalculatedFields": [
+    {
+      "DataSetIdentifier": "aq-weather-daily",
+      "Name": "wind_sector",
+      "Expression": "ifelse(isNull({avg_wind_dir}), 'Unknown', ifelse({avg_wind_dir} < 90, 'NE (0-90)', ifelse({avg_wind_dir} < 180, 'SE (90-180)', ifelse({avg_wind_dir} < 270, 'SW (180-270)', 'NW (270-360)'))))"
+    },
+    {
+      "DataSetIdentifier": "exceedance-stats",
+      "Name": "compliant_days",
+      "Expression": "{total_days} - {who_exceedance_days}"
+    },
+    {
+      "DataSetIdentifier": "exceedance-stats",
+      "Name": "who_only_days",
+      "Expression": "{who_exceedance_days} - {qcvn_exceedance_days}"
+    }
+  ],
   "ParameterDeclarations": [],
   "FilterGroups": [
     {
@@ -2553,8 +2921,7 @@
             "Configuration": {
               "FilterListConfiguration": {
                 "MatchOperator": "CONTAINS",
-                "SelectAllOptions": "FILTER_ALL_VALUES",
-                "NullOption": "NON_NULLS_ONLY"
+                "SelectAllOptions": "FILTER_ALL_VALUES"
               }
             }
           }
@@ -2570,8 +2937,8 @@
           ]
         }
       },
-      "Status": "ENABLED",
-      "CrossDataset": "SINGLE_DATASET"
+      "CrossDataset": "SINGLE_DATASET",
+      "Status": "ENABLED"
     },
     {
       "FilterGroupId": "fg-s2-city",
@@ -2586,8 +2953,7 @@
             "Configuration": {
               "FilterListConfiguration": {
                 "MatchOperator": "CONTAINS",
-                "SelectAllOptions": "FILTER_ALL_VALUES",
-                "NullOption": "NON_NULLS_ONLY"
+                "SelectAllOptions": "FILTER_ALL_VALUES"
               }
             }
           }
@@ -2603,8 +2969,8 @@
           ]
         }
       },
-      "Status": "ENABLED",
-      "CrossDataset": "SINGLE_DATASET"
+      "CrossDataset": "SINGLE_DATASET",
+      "Status": "ENABLED"
     },
     {
       "FilterGroupId": "fg-s2-season",
@@ -2619,8 +2985,7 @@
             "Configuration": {
               "FilterListConfiguration": {
                 "MatchOperator": "CONTAINS",
-                "SelectAllOptions": "FILTER_ALL_VALUES",
-                "NullOption": "NON_NULLS_ONLY"
+                "SelectAllOptions": "FILTER_ALL_VALUES"
               }
             }
           }
@@ -2636,8 +3001,8 @@
           ]
         }
       },
-      "Status": "ENABLED",
-      "CrossDataset": "SINGLE_DATASET"
+      "CrossDataset": "SINGLE_DATASET",
+      "Status": "ENABLED"
     },
     {
       "FilterGroupId": "fg-s3-city",
@@ -2652,8 +3017,7 @@
             "Configuration": {
               "FilterListConfiguration": {
                 "MatchOperator": "CONTAINS",
-                "SelectAllOptions": "FILTER_ALL_VALUES",
-                "NullOption": "NON_NULLS_ONLY"
+                "SelectAllOptions": "FILTER_ALL_VALUES"
               }
             }
           }
@@ -2669,8 +3033,8 @@
           ]
         }
       },
-      "Status": "ENABLED",
-      "CrossDataset": "SINGLE_DATASET"
+      "CrossDataset": "SINGLE_DATASET",
+      "Status": "ENABLED"
     },
     {
       "FilterGroupId": "fg-s3-year",
@@ -2685,8 +3049,7 @@
             "Configuration": {
               "FilterListConfiguration": {
                 "MatchOperator": "CONTAINS",
-                "SelectAllOptions": "FILTER_ALL_VALUES",
-                "NullOption": "NON_NULLS_ONLY"
+                "SelectAllOptions": "FILTER_ALL_VALUES"
               }
             }
           }
@@ -2702,8 +3065,8 @@
           ]
         }
       },
-      "Status": "ENABLED",
-      "CrossDataset": "SINGLE_DATASET"
+      "CrossDataset": "SINGLE_DATASET",
+      "Status": "ENABLED"
     },
     {
       "FilterGroupId": "fg-s4-loc",
@@ -2718,8 +3081,7 @@
             "Configuration": {
               "FilterListConfiguration": {
                 "MatchOperator": "CONTAINS",
-                "SelectAllOptions": "FILTER_ALL_VALUES",
-                "NullOption": "NON_NULLS_ONLY"
+                "SelectAllOptions": "FILTER_ALL_VALUES"
               }
             }
           }
@@ -2735,8 +3097,8 @@
           ]
         }
       },
-      "Status": "ENABLED",
-      "CrossDataset": "SINGLE_DATASET"
+      "CrossDataset": "SINGLE_DATASET",
+      "Status": "ENABLED"
     },
     {
       "FilterGroupId": "fg-s4-model",
@@ -2751,8 +3113,7 @@
             "Configuration": {
               "FilterListConfiguration": {
                 "MatchOperator": "CONTAINS",
-                "SelectAllOptions": "FILTER_ALL_VALUES",
-                "NullOption": "NON_NULLS_ONLY"
+                "SelectAllOptions": "FILTER_ALL_VALUES"
               }
             }
           }
@@ -2768,8 +3129,8 @@
           ]
         }
       },
-      "Status": "ENABLED",
-      "CrossDataset": "SINGLE_DATASET"
+      "CrossDataset": "SINGLE_DATASET",
+      "Status": "ENABLED"
     }
   ],
   "Options": {

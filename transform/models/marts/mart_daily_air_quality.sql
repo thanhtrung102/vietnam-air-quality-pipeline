@@ -87,13 +87,33 @@ aggregated as (
         station_lon,
         sensor_type
 
+),
+
+-- Daily average relative humidity per station, derived from the relativehumidity
+-- parameter rows in the same source table.  Used to apply the EPA/Jayaratne
+-- humidity-adjusted correction to low-cost PM2.5 sensors (see corrected_pm25 below).
+-- NULL when no humidity readings exist for that station-day.
+daily_rh as (
+
+    select
+        location_id,
+        measurement_date,
+        round(avg(measurement_value), 2) as avg_rh
+
+    from source
+    where parameter = 'relativehumidity'
+
+    group by
+        location_id,
+        measurement_date
+
 )
 
 select
     city,
     province,
     parameter,
-    location_id,
+    a.location_id,
     location_name,
     station_lat,
     station_lon,
@@ -182,8 +202,14 @@ select
     end as is_outlier_station,
 
     -- Bias-corrected PM2.5 for low-cost optical sensors (PMS5003 family).
-    -- Raw readings overestimate by ~50% in tropical high-humidity conditions (AirGradient, 2023).
-    -- corrected_pm25 = avg_value / 1.50 for low-cost sensors; = avg_value for reference instruments.
+    -- Uses the EPA/Jayaratne humidity-adjusted formula when RH data is available:
+    --   corrected = raw / (1 + 0.24 × RH_fraction)
+    -- At 70% RH (Hanoi typical) this yields ~1.17 divisor (≈ 15% correction).
+    -- At 90% RH (fog/winter nights) this yields ~1.22 divisor (≈ 18% correction).
+    -- When no humidity data exists for that station-day, falls back to the flat
+    -- divisor 1.17 (equivalent to 70% RH, conservative tropical baseline).
+    -- Reference: Jayaratne et al. 2018; AirGradient field study Hanoi 2023.
+    -- Reference instruments (BAM/TEOM) are unaffected (corrected_pm25 = avg_value).
     -- NULL for non-PM2.5 parameters.
     case
         when parameter = 'pm25' then
@@ -191,13 +217,19 @@ select
                 when lower(sensor_type) like '%low%cost%'
                   or lower(sensor_type) like '%low_cost%'
                   or lower(sensor_type) = 'low-cost sensor'
-                    then round(avg_value / 1.50, 4)
+                    then round(
+                        avg_value / (1.0 + 0.24 * coalesce(r.avg_rh, 70.0) / 100.0),
+                        4
+                    )
                 else avg_value
             end
         else null
     end as corrected_pm25,
 
     -- partition column must be last
-    measurement_date
+    a.measurement_date
 
-from aggregated
+from aggregated a
+left join daily_rh r
+    on  a.location_id      = r.location_id
+    and a.measurement_date = r.measurement_date
