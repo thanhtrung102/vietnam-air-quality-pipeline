@@ -8,10 +8,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Name** | [Placeholder] |
-| **School** | [Placeholder] |
-| **Major** | [Placeholder] |
-| **Company** | [Placeholder] |
+| **Name** | [TODO: Full name] |
+| **Phone** | [TODO: Phone number] |
+| **Email** | [TODO: Email address] |
+| **School** | [TODO: University name] |
+| **Major** | [TODO: Major/Faculty] |
+| **Company** | [TODO: Company name] |
 | **Position** | Cloud Data Engineering Intern |
 | **Duration** | January 6 – April 4, 2026 (12 weeks) |
 
@@ -41,10 +43,15 @@ All infrastructure is declared in Terraform — the entire environment can be to
 | 5.4 | [Data Ingestion Pipeline](docs/workshop/5.4-ingestion.md) | Historical batch sync, streaming producer, weather backfill, validation |
 | 5.5 | [Transformation, Forecast & Security](docs/workshop/5.5-transform-security.md) | dbt build, forecast Lambda container, IAM design, CloudWatch |
 | 5.6 | [Cleanup](docs/workshop/5.6-cleanup.md) | Full resource teardown with verification checklist |
+| — | [Events Participated](docs/events.md) | Events attended during the internship with role and takeaways |
+| — | [Self-evaluation](docs/self-evaluation.md) | Self-assessment across 8 professional criteria with reflection |
+| — | [Sharing & Feedback](docs/feedback.md) | Program impressions, satisfaction level, and recommendations |
 
 ---
 
 ## Quick Start (Demo Run) | Khởi động nhanh
+
+*[VI: Đã đáp ứng điều kiện tiên quyết ([Bước 5.2](docs/workshop/5.2-prerequisites.md))? Chạy toàn bộ pipeline theo thứ tự sau:]*
 
 Prerequisites met ([Step 5.2](docs/workshop/5.2-prerequisites.md))? Run the full pipeline in order:
 
@@ -90,9 +97,13 @@ The live map is served from `dashboard/index.html` (S3 static site). It fetches 
 
 Each marker popup shows: composite AQI, PM2.5 (µg/m³), dominant pollutant, cigarette equivalent, sensor type, and measurement date.
 
+*[VI: Bản đồ trực tiếp được phục vụ từ `dashboard/index.html` (trang web tĩnh S3). Nó lấy GeoJSON từ Lambda `aqi_api` qua API Gateway và hiển thị các điểm đánh dấu trạm được tô màu theo danh mục AQI. Mỗi popup hiển thị: AQI tổng hợp, PM2.5 (µg/m³), chất ô nhiễm chính, tương đương thuốc lá, loại cảm biến và ngày đo lường.]*
+
 ---
 
 ## Key Results | Kết quả chính
+
+*[VI: Kết quả đo lường thực tế từ pipeline sau 3 năm dữ liệu (2023–2026):]*
 
 | Metric | Value |
 |--------|-------|
@@ -112,6 +123,8 @@ Each marker popup shows: composite AQI, PM2.5 (µg/m³), dominant pollutant, cig
 ---
 
 ## Tech Stack | Công nghệ sử dụng
+
+*[VI: Toàn bộ stack công nghệ được sử dụng trong dự án, từ hạ tầng đến dashboard:]*
 
 | Layer | Technology |
 |-------|-----------|
