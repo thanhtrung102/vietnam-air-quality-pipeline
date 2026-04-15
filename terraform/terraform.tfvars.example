@@ -1,0 +1,19 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — do NOT commit it.
+#
+#   cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+
+# Must be globally unique — S3 bucket name will be openaq-pipeline-{suffix}
+s3_bucket_suffix = "yourname"
+
+aws_region   = "ap-southeast-1"
+alert_email  = "you@example.com"
+
+# Your OpenAQ v3 API key (free at openaq.org/developers)
+# Only used during terraform apply to seed Secrets Manager.
+# Lambdas read it from Secrets Manager at runtime.
+openaq_api_key = "your-openaq-api-key"
+
+# Email address for the QuickSight Author account.
+# Must match an IAM user email or be a valid address for QuickSight managed users.
+quicksight_admin_email = "you@example.com"
