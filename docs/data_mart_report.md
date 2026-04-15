@@ -30,7 +30,6 @@
 5. [Cross-Mart Summary](#5-cross-mart-summary)
 6. [Design Patterns & Engineering Decisions](#6-design-patterns--engineering-decisions)
 7. [Data Quality Controls](#7-data-quality-controls)
-8. [QuickSight Dashboard Mapping](#8-quicksight-dashboard-mapping)
 
 ---
 
@@ -845,19 +844,6 @@ When the forecast Lambda reruns (due to a data gap or code update), it produces 
 
 ---
 
-## 8. QuickSight Dashboard Mapping
-
-| Dashboard Sheet | Primary Mart | Supporting Marts | Key Visuals |
-|----------------|-------------|-----------------|-------------|
-| **Sheet 1 — Historical Trends** | `mart_daily_aqi` | `mart_health_summary`, `mart_annual_monthly_trend`, `mart_daily_air_quality` | Annual AQI line by city; calendar heatmap (PM2.5 daily); health day stacked bar per year; PM2.5 time series with WHO/QCVN reference lines |
-| **Sheet 2 — Seasonal & Diurnal** | `mart_monthly_profile` | `mart_diurnal_profile`, `mart_daily_air_quality` | Monthly PM2.5 bar chart; hour-of-day line (0–23 UTC+7); sensor type comparison; city KPI tiles |
-| **Sheet 3 — Statistical Analysis** | `mart_exceedance_stats` | `mart_pollutant_ratio`, `mart_annual_monthly_trend` | WHO exceedance rate trend; PM2.5/PM10 ratio by season; YoY monthly comparison; corrected vs raw scatter |
-| **Sheet 4 — Predictive Forecasts** | `mart_forecast_accuracy` | `mart_daily_forecast` (external) | 7-day SARIMA forecast with CI band; forecast vs actual scatter; rolling RMSE trend line (25 µg/m³ alarm threshold); forecast accuracy KPI |
-
-All four datasets use **SPICE import mode** with a daily refresh at 04:00 UTC (after dbt completes at ~02:45 UTC via CodeBuild schedule). This eliminates per-query Athena cost for dashboard loads.
-
----
-
 ## 9. SQL Implementation Reference
 
 The complete SQL for every mart model lives under `transform/models/marts/`. This section shows the actual source code for the most analytically significant models.
@@ -1462,53 +1448,3 @@ models:
 
 ---
 
-## 11. QuickSight SPICE Dataset Inventory
-
-Phase 2 deployed 8 SPICE datasets and 8 refresh schedules to AWS account `703668403514` (ap-southeast-1). All datasets refresh daily at **04:00 UTC**.
-
-| Terraform resource | Dataset ID | Mart table | SPICE refresh | Sheet |
-|-------------------|-----------|-----------|--------------|-------|
-| `aws_quicksight_data_set.daily_aqi` | `openaq-daily-aqi` | `mart_daily_aqi` | 04:00 UTC daily | 1 |
-| `aws_quicksight_data_set.health_summary` | `openaq-health-summary` | `mart_health_summary` | 04:00 UTC daily | 1 |
-| `aws_quicksight_data_set.annual_monthly_trend` | `openaq-annual-monthly-trend` | `mart_annual_monthly_trend` | 04:00 UTC daily | 1 & 3 |
-| `aws_quicksight_data_set.monthly_profile` | `openaq-monthly-profile` | `mart_monthly_profile` | 04:00 UTC daily | 2 |
-| `aws_quicksight_data_set.diurnal_profile` | `openaq-diurnal-profile` | `mart_diurnal_profile` | 04:00 UTC daily | 2 |
-| `aws_quicksight_data_set.exceedance_stats` | `openaq-exceedance-stats` | `mart_exceedance_stats` | 04:00 UTC daily | 3 |
-| `aws_quicksight_data_set.pollutant_ratio` | `openaq-pollutant-ratio` | `mart_pollutant_ratio` | 04:00 UTC daily | 3 |
-| `aws_quicksight_data_set.forecast_accuracy` | `openaq-forecast-accuracy` | `mart_forecast_accuracy` | 04:00 UTC daily | 4 |
-
-**Shared Athena data source:** `openaq-athena` → workgroup `openaq_workgroup`, database `openaq_mart`
-
-**Data source ARN:** `arn:aws:quicksight:ap-southeast-1:703668403514:datasource/openaq-athena`
-
-**Service role ARN:** `arn:aws:iam::703668403514:role/QuickSightServiceRole-openaq`
-
-### Ingestion monitoring
-
-```bash
-# Check SPICE ingestion status for any dataset
-aws quicksight list-ingestions \
-  --aws-account-id 703668403514 \
-  --data-set-id openaq-daily-aqi \
-  --region ap-southeast-1 \
-  --query 'Ingestions[0].{Status:IngestionStatus,RowsIngested:RowInfo.RowsIngested,StartTime:CreatedTime}'
-
-# Trigger a manual SPICE refresh
-aws quicksight create-ingestion \
-  --aws-account-id 703668403514 \
-  --data-set-id openaq-daily-aqi \
-  --ingestion-id manual-$(date +%Y%m%d-%H%M%S) \
-  --region ap-southeast-1
-```
-
-### Marts NOT in SPICE (available for direct Athena query)
-
-The following marts are queryable via Athena but not yet added to a QuickSight SPICE dataset (Phase 3 analysis definition will reference them as needed):
-
-| Mart | Reason not in SPICE | Planned use |
-|------|---------------------|-------------|
-| `mart_daily_air_quality` | Large (~450K rows); already covered by `mart_daily_aqi` for dashboard needs | Raw data export, ad-hoc correlation queries |
-| `mart_daily_weather` | Covered by `mart_aq_weather_daily` (which is also not in SPICE) | Weather-only analysis |
-| `mart_aq_weather_daily` | Covered by feature mart; too large for current dashboard scope | Phase 5 model validation |
-| `mart_lagged_features` | Read by forecast Lambda directly; not a dashboard source | ML training input |
-| `mart_feature_stats` | 21-row QA table; queried manually post-dbt-build | Feature engineering validation |
