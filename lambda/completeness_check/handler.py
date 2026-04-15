@@ -20,7 +20,6 @@ Environment variables:
 
 import os
 import sys
-import time
 from datetime import date, timezone, datetime
 
 import boto3
@@ -95,11 +94,11 @@ def handler(event, context):
         # A stale archive is an upstream data availability issue, not a pipeline
         # failure — alerting every hour would be noise. The CloudWatch metric is
         # still emitted so the dashboard reflects the true state.
-        archive_stale = data_age_days > 7
-        if archive_stale:
+        is_archive_stale = data_age_days > 7
+        if is_archive_stale:
             print(f"Archive data is {data_age_days} days old — suppressing SNS alert (upstream lag)")
 
-        if active_count < ALERT_THRESHOLD and not archive_stale and sns_topic_arn and sns:
+        if active_count < ALERT_THRESHOLD and not is_archive_stale and sns_topic_arn and sns:
             msg = (
                 f"OpenAQ pipeline alert: only {active_count}/{EXPECTED_STATIONS} stations "
                 f"reported data for {check_date} ({missing_count} missing). "
@@ -115,7 +114,7 @@ def handler(event, context):
         return {
             "date":           check_date,
             "data_age_days":  data_age_days,
-            "archive_stale":  archive_stale,
+            "is_archive_stale":  is_archive_stale,
             "active":         active_count,
             "missing":        missing_count,
             "expected":       EXPECTED_STATIONS,

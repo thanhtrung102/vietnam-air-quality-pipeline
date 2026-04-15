@@ -28,56 +28,59 @@ even when the ratio cannot be computed.
 
 {{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
 
+-- Pivot raw rows into one row per station-day with each pollutant as a column.
+-- All downstream expressions reference simple column names — no repeated CASE WHEN.
+with pivoted as (
+
+    select
+        location_id,
+        location_name,
+        city,
+        province,
+        measurement_date,
+
+        round(max(case when parameter = 'pm25' then avg_value end), 4) as pm25_avg,
+        round(max(case when parameter = 'pm10' then avg_value end), 4) as pm10_avg,
+        -- pm1 is reported by AirGradient low-cost sensors only; NULL for reference stations.
+        -- pm1/pm25 ratio < 0.7 → secondary aerosol (ammonium sulfate/nitrate) dominant;
+        -- pm1/pm25 ratio > 0.85 → fresh combustion particles dominant.
+        round(max(case when parameter = 'pm1'  then avg_value end), 4) as pm1_avg
+
+    from {{ ref('mart_daily_air_quality') }}
+    where parameter      in ('pm25', 'pm10', 'pm1')
+      and is_outlier_station = 0
+
+    group by
+        location_id,
+        location_name,
+        city,
+        province,
+        measurement_date
+
+)
+
 select
     location_id,
     location_name,
     city,
     province,
     measurement_date,
+    pm25_avg,
+    pm10_avg,
+    pm1_avg,
 
-    -- Conditional aggregation pivot: one row per station-day with all pollutants
-    round(max(case when parameter = 'pm25' then avg_value end), 4) as pm25_avg,
-    round(max(case when parameter = 'pm10' then avg_value end), 4) as pm10_avg,
-    -- pm1 is reported by AirGradient low-cost sensors only; NULL for reference stations.
-    -- pm1/pm25 ratio < 0.7 → secondary aerosol (ammonium sulfate/nitrate) dominant;
-    -- pm1/pm25 ratio > 0.85 → fresh combustion particles dominant.
-    round(max(case when parameter = 'pm1'  then avg_value end), 4) as pm1_avg,
-
-    -- Ratio: NULL when either pollutant is missing or PM10 is zero
+    -- Ratio: NULL when either pollutant is missing for this station-day, or PM10 is zero.
     case
-        when max(case when parameter = 'pm25' then avg_value end) is null
-          or max(case when parameter = 'pm10' then avg_value end) is null
-          or max(case when parameter = 'pm10' then avg_value end) = 0
-            then null
-        else round(
-            max(case when parameter = 'pm25' then avg_value end) /
-            max(case when parameter = 'pm10' then avg_value end),
-            4
-        )
+        when pm25_avg is null or pm10_avg is null or pm10_avg = 0 then null
+        else round(pm25_avg / pm10_avg, 4)
     end as pm25_pm10_ratio,
 
-    -- Source indicator derived from ratio
+    -- Source indicator derived from ratio thresholds.
     case
-        when max(case when parameter = 'pm25' then avg_value end) is null
-          or max(case when parameter = 'pm10' then avg_value end) is null
-          or max(case when parameter = 'pm10' then avg_value end) = 0
-            then null
-        when max(case when parameter = 'pm25' then avg_value end) /
-             max(case when parameter = 'pm10' then avg_value end) > 0.7
-            then 'combustion-dominated'
-        when max(case when parameter = 'pm25' then avg_value end) /
-             max(case when parameter = 'pm10' then avg_value end) >= 0.4
-            then 'mixed'
+        when pm25_avg is null or pm10_avg is null or pm10_avg = 0 then null
+        when pm25_avg / pm10_avg > 0.7  then 'combustion-dominated'
+        when pm25_avg / pm10_avg >= 0.4 then 'mixed'
         else 'crustal/dust'
     end as source_indicator
 
-from {{ ref('mart_daily_air_quality') }}
-where parameter in ('pm25', 'pm10', 'pm1')
-  and is_outlier_station = 0
-
-group by
-    location_id,
-    location_name,
-    city,
-    province,
-    measurement_date
+from pivoted
