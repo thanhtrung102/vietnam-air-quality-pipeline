@@ -14,7 +14,7 @@ Coverage:
 import os
 import sys
 from datetime import date, timedelta
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 import pytest
 
 # ── Add handler to path ────────────────────────────────────────────────────────
@@ -81,10 +81,8 @@ def _run_handler(athena_client, cw_client=None, sns_client=None):
     def _get_client(service):
         return client_map.get(service, MagicMock())
 
-    with patch("handler.boto3") as mock_boto3, patch("handler.time") as mock_time:
+    with patch("handler.boto3") as mock_boto3:
         mock_boto3.client.side_effect = _get_client
-        mock_time.time.return_value = 0.0
-        mock_time.sleep = MagicMock()
         return h.handler({}, {}), cw_client, sns_client
 
 
@@ -137,7 +135,7 @@ def test_handler_below_threshold_stale_archive():
     stale_date = (date.today() - timedelta(days=8)).isoformat()
     result, cw, sns = _run_handler(_make_athena_client(stale_date, 10))
 
-    assert result["archive_stale"] is True
+    assert result["is_archive_stale"] is True
     assert result["missing"] == 11
     cw.put_metric_data.assert_called_once()  # metric still emitted
     sns.publish.assert_not_called()           # alert suppressed

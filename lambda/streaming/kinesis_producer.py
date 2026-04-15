@@ -180,30 +180,29 @@ def _api_get(path: str, params: dict, api_key: str) -> dict | None:
         except requests.RequestException as exc:
             log.error("API request failed %s (attempt %d/%d): %s",
                       path, attempt, _API_MAX_RETRIES, exc)
-            if attempt < _API_MAX_RETRIES:
-                log.info("retrying in %ds", delay)
-                time.sleep(delay)
-                delay = min(delay * 2, _API_MAX_DELAY)
-            continue
+            resp = None
 
-        if resp.status_code in (429,) or resp.status_code >= 500:
-            log.warning("API HTTP %d for %s (attempt %d/%d) — retryable",
-                        resp.status_code, path, attempt, _API_MAX_RETRIES)
-            if attempt < _API_MAX_RETRIES:
-                log.info("retrying in %ds", delay)
-                time.sleep(delay)
-                delay = min(delay * 2, _API_MAX_DELAY)
+        else:
+            if resp.status_code in (429,) or resp.status_code >= 500:
+                log.warning("API HTTP %d for %s (attempt %d/%d) — retryable",
+                            resp.status_code, path, attempt, _API_MAX_RETRIES)
+                if attempt >= _API_MAX_RETRIES:
+                    log.error("API HTTP %d: all %d attempts exhausted for %s",
+                              resp.status_code, _API_MAX_RETRIES, path)
+                resp = None
+
+            elif not resp.ok:
+                # 400/401/403/404 — client error, retrying won't help
+                log.error("API HTTP %d for %s — non-retryable", resp.status_code, path)
+                return None
+
             else:
-                log.error("API HTTP %d: all %d attempts exhausted for %s",
-                          resp.status_code, _API_MAX_RETRIES, path)
-            continue
+                return resp.json()
 
-        if not resp.ok:
-            # 400/401/403/404 — client error, retrying won't help
-            log.error("API HTTP %d for %s — non-retryable", resp.status_code, path)
-            return None
-
-        return resp.json()
+        if attempt < _API_MAX_RETRIES:
+            log.info("retrying in %ds", delay)
+            time.sleep(delay)
+            delay = min(delay * 2, _API_MAX_DELAY)
 
     return None
 

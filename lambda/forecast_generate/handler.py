@@ -48,12 +48,12 @@ from datetime import date, timedelta
 
 import boto3
 import numpy as np
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
-from athena_utils import AthenaConfig, run_query  # noqa: E402
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
+from athena_utils import AthenaConfig, run_query  # noqa: E402
 
 warnings.filterwarnings("ignore")
 
