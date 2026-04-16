@@ -4,21 +4,20 @@ Diagram:
       Url: "https://raw.githubusercontent.com/awslabs/diagram-as-code/main/definitions/definition-for-aws-icons-light.yaml"
 
   # Vietnam Air Quality Pipeline — ap-southeast-1
-  # High-level overview: three ingestion paths → Athena → dbt → Serving + Monitoring
   # Generated with: awsdac docs/architecture.yaml -o docs/architecture.png -f
 
   Resources:
 
     Canvas:
       Type: AWS::Diagram::Canvas
-      Direction: vertical
+      Direction: horizontal
       Children:
-        - ExternalRow
+        - ExternalCol
         - AWSCloud
-        - UserRow
+        - UserCol
 
-    # ── External ──────────────────────────────────────────────────────────────────
-    ExternalRow:
+    # ── External (left column) ────────────────────────────────────────────────────
+    ExternalCol:
       Type: AWS::Diagram::HorizontalStack
       Children:
         - OpenAQArchive
@@ -28,19 +27,19 @@ Diagram:
     OpenAQArchive:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "OpenAQ S3 Archive\nus-east-1 · 21 VN stations"
+      Title: "OpenAQ S3 Archive\nus-east-1 · 21 stations"
 
     OpenAQAPI:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "OpenAQ REST API v3\nlatest readings"
+      Title: "OpenAQ REST API v3"
 
     OpenMeteo:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "Open-Meteo ERA5\nhourly reanalysis"
+      Title: "Open-Meteo ERA5"
 
-    # ── AWS Cloud ─────────────────────────────────────────────────────────────────
+    # ── AWS Cloud (center) ────────────────────────────────────────────────────────
     AWSCloud:
       Type: AWS::Diagram::Cloud
       Direction: vertical
@@ -78,7 +77,7 @@ Diagram:
     EventBridge:
       Type: AWS::Diagram::Resource
       Preset: "Amazon EventBridge"
-      Title: "EventBridge Scheduler\n6 rules · daily + every 30 min / 1 h"
+      Title: "EventBridge Scheduler\n6 rules"
 
     SecretsManager:
       Type: AWS::Diagram::Resource
@@ -119,19 +118,19 @@ Diagram:
     S3DataLake:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "S3 Data Lake\nraw/batch/ · raw/weather/"
+      Title: "S3 openaq-pipeline\nbatch · stream · weather"
 
     KinesisPipeline:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Kinesis"
-      Title: "Kinesis Stream → Firehose\nopenaq_stream · raw/stream/"
+      Title: "Kinesis Data Streams\n→ Firehose → raw/stream/"
 
     SQSDLQ:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Queue Service (Amazon SQS)"
       Title: "SQS DLQ\nopenaq_streaming_dlq"
 
-    # ── Query ─────────────────────────────────────────────────────────────────────
+    # ── Query & Transform ─────────────────────────────────────────────────────────
     QueryRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
@@ -142,17 +141,17 @@ Diagram:
     GlueCatalog:
       Type: AWS::Diagram::Resource
       Preset: "AWS Glue"
-      Title: "Glue Data Catalog\nopenaq_raw · partition projection"
+      Title: "Glue Data Catalog\npartition projection"
 
     Athena:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Athena"
-      Title: "Athena · openaq_workgroup\nopenaq_mart (17 models)"
+      Title: "Athena\nopenaq_workgroup"
 
     CodeBuild:
       Type: AWS::Diagram::Resource
       Preset: "AWS CodeBuild"
-      Title: "CodeBuild · dbt runner\n17 models · 85 tests · 02:30 UTC"
+      Title: "CodeBuild · dbt\n17 models · 85 tests"
 
     # ── Serving ───────────────────────────────────────────────────────────────────
     ServingRow:
@@ -163,13 +162,13 @@ Diagram:
 
     AQIService:
       Type: AWS::Diagram::Resource
-      Preset: "AWS Lambda"
-      Title: "aqi_api → API Gateway\nAthena → GeoJSON · CORS"
+      Preset: "Amazon API Gateway"
+      Title: "aqi_api + API Gateway\nGeoJSON · CORS"
 
     ForecastService:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "forecast_generate (ECR)\nSARIMA 7-day PM2.5 · 03:00 UTC"
+      Title: "forecast_generate (ECR)\nSARIMA 7-day PM2.5"
 
     # ── Monitoring ────────────────────────────────────────────────────────────────
     MonitorRow:
@@ -181,14 +180,14 @@ Diagram:
     CompletenessLambda:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "completeness_check\nevery hour · MissingStations metric"
+      Title: "completeness_check\nMissingStations metric"
 
     MonitoringStack:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch + SNS\n4 alarms · openaq_alerts email"
+      Title: "CloudWatch + SNS\n4 alarms · openaq_alerts"
 
-    # ── Billing (us-east-1) ───────────────────────────────────────────────────────
+    # ── Billing us-east-1 ─────────────────────────────────────────────────────────
     BillingRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
@@ -197,10 +196,10 @@ Diagram:
     BillingMonitor:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch + SNS\nBilling alarm · > $8/month"
+      Title: "CloudWatch + SNS\nBilling > $8/month"
 
-    # ── End User ──────────────────────────────────────────────────────────────────
-    UserRow:
+    # ── End User (right column) ───────────────────────────────────────────────────
+    UserCol:
       Type: AWS::Diagram::HorizontalStack
       Children:
         - LeafletMap
@@ -208,29 +207,29 @@ Diagram:
     LeafletMap:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "Leaflet Map\n21 stations · US EPA AQI · XSS-safe"
+      Title: "Leaflet Map\n21 stations · US EPA AQI"
 
   Links:
 
-    # ── External → Ingestion ──────────────────────────────────────────────────────
+    # ── External → Ingestion (E→W: left panel into AWS) ──────────────────────────
     - Source: OpenAQArchive
-      SourcePosition: S
+      SourcePosition: E
       Target: BatchLambda
-      TargetPosition: N
+      TargetPosition: W
       TargetArrowHead:
         Type: Open
 
     - Source: OpenAQAPI
-      SourcePosition: S
+      SourcePosition: E
       Target: StreamingLambda
-      TargetPosition: N
+      TargetPosition: W
       TargetArrowHead:
         Type: Open
 
     - Source: OpenMeteo
-      SourcePosition: S
+      SourcePosition: E
       Target: WeatherLambda
-      TargetPosition: N
+      TargetPosition: W
       TargetArrowHead:
         Type: Open
 
@@ -386,14 +385,15 @@ Diagram:
         SourceRight:
           Title: "mart_lagged_features"
 
-    # ── Serving → User & Monitoring ───────────────────────────────────────────────
+    # ── Serving → User (E→W: AWS into right panel) ────────────────────────────────
     - Source: AQIService
-      SourcePosition: S
+      SourcePosition: E
       Target: LeafletMap
-      TargetPosition: N
+      TargetPosition: W
       TargetArrowHead:
         Type: Open
 
+    # ── Monitoring ────────────────────────────────────────────────────────────────
     - Source: ForecastService
       SourcePosition: S
       Target: MonitoringStack
