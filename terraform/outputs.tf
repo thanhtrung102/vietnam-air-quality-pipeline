@@ -130,6 +130,3 @@ output "quicksight_service_role_arn" {
   description = "ARN of the QuickSight service role (grant this in the QuickSight console under Security & Permissions)"
   value       = aws_iam_role.quicksight_service.arn
 }
-
-# Phase 3 & 4 outputs (aws_quicksight_analysis, template, dashboard) are added
-# after the analysis resource is uncommented in quicksight_analysis.tf.

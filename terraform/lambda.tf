@@ -98,9 +98,9 @@ data "aws_iam_policy_document" "lambda_inline" {
     resources = ["arn:aws:s3:::openaq-data-archive"]
   }
 
-  # Glue — catalogue read
+  # Glue — catalog read
   statement {
-    sid    = "GlueCatalogueRead"
+    sid    = "GlueCatalogRead"
     effect = "Allow"
 
     actions = [
@@ -398,55 +398,12 @@ resource "aws_scheduler_schedule" "streaming_30min" {
 # OpenAQ publishes an SNS notification to:
 #   arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created
 # for every new CSV.GZ written to the archive bucket.
+# SNS invokes the Lambda directly (cross-region, supported since 2021).
+# The EventBridge cron schedule is retained as a daily catch-all.
 #
-# Architecture:
-#   SNS (us-east-1) → SQS (us-east-1) → Lambda (ap-southeast-1, cross-region trigger)
-#
-# This replaces the cron-based daily batch for files that arrive during the day;
-# the cron schedule is retained as a catch-all for any missed events.
-#
-# NOTE: The SNS topic is owned by OpenAQ (account 817926761842) and is in
-# us-east-1. Resources below are ap-southeast-1 except where noted.
-
-# SQS queue in us-east-1 to buffer SNS notifications
-resource "aws_sqs_queue" "openaq_events" {
-  provider = aws.us_east_1
-  name     = "openaq-archive-events"
-
-  # Keep messages for 4 hours — Lambda will drain quickly under normal load
-  message_retention_seconds  = 14400
-  visibility_timeout_seconds = 960   # > Lambda timeout (900s) to prevent double-processing
-
-  tags = local.common_tags
-}
-
-# Allow the OpenAQ SNS topic to send messages to our queue
-resource "aws_sqs_queue_policy" "openaq_events" {
-  provider  = aws.us_east_1
-  queue_url = aws_sqs_queue.openaq_events.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid       = "AllowOpenAQSNS"
-      Effect    = "Allow"
-      Principal = { Service = "sns.amazonaws.com" }
-      Action    = "sqs:SendMessage"
-      Resource  = aws_sqs_queue.openaq_events.arn
-      Condition = {
-        ArnEquals = {
-          "aws:SourceArn" = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"
-        }
-      }
-    }]
-  })
-}
+# NOTE: The SNS topic is owned by OpenAQ (account 817926761842) in us-east-1.
 
 # Subscribe batch_sync Lambda directly to the OpenAQ SNS topic.
-# SNS cross-region Lambda invocation is supported (Lambda endpoint may be in
-# a different region from the SNS topic since 2021).
-# The SQS queue is retained for buffering but not wired as a Lambda trigger —
-# Lambda is invoked directly by SNS, which retries 3 times on failure.
 resource "aws_sns_topic_subscription" "openaq_events" {
   provider  = aws.us_east_1
   topic_arn = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"

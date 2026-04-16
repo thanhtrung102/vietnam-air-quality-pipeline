@@ -179,8 +179,6 @@ resource "aws_athena_workgroup" "openaq" {
 # Requires: AWS CLI installed and caller credentials with athena:UpdateWorkGroup.
 
 resource "null_resource" "athena_result_reuse" {
-  depends_on = [aws_athena_workgroup.openaq]
-
   triggers = {
     workgroup_name  = aws_athena_workgroup.openaq.name
     max_age_minutes = "60"
@@ -301,9 +299,9 @@ data "aws_iam_policy_document" "pipeline_inline" {
     }
   }
 
-  # Glue — catalogue management
+  # Glue — catalog management
   statement {
-    sid    = "GlueCatalogue"
+    sid    = "GlueCatalog"
     effect = "Allow"
 
     actions = [
