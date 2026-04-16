@@ -1,7 +1,7 @@
 # ── QuickSight Data Source: Athena (Phase 2.1) ────────────────────────────────
 #
 # One data source wires QuickSight → Athena workgroup.
-# All eight SPICE datasets share this single data source.
+# All nine datasets share this single data source.
 #
 # Depends on:
 #   - aws_athena_workgroup.openaq     (main.tf)

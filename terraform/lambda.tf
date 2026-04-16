@@ -343,6 +343,8 @@ data "aws_iam_policy_document" "scheduler_invoke" {
     resources = [
       aws_lambda_function.batch_sync.arn,
       aws_lambda_function.streaming_producer.arn,
+      aws_lambda_function.completeness_check.arn,
+      aws_lambda_function.weather_ingest.arn,
     ]
   }
 }
@@ -526,7 +528,10 @@ resource "aws_lambda_function" "completeness_check" {
       ATHENA_DATABASE     = "openaq_mart"
       ATHENA_WORKGROUP    = "openaq_workgroup"
       EXPECTED_STATIONS   = "21"
-      ALERT_THRESHOLD     = "3"           # < 3 = alert; only ~5 VN stations actively report to OpenAQ as of 2026
+      # Minimum active-station count before Lambda fires a direct SNS alert.
+      # Lowered from default 18 (85%) because only ~5 VN stations actively
+      # report to OpenAQ as of 2026; alert only on catastrophic loss (< 3).
+      ALERT_THRESHOLD     = "3"
       SNS_ALERT_TOPIC_ARN = aws_sns_topic.openaq_alerts.arn
     }
   }
@@ -560,34 +565,22 @@ resource "aws_lambda_permission" "completeness_scheduler" {
   source_arn    = aws_scheduler_schedule.completeness_hourly.arn
 }
 
-# Allow scheduler to invoke completeness Lambda
-resource "aws_iam_role_policy" "scheduler_invoke_completeness" {
-  name = "openaq_scheduler_invoke_completeness"
-  role = aws_iam_role.scheduler.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid      = "InvokeCompleteness"
-      Effect   = "Allow"
-      Action   = "lambda:InvokeFunction"
-      Resource = aws_lambda_function.completeness_check.arn
-    }]
-  })
-}
 
 # ── CloudWatch Alarm: MissingStations (Gap 6) ─────────────────────────────────
-# Fires when > 3 stations are missing for 2 consecutive 1-hour periods.
+# Fires when > 18 stations are missing (= fewer than 3 active) for 2 consecutive
+# 1-hour periods. Threshold = 21 − ALERT_THRESHOLD = 21 − 3 = 18.
+# Only ~5 VN stations actively report as of 2026, so this is a catastrophic-loss
+# signal, not a routine gap alarm.
 
 resource "aws_cloudwatch_metric_alarm" "missing_stations" {
   alarm_name          = "openaq_missing_stations"
-  alarm_description   = "More than 3 VN stations are missing from mart_daily_aqi for the current date"
+  alarm_description   = "Fewer than 3 VN stations have data in mart_daily_aqi — catastrophic coverage loss"
   metric_name         = "MissingStations"
   namespace           = "OpenAQ/Pipeline"
   statistic           = "Maximum"
   period              = 3600          # 1-hour evaluation window
   evaluation_periods  = 2             # alarm after 2 consecutive breaches
-  threshold           = 3
+  threshold           = 18            # 21 - 3 = 18; matches Lambda ALERT_THRESHOLD = 3
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "notBreaching"
 
@@ -655,20 +648,6 @@ resource "aws_lambda_permission" "weather_scheduler" {
   source_arn    = aws_scheduler_schedule.weather_daily.arn
 }
 
-resource "aws_iam_role_policy" "scheduler_invoke_weather" {
-  name = "openaq_scheduler_invoke_weather"
-  role = aws_iam_role.scheduler.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid      = "InvokeWeather"
-      Effect   = "Allow"
-      Action   = "lambda:InvokeFunction"
-      Resource = aws_lambda_function.weather_ingest.arn
-    }]
-  })
-}
 
 # ── dbt runner: CodeBuild project + EventBridge Scheduler ────────────────────
 # dbt-athena is too large for a Lambda zip. A CodeBuild project running the
