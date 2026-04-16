@@ -5,8 +5,7 @@ models:
     description: >
       Daily average air quality per station and pollutant.
       Grain: one row per measurement_date × location_id × parameter.
-      Partitioned by measurement_date; bucketed by parameter and location_id
-      (8 buckets) for efficient dashboard queries.
+      Partitioned by measurement_date.
 
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -110,6 +109,21 @@ models:
         description: >
           PM2.5 daily avg / 22.0 µg/m³ — cigarettes per day equivalent exposure
           (Berkeley Earth / aqi.in standard). NULL for non-PM2.5 parameters.
+
+      - name: is_outlier_station
+        description: >
+          1 for stations with confirmed calibration/initialisation artefacts
+          (currently station 6273386 — VNUHCMUS Campus 1, HCMC). 0 otherwise.
+          Sourced from vn_stations seed. Downstream marts filter WHERE = 0.
+
+      - name: corrected_pm25
+        description: >
+          Bias-corrected PM2.5 for low-cost optical sensors (PMS5003 family).
+          Uses the EPA/Jayaratne humidity-adjusted formula:
+            corrected = avg_value / (1 + 0.24 × RH_fraction)
+          Falls back to RH=70% when no humidity data exists for that station-day.
+          For reference stations, corrected_pm25 = avg_value (no correction applied).
+          NULL for non-PM2.5 parameters.
 
   - name: mart_daily_aqi
     description: >
@@ -270,6 +284,7 @@ models:
       Average pollutant concentration by hour of day (Vietnam local time, UTC+7).
       Grain: one row per location_id × parameter × hour_of_day × day_type × season.
       Drives the rush-hour line chart (weekday vs weekend × monsoon season) in the dashboard.
+      is_outlier_station is exposed so consumers can filter out artefact stations.
 
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -304,6 +319,9 @@ models:
 
       - name: sensor_type
         description: Instrument type — 'reference' or 'low_cost'
+
+      - name: is_outlier_station
+        description: 1 for stations with confirmed calibration artefacts (station 6273386); 0 otherwise. Filter WHERE = 0 to exclude outlier data.
 
       - name: parameter
         description: Pollutant code
@@ -351,6 +369,7 @@ models:
       Average pollutant concentration by month of year.
       Grain: one row per location_id × parameter × month_of_year (1–12).
       Drives the seasonal bar/line chart and hour × month heatmap in the dashboard.
+      is_outlier_station is exposed so consumers can filter out artefact stations.
 
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -383,6 +402,9 @@ models:
 
       - name: sensor_type
         description: Instrument type — 'reference' or 'low_cost'
+
+      - name: is_outlier_station
+        description: 1 for stations with confirmed calibration artefacts (station 6273386); 0 otherwise. Filter WHERE = 0 to exclude outlier data.
 
       - name: parameter
         description: Pollutant code
@@ -730,7 +752,7 @@ models:
         description: Daily maximum PM2.5 (µg/m³, 4 dp)
 
       - name: corrected_pm25
-        description: Bias-corrected PM2.5 for low-cost sensors (÷1.50); equals avg_pm25 for reference stations
+        description: EPA/Jayaratne humidity-adjusted PM2.5 for low-cost sensors (÷(1+0.24×RH)); equals avg_pm25 for reference stations
 
       - name: aqi_value
         description: US EPA 2024 AQI for PM2.5 (integer)
@@ -806,7 +828,7 @@ models:
         description: Current day's daily mean PM2.5 (µg/m³, 4 dp)
 
       - name: corrected_pm25
-        description: Bias-corrected PM2.5 for low-cost sensors (÷1.50)
+        description: EPA/Jayaratne humidity-adjusted PM2.5 for low-cost sensors (÷(1+0.24×RH))
 
       - name: pm25_lag1
         description: Previous day's avg_pm25 (µg/m³); NULL for first row of each station series
@@ -950,11 +972,11 @@ models:
           - not_null
 
       - name: model
-        description: Model type ('sarima' or 'prophet')
+        description: Model type (currently 'sarima' only; Prophet was removed due to container build incompatibility)
         tests:
           - not_null
           - accepted_values:
-              values: [sarima, prophet]
+              values: [sarima]
 
       - name: city
         description: City (Hanoi or Ho Chi Minh City)

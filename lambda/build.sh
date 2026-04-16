@@ -22,7 +22,7 @@ PACKAGE_DIR="$LAMBDA_DIR/package"
 
 # Prefer the project venv pip; fall back to system pip
 VENV_PIP="$REPO_ROOT/.venv/Scripts/pip"
-PIP="${VENV_PIP:-pip}"
+if [[ -f "$VENV_PIP" ]]; then PIP="$VENV_PIP"; else PIP="pip"; fi
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 

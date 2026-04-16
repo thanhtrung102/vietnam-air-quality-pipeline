@@ -26,6 +26,7 @@ select
     city,
     province,
     sensor_type,
+    is_outlier_station,
     parameter,
     month(measurement_date)                 as month_of_year,
 
@@ -54,5 +55,6 @@ group by
     city,
     province,
     sensor_type,
+    is_outlier_station,
     parameter,
     month(measurement_date)

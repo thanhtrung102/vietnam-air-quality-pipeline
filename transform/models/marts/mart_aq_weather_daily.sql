@@ -45,7 +45,6 @@ with aq as (
         exceeds_who_24h,
         exceeds_qcvn,
         cigarette_equivalent,
-        is_outlier_station,
         measurement_date
 
     from {{ ref('mart_daily_air_quality') }}

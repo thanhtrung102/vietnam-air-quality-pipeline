@@ -35,6 +35,7 @@ with labelled as (
         city,
         province,
         sensor_type,
+        is_outlier_station,
         parameter,
         measurement_value,
         -- Convert UTC → Vietnam local time (UTC+7, no DST)
@@ -68,6 +69,7 @@ select
     city,
     province,
     sensor_type,
+    is_outlier_station,
     parameter,
     hour_of_day,
     day_type,
@@ -85,6 +87,7 @@ group by
     city,
     province,
     sensor_type,
+    is_outlier_station,
     parameter,
     hour_of_day,
     day_type,

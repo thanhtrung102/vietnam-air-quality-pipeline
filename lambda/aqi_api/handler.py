@@ -120,7 +120,6 @@ def _save_cache(payload: dict) -> None:
 def handler(event, context):
     database  = os.environ.get("ATHENA_DATABASE",  "openaq_mart")
     workgroup = os.environ.get("ATHENA_WORKGROUP", "openaq_workgroup")
-    bucket    = os.environ.get("S3_BUCKET_NAME",   "")
 
     # Serve from /tmp cache when available (warm invocation, data < 1 h old)
     cached = _load_cache()

@@ -1,6 +1,5 @@
 import os
 import sys
-sys.path.insert(0, "/var/task")
 
 import boto3
 from botocore.exceptions import ClientError
