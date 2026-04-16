@@ -1,0 +1,37 @@
+name: Regenerate architecture diagram
+
+on:
+  push:
+    paths:
+      - 'docs/architecture.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download awsdac
+        run: |
+          VERSION=v0.23
+          curl -L "https://github.com/awslabs/diagram-as-code/releases/download/${VERSION}/awsdac-${VERSION}_linux-amd64.zip" \
+            -o /tmp/awsdac.zip
+          unzip -q /tmp/awsdac.zip -d /tmp/awsdac
+          chmod +x /tmp/awsdac/dist/awsdac-${VERSION}_linux-amd64/awsdac
+          echo "/tmp/awsdac/dist/awsdac-${VERSION}_linux-amd64" >> "$GITHUB_PATH"
+
+      - name: Generate PNG
+        run: awsdac docs/architecture.yaml -o docs/architecture.png -f
+
+      - name: Commit updated diagram
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/architecture.png
+          git diff --cached --quiet || git commit -m "chore: regenerate architecture.png from architecture.yaml [skip ci]"
+          git push

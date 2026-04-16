@@ -47,10 +47,11 @@ Diagram:
       Preset: AWSCloudNoLogo
       Children:
         - APSoutheast1
+        - USEast1
 
     APSoutheast1:
       Type: AWS::Region
-      Title: ap-southeast-1
+      Title: "ap-southeast-1\n(fully managed — no VPC)"
       Direction: vertical
       Children:
         - SchedulingSecurityRow
@@ -60,6 +61,29 @@ Diagram:
         - TransformRow
         - ServingRow
         - MonitoringRow
+
+    USEast1:
+      Type: AWS::Region
+      Title: "us-east-1\n(billing resources)"
+      Direction: vertical
+      Children:
+        - BillingRow
+
+    BillingRow:
+      Type: AWS::Diagram::HorizontalStack
+      Children:
+        - BillingAlarm
+        - BillingSNS
+
+    BillingAlarm:
+      Type: AWS::Diagram::Resource
+      Preset: "Amazon CloudWatch"
+      Title: "CloudWatch\nopenaq-monthly-spend-high\nEstimatedCharges > $8\n(billing metrics: us-east-1 only)"
+
+    BillingSNS:
+      Type: AWS::Diagram::Resource
+      Preset: "Amazon Simple Notification Service (Amazon SNS)"
+      Title: "SNS\nopenaq_alerts_billing\n→ billing email"
 
     # ── Scheduling & Security ─────────────────────────────────────────────────────
     SchedulingSecurityRow:
@@ -224,12 +248,12 @@ Diagram:
     CloudWatch:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch\nMetrics: ForecastRMSE · MissingStations\nAlarms (4): RMSE > 25 µg/m³\nMissingStations > 3 (2 × 1 h)\nKinesis iterator age > 5 min\nBilling > $8/month\nDashboard: openaq_pipeline"
+      Title: "CloudWatch\nMetrics: ForecastRMSE · MissingStations\nAlarms (3): RMSE > 25 µg/m³\nMissingStations > 3 (2 × 1 h)\nKinesis iterator age > 5 min\nDashboard: openaq_pipeline"
 
     SNS:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Notification Service (Amazon SNS)"
-      Title: "SNS\nopenaq_alerts → alert_email\nopenaq_alerts_billing → billing email\nHigh RMSE · Low coverage\nBilling threshold $8"
+      Title: "SNS\nopenaq_alerts → alert_email\nHigh RMSE · Low coverage"
 
     # ── End Users ─────────────────────────────────────────────────────────────────
     ExternalUsers:
@@ -502,6 +526,17 @@ Diagram:
     - Source: CloudWatch
       SourcePosition: E
       Target: SNS
+      TargetPosition: W
+      TargetArrowHead:
+        Type: Open
+      Labels:
+        SourceRight:
+          Title: "alarm → publish"
+
+    # ── Billing (us-east-1) ───────────────────────────────────────────────────────
+    - Source: BillingAlarm
+      SourcePosition: E
+      Target: BillingSNS
       TargetPosition: W
       TargetArrowHead:
         Type: Open
