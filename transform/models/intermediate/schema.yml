@@ -4,9 +4,9 @@ models:
   - name: int_measurements_enriched
     description: >
       Staging measurements enriched with station metadata from the vn_stations seed.
-      Left-joins on location_id to add city, province, canonical station coordinates,
-      and location_name. Rows without a city mapping (station IDs absent from the seed)
-      are excluded.
+      Inner-joins on location_id to add city, province, canonical station coordinates,
+      location_name, sensor_type, and is_outlier_station. Station IDs absent from the
+      seed are implicitly excluded by the inner join.
 
     columns:
       - name: location_id
@@ -64,6 +64,13 @@ models:
           monitors; 'low_cost' for AirGradient optical sensors (stations 6123215,
           6068138, 6273386). Used for downstream filtering; EPA humidity correction
           pending RH self-join implementation.
+
+      - name: is_outlier_station
+        description: >
+          Data-quality flag from vn_stations seed. 1 for stations with confirmed
+          calibration or initialisation artefacts that produce unrepresentative
+          readings (currently station 6273386 only). 0 for all other stations.
+          Downstream marts filter WHERE is_outlier_station = 0.
 
   - name: int_weather_enriched
     description: >

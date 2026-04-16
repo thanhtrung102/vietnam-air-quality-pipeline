@@ -6,8 +6,9 @@ Source: stg_measurements (staging view) + vn_stations (seed)
 Transformations:
   - Inner join vn_stations on location_id to add city, province,
     canonical station coordinates (station_lat, station_lon, location_name),
-    and sensor_type (reference | low_cost). Only the 21 stations in the seed
-    are in scope; unrecognised location_ids are implicitly excluded.
+    sensor_type (reference | low_cost), and is_outlier_station flag.
+    Only the 21 stations in the seed are in scope; unrecognised location_ids
+    are implicitly excluded.
   - sensor_type='low_cost' stations (6123215, 6068138, 6273386) are AirGradient
     optical sensors. Diagnostic confirmed all stations read within expected ranges
     after filtering sentinel value 985.0 in staging; no flat correction applied.
@@ -30,7 +31,8 @@ stations as (
         province,
         latitude,
         longitude,
-        sensor_type
+        sensor_type,
+        is_outlier_station
 
     from {{ ref('vn_stations') }}
 
@@ -53,9 +55,10 @@ enriched as (
         s.location_name,
         s.city,
         s.province,
-        s.latitude   as station_lat,
-        s.longitude  as station_lon,
-        s.sensor_type
+        s.latitude          as station_lat,
+        s.longitude         as station_lon,
+        s.sensor_type,
+        s.is_outlier_station
 
     -- INNER JOIN: vn_stations is the authoritative station allowlist.
     -- Only the 21 known Vietnamese stations are in scope; any location_id not
