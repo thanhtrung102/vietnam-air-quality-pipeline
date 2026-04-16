@@ -4,7 +4,7 @@ Diagram:
       Url: "https://raw.githubusercontent.com/awslabs/diagram-as-code/main/definitions/definition-for-aws-icons-light.yaml"
 
   # Vietnam Air Quality Pipeline — ap-southeast-1
-  # Three parallel ingestion paths → Athena → dbt → Serving + Forecast + Monitoring
+  # High-level overview: three ingestion paths → Athena → dbt → Serving + Monitoring
   # Generated with: awsdac docs/architecture.yaml -o docs/architecture.png -f
 
   Resources:
@@ -13,12 +13,12 @@ Diagram:
       Type: AWS::Diagram::Canvas
       Direction: vertical
       Children:
-        - ExternalSources
+        - ExternalRow
         - AWSCloud
-        - ExternalUsers
+        - UserRow
 
-    # ── External Sources ──────────────────────────────────────────────────────────
-    ExternalSources:
+    # ── External ──────────────────────────────────────────────────────────────────
+    ExternalRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
         - OpenAQArchive
@@ -28,17 +28,17 @@ Diagram:
     OpenAQArchive:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "OpenAQ S3 Archive\nus-east-1 · requester-pays · 21 VN stations"
+      Title: "OpenAQ S3 Archive\nus-east-1 · 21 VN stations"
 
     OpenAQAPI:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "OpenAQ REST API v3\nlatest readings per station"
+      Title: "OpenAQ REST API v3\nlatest readings"
 
     OpenMeteo:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "Open-Meteo ERA5\nhourly reanalysis · 7 weather variables"
+      Title: "Open-Meteo ERA5\nhourly reanalysis"
 
     # ── AWS Cloud ─────────────────────────────────────────────────────────────────
     AWSCloud:
@@ -46,47 +46,30 @@ Diagram:
       Direction: vertical
       Preset: AWSCloudNoLogo
       Children:
-        - APSoutheast1
-        - USEast1
+        - MainRegion
+        - BillingRegion
 
-    APSoutheast1:
+    MainRegion:
       Type: AWS::Region
       Title: "ap-southeast-1 (fully managed — no VPC)"
       Direction: vertical
       Children:
-        - SchedulingSecurityRow
-        - IngestionRow
+        - ScheduleRow
+        - IngestRow
         - StorageRow
-        - CatalogRow
-        - TransformRow
+        - QueryRow
         - ServingRow
-        - MonitoringRow
+        - MonitorRow
 
-    USEast1:
+    BillingRegion:
       Type: AWS::Region
-      Title: "us-east-1 (billing resources)"
+      Title: "us-east-1"
       Direction: vertical
       Children:
         - BillingRow
 
-    BillingRow:
-      Type: AWS::Diagram::HorizontalStack
-      Children:
-        - BillingAlarm
-        - BillingSNS
-
-    BillingAlarm:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon CloudWatch"
-      Title: "CloudWatch\nopenaq-monthly-spend-high · > $8"
-
-    BillingSNS:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon Simple Notification Service (Amazon SNS)"
-      Title: "SNS openaq_alerts_billing\n→ billing email"
-
-    # ── Scheduling & Security ─────────────────────────────────────────────────────
-    SchedulingSecurityRow:
+    # ── Scheduling ────────────────────────────────────────────────────────────────
+    ScheduleRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
         - EventBridge
@@ -95,202 +78,166 @@ Diagram:
     EventBridge:
       Type: AWS::Diagram::Resource
       Preset: "Amazon EventBridge"
-      Title: "EventBridge Scheduler\n6 schedules · 01:00/02:00/02:30/03:00 UTC · 30 min · 1 h"
+      Title: "EventBridge Scheduler\n6 rules · daily + every 30 min / 1 h"
 
     SecretsManager:
       Type: AWS::Diagram::Resource
       Preset: "AWS Secrets Manager"
       Title: "Secrets Manager\nopenaq/api_key"
 
-    # ── Ingestion Layer ───────────────────────────────────────────────────────────
-    IngestionRow:
+    # ── Ingestion ─────────────────────────────────────────────────────────────────
+    IngestRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
-        - BatchSync
-        - StreamingProducer
-        - WeatherIngest
+        - BatchLambda
+        - StreamingLambda
+        - WeatherLambda
 
-    BatchSync:
+    BatchLambda:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_batch_sync\n512 MB · 900 s · daily 01:00 UTC"
+      Title: "batch_sync\n512 MB · 900 s"
 
-    StreamingProducer:
+    StreamingLambda:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_streaming_producer\n256 MB · 120 s · every 30 min"
+      Title: "streaming_producer\n256 MB · 120 s"
 
-    WeatherIngest:
+    WeatherLambda:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_weather_ingest\n256 MB · 300 s · daily 02:00 UTC"
+      Title: "weather_ingest\n256 MB · 300 s"
 
-    # ── Storage Layer ─────────────────────────────────────────────────────────────
+    # ── Storage ───────────────────────────────────────────────────────────────────
     StorageRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
-        - S3Batch
-        - KinesisStream
-        - Firehose
-        - S3Weather
-
-    S3Batch:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "S3 raw/batch/\nCSV.GZ · locationid / year / month"
-
-    KinesisStream:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon Kinesis"
-      Title: "Kinesis Data Streams\nopenaq_stream · ON_DEMAND · 7-day retention"
-
-    Firehose:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon Data Firehose"
-      Title: "Amazon Data Firehose\nopenaq_firehose · GZIP · 128 MB / 300 s"
-
-    S3Weather:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "S3 raw/weather/\nNDJSON · location / yyyy / MM / dd"
-
-    # ── Catalog & Query Layer ─────────────────────────────────────────────────────
-    CatalogRow:
-      Type: AWS::Diagram::HorizontalStack
-      Children:
-        - GlueGroup
-        - AthenaGroup
+        - S3DataLake
+        - KinesisPipeline
         - SQSDLQ
 
-    GlueGroup:
+    S3DataLake:
       Type: AWS::Diagram::Resource
-      Preset: "AWS Glue"
-      Title: "Glue Data Catalog\nopenaq_raw · partition projection"
+      Preset: "Amazon Simple Storage Service (Amazon S3)"
+      Title: "S3 Data Lake\nraw/batch/ · raw/weather/"
 
-    AthenaGroup:
+    KinesisPipeline:
       Type: AWS::Diagram::Resource
-      Preset: "Amazon Athena"
-      Title: "Athena · openaq_workgroup\n10 GB scan guard · avg 63.6 KB/query"
+      Preset: "Amazon Kinesis"
+      Title: "Kinesis Stream → Firehose\nopenaq_stream · raw/stream/"
 
     SQSDLQ:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Queue Service (Amazon SQS)"
-      Title: "SQS DLQ\nopenaq_streaming_dlq · 1-day TTL"
+      Title: "SQS DLQ\nopenaq_streaming_dlq"
 
-    # ── Transformation Layer ──────────────────────────────────────────────────────
-    TransformRow:
+    # ── Query ─────────────────────────────────────────────────────────────────────
+    QueryRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
+        - GlueCatalog
+        - Athena
         - CodeBuild
+
+    GlueCatalog:
+      Type: AWS::Diagram::Resource
+      Preset: "AWS Glue"
+      Title: "Glue Data Catalog\nopenaq_raw · partition projection"
+
+    Athena:
+      Type: AWS::Diagram::Resource
+      Preset: "Amazon Athena"
+      Title: "Athena · openaq_workgroup\nopenaq_mart (17 models)"
 
     CodeBuild:
       Type: AWS::Diagram::Resource
       Preset: "AWS CodeBuild"
-      Title: "CodeBuild · openaq-dbt-runner\n17 models · 2 seeds · 85 tests · 02:30 UTC"
+      Title: "CodeBuild · dbt runner\n17 models · 85 tests · 02:30 UTC"
 
-    # ── Serving Layer ─────────────────────────────────────────────────────────────
+    # ── Serving ───────────────────────────────────────────────────────────────────
     ServingRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
-        - AQIApi
-        - APIGateway
-        - ECR
-        - ForecastLambda
+        - AQIService
+        - ForecastService
 
-    AQIApi:
+    AQIService:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_aqi_api\n256 MB · 60 s · Athena → GeoJSON"
+      Title: "aqi_api → API Gateway\nAthena → GeoJSON · CORS"
 
-    APIGateway:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon API Gateway"
-      Title: "API Gateway HTTP API\nGET / · CORS enabled"
-
-    ECR:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon Elastic Container Registry (Amazon ECR)"
-      Title: "ECR\nopenaq-forecast-generate"
-
-    ForecastLambda:
+    ForecastService:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_forecast_generate\n3008 MB · 900 s · SARIMA 7-day PM2.5"
+      Title: "forecast_generate (ECR)\nSARIMA 7-day PM2.5 · 03:00 UTC"
 
-    # ── Monitoring Layer ──────────────────────────────────────────────────────────
-    MonitoringRow:
+    # ── Monitoring ────────────────────────────────────────────────────────────────
+    MonitorRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
-        - CompletenessCheck
-        - CloudWatch
-        - SNS
+        - CompletenessLambda
+        - MonitoringStack
 
-    CompletenessCheck:
+    CompletenessLambda:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_completeness_check\n256 MB · 120 s · every hour"
+      Title: "completeness_check\nevery hour · MissingStations metric"
 
-    CloudWatch:
+    MonitoringStack:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch · openaq_pipeline\n3 alarms: RMSE · MissingStations · KinesisAge"
+      Title: "CloudWatch + SNS\n4 alarms · openaq_alerts email"
 
-    SNS:
+    # ── Billing (us-east-1) ───────────────────────────────────────────────────────
+    BillingRow:
+      Type: AWS::Diagram::HorizontalStack
+      Children:
+        - BillingMonitor
+
+    BillingMonitor:
       Type: AWS::Diagram::Resource
-      Preset: "Amazon Simple Notification Service (Amazon SNS)"
-      Title: "SNS openaq_alerts\n→ alert_email"
+      Preset: "Amazon CloudWatch"
+      Title: "CloudWatch + SNS\nBilling alarm · > $8/month"
 
-    # ── End Users ─────────────────────────────────────────────────────────────────
-    ExternalUsers:
+    # ── End User ──────────────────────────────────────────────────────────────────
+    UserRow:
+      Type: AWS::Diagram::HorizontalStack
+      Children:
+        - LeafletMap
+
+    LeafletMap:
       Type: AWS::Diagram::Resource
       Preset: User
       Title: "Leaflet Map\n21 stations · US EPA AQI · XSS-safe"
 
   Links:
 
-    # ── External sources → Ingestion ──────────────────────────────────────────────
+    # ── External → Ingestion ──────────────────────────────────────────────────────
     - Source: OpenAQArchive
       SourcePosition: S
-      Target: BatchSync
+      Target: BatchLambda
       TargetPosition: N
       TargetArrowHead:
         Type: Open
-      Labels:
-        TargetLeft:
-          Title: "S3 sync (requester-pays)\n+ SNS event trigger"
 
     - Source: OpenAQAPI
       SourcePosition: S
-      Target: StreamingProducer
+      Target: StreamingLambda
       TargetPosition: N
       TargetArrowHead:
         Type: Open
-      Labels:
-        TargetLeft:
-          Title: "GET /v3/locations/{id}/latest"
 
     - Source: OpenMeteo
       SourcePosition: S
-      Target: WeatherIngest
+      Target: WeatherLambda
       TargetPosition: N
       TargetArrowHead:
         Type: Open
-      Labels:
-        TargetLeft:
-          Title: "ERA5 hourly reanalysis"
 
-    # ── EventBridge → all scheduled targets ──────────────────────────────────────
+    # ── EventBridge triggers (orange) ─────────────────────────────────────────────
     - Source: EventBridge
       SourcePosition: S
-      Target: BatchSync
-      TargetPosition: N
-      TargetArrowHead:
-        Type: Open
-      LineColor: "rgba(232,140,0,255)"
-
-    - Source: EventBridge
-      SourcePosition: S
-      Target: StreamingProducer
+      Target: BatchLambda
       TargetPosition: N
       TargetArrowHead:
         Type: Open
@@ -298,7 +245,15 @@ Diagram:
 
     - Source: EventBridge
       SourcePosition: S
-      Target: WeatherIngest
+      Target: StreamingLambda
+      TargetPosition: N
+      TargetArrowHead:
+        Type: Open
+      LineColor: "rgba(232,140,0,255)"
+
+    - Source: EventBridge
+      SourcePosition: S
+      Target: WeatherLambda
       TargetPosition: N
       TargetArrowHead:
         Type: Open
@@ -314,7 +269,7 @@ Diagram:
 
     - Source: EventBridge
       SourcePosition: S
-      Target: ForecastLambda
+      Target: ForecastService
       TargetPosition: N
       TargetArrowHead:
         Type: Open
@@ -322,93 +277,69 @@ Diagram:
 
     - Source: EventBridge
       SourcePosition: S
-      Target: CompletenessCheck
+      Target: CompletenessLambda
       TargetPosition: N
       TargetArrowHead:
         Type: Open
       LineColor: "rgba(232,140,0,255)"
 
-    # ── Secrets Manager → streaming_producer ─────────────────────────────────────
+    # ── Secrets (red) ─────────────────────────────────────────────────────────────
     - Source: SecretsManager
       SourcePosition: S
-      Target: StreamingProducer
+      Target: StreamingLambda
       TargetPosition: N
       TargetArrowHead:
         Type: Open
       LineColor: "rgba(221,0,49,255)"
-      Labels:
-        SourceLeft:
-          Title: "GetSecretValue"
 
     # ── Ingestion → Storage ───────────────────────────────────────────────────────
-    - Source: BatchSync
+    - Source: BatchLambda
       SourcePosition: S
-      Target: S3Batch
+      Target: S3DataLake
       TargetPosition: N
       TargetArrowHead:
         Type: Open
 
-    - Source: StreamingProducer
+    - Source: StreamingLambda
       SourcePosition: S
-      Target: KinesisStream
+      Target: KinesisPipeline
       TargetPosition: N
       TargetArrowHead:
         Type: Open
-      Labels:
-        SourceLeft:
-          Title: "PutRecords (500/batch)"
 
-    - Source: StreamingProducer
+    - Source: StreamingLambda
       SourcePosition: S
       Target: SQSDLQ
       TargetPosition: N
       TargetArrowHead:
         Type: Open
       LineColor: "rgba(221,0,49,255)"
-      Labels:
-        SourceLeft:
-          Title: "on exception"
 
-    - Source: KinesisStream
+    - Source: WeatherLambda
       SourcePosition: S
-      Target: Firehose
+      Target: S3DataLake
       TargetPosition: N
       TargetArrowHead:
         Type: Open
 
-    - Source: WeatherIngest
+    - Source: KinesisPipeline
       SourcePosition: S
-      Target: S3Weather
+      Target: S3DataLake
       TargetPosition: N
       TargetArrowHead:
         Type: Open
 
-    # ── Storage → Glue ────────────────────────────────────────────────────────────
-    - Source: S3Batch
+    # ── Storage → Glue → Athena ───────────────────────────────────────────────────
+    - Source: S3DataLake
       SourcePosition: S
-      Target: GlueGroup
+      Target: GlueCatalog
       TargetPosition: N
       TargetArrowHead:
         Type: Open
 
-    - Source: Firehose
-      SourcePosition: S
-      Target: GlueGroup
-      TargetPosition: N
-      TargetArrowHead:
-        Type: Open
-
-    - Source: S3Weather
-      SourcePosition: S
-      Target: GlueGroup
-      TargetPosition: N
-      TargetArrowHead:
-        Type: Open
-
-    # ── Glue → Athena ─────────────────────────────────────────────────────────────
-    - Source: GlueGroup
+    - Source: GlueCatalog
       SourcePosition: E
-      Target: AthenaGroup
+      Target: Athena
       TargetPosition: W
       TargetArrowHead:
         Type: Open
@@ -416,31 +347,28 @@ Diagram:
         SourceRight:
           Title: "partition projection"
 
-    # ── Athena ↔ CodeBuild (dbt) ─────────────────────────────────────────────────
-    - Source: AthenaGroup
-      SourcePosition: S
+    # ── Athena ↔ dbt ──────────────────────────────────────────────────────────────
+    - Source: Athena
+      SourcePosition: E
       Target: CodeBuild
-      TargetPosition: N
+      TargetPosition: W
       TargetArrowHead:
         Type: Open
-      Labels:
-        SourceLeft:
-          Title: "raw tables"
 
     - Source: CodeBuild
-      SourcePosition: N
-      Target: AthenaGroup
-      TargetPosition: S
+      SourcePosition: W
+      Target: Athena
+      TargetPosition: E
       TargetArrowHead:
         Type: Open
       Labels:
-        TargetLeft:
-          Title: "mart tables (openaq_mart)"
+        TargetRight:
+          Title: "openaq_mart"
 
     # ── Athena → Serving ──────────────────────────────────────────────────────────
-    - Source: AthenaGroup
+    - Source: Athena
       SourcePosition: S
-      Target: AQIApi
+      Target: AQIService
       TargetPosition: N
       TargetArrowHead:
         Type: Open
@@ -448,9 +376,9 @@ Diagram:
         SourceLeft:
           Title: "mart_daily_aqi"
 
-    - Source: AthenaGroup
+    - Source: Athena
       SourcePosition: S
-      Target: ForecastLambda
+      Target: ForecastService
       TargetPosition: N
       TargetArrowHead:
         Type: Open
@@ -458,73 +386,24 @@ Diagram:
         SourceRight:
           Title: "mart_lagged_features"
 
-    # ── AQI API → API Gateway → User ─────────────────────────────────────────────
-    - Source: AQIApi
-      SourcePosition: E
-      Target: APIGateway
-      TargetPosition: W
-      TargetArrowHead:
-        Type: Open
-      Labels:
-        SourceRight:
-          Title: "GeoJSON"
-
-    - Source: APIGateway
+    # ── Serving → User & Monitoring ───────────────────────────────────────────────
+    - Source: AQIService
       SourcePosition: S
-      Target: ExternalUsers
+      Target: LeafletMap
       TargetPosition: N
       TargetArrowHead:
         Type: Open
 
-    # ── ECR → Forecast Lambda ─────────────────────────────────────────────────────
-    - Source: ECR
-      SourcePosition: E
-      Target: ForecastLambda
-      TargetPosition: W
-      TargetArrowHead:
-        Type: Open
-      Labels:
-        SourceRight:
-          Title: "container image"
-
-    # ── Monitoring ────────────────────────────────────────────────────────────────
-    - Source: CompletenessCheck
-      SourcePosition: E
-      Target: CloudWatch
-      TargetPosition: W
-      TargetArrowHead:
-        Type: Open
-      Labels:
-        SourceRight:
-          Title: "MissingStations metric"
-
-    - Source: ForecastLambda
+    - Source: ForecastService
       SourcePosition: S
-      Target: CloudWatch
+      Target: MonitoringStack
       TargetPosition: N
       TargetArrowHead:
         Type: Open
-      Labels:
-        SourceLeft:
-          Title: "ForecastRMSE metric"
 
-    - Source: CloudWatch
+    - Source: CompletenessLambda
       SourcePosition: E
-      Target: SNS
+      Target: MonitoringStack
       TargetPosition: W
       TargetArrowHead:
         Type: Open
-      Labels:
-        SourceRight:
-          Title: "alarm → publish"
-
-    # ── Billing (us-east-1) ───────────────────────────────────────────────────────
-    - Source: BillingAlarm
-      SourcePosition: E
-      Target: BillingSNS
-      TargetPosition: W
-      TargetArrowHead:
-        Type: Open
-      Labels:
-        SourceRight:
-          Title: "alarm → publish"
