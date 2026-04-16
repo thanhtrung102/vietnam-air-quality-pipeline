@@ -322,9 +322,9 @@ Diagram:
         Type: Open
 
     - Source: KinesisPipeline
-      SourcePosition: S
+      SourcePosition: W
       Target: S3DataLake
-      TargetPosition: N
+      TargetPosition: E
       TargetArrowHead:
         Type: Open
 
