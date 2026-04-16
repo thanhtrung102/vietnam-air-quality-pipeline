@@ -23,7 +23,7 @@
 
 This project builds a fully serverless data pipeline that ingests PM2.5 and PM10 air quality readings from 21 OpenAQ monitoring stations across Hanoi and Ho Chi Minh City into an AWS data lakehouse. The pipeline enriches raw measurements with Open-Meteo ERA5 meteorological reanalysis, runs a 17-model dbt transformation layer on Amazon Athena, and delivers a live Leaflet station map served via API Gateway with 7-day SARIMA forecasts.
 
-All infrastructure is declared in Terraform — the entire environment can be torn down and rebuilt with two commands. There is no persistent compute: every workload runs as an on-demand AWS Lambda function at a total cost of ~$1.61/month.
+All infrastructure is declared in Terraform — the entire environment can be torn down and rebuilt with two commands. There is no persistent compute: every workload runs as an on-demand AWS Lambda function or short-lived CodeBuild job at a total cost of ~$3.22/month.
 
 *[VI: Dự án này xây dựng pipeline dữ liệu hoàn toàn serverless nạp dữ liệu chất lượng không khí PM2.5 và PM10 từ 21 trạm giám sát OpenAQ ở Hà Nội và TP.HCM vào AWS data lakehouse. Toàn bộ hạ tầng được khai báo trong Terraform — môi trường có thể tái tạo hoàn toàn với hai lệnh.]*
 
@@ -80,7 +80,7 @@ cd terraform/ && terraform apply -var="forecast_lambda_image_uri=<ecr-uri>"
 aws lambda invoke --function-name openaq_forecast_generate \
   --payload '{}' --cli-binary-format raw-in-base64-out /tmp/forecast.json
 cat /tmp/forecast.json
-# {"statusCode": 200, "stations_forecasted": 3, "records_written": 21}
+# {"generated_at": "2026-04-17", "stations_ok": 3, "errors": 0, "sarima_records": 21, "alert_count": 0}
 
 # 7. Deploy dashboard
 aws s3 cp dashboard/index.html s3://$S3_BUCKET_NAME/dashboard/index.html \
@@ -118,7 +118,7 @@ Each marker popup shows: composite AQI, PM2.5 (µg/m³), dominant pollutant, cig
 | SARIMA RMSE — Hanoi | ~12.0 µg/m³ (30-day holdout) |
 | SARIMA RMSE — HCMC | ~6.8 µg/m³ (30-day holdout) |
 | Athena average scan per query | 63.6 KB (partition projection) |
-| Infrastructure cost | ~$1.61/month |
+| Infrastructure cost | ~$3.22/month (see 5.1 cost table for breakdown) |
 
 ---
 
