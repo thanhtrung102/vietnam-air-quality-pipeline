@@ -5,7 +5,7 @@ Diagram:
 
   # Vietnam Air Quality Pipeline — ap-southeast-1
   # Three parallel ingestion paths → Athena → dbt → Serving + Forecast + Monitoring
-  # Generated with: awsdac docs/architecture.yaml -o docs/architecture.png
+  # Generated with: awsdac docs/architecture.yaml -o docs/architecture.png -f
 
   Resources:
 
@@ -28,17 +28,17 @@ Diagram:
     OpenAQArchive:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "OpenAQ S3 Archive\n(us-east-1 · requester-pays\nCSV.GZ · 21 VN stations)"
+      Title: "OpenAQ S3 Archive\nus-east-1 · requester-pays · 21 VN stations"
 
     OpenAQAPI:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "OpenAQ REST API v3\n(latest measurements\nper station)"
+      Title: "OpenAQ REST API v3\nlatest readings per station"
 
     OpenMeteo:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "Open-Meteo ERA5\n(hourly reanalysis\n7 weather variables)"
+      Title: "Open-Meteo ERA5\nhourly reanalysis · 7 weather variables"
 
     # ── AWS Cloud ─────────────────────────────────────────────────────────────────
     AWSCloud:
@@ -51,7 +51,7 @@ Diagram:
 
     APSoutheast1:
       Type: AWS::Region
-      Title: "ap-southeast-1\n(fully managed — no VPC)"
+      Title: "ap-southeast-1 (fully managed — no VPC)"
       Direction: vertical
       Children:
         - SchedulingSecurityRow
@@ -64,7 +64,7 @@ Diagram:
 
     USEast1:
       Type: AWS::Region
-      Title: "us-east-1\n(billing resources)"
+      Title: "us-east-1 (billing resources)"
       Direction: vertical
       Children:
         - BillingRow
@@ -78,12 +78,12 @@ Diagram:
     BillingAlarm:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch\nopenaq-monthly-spend-high\nEstimatedCharges > $8\n(billing metrics: us-east-1 only)"
+      Title: "CloudWatch\nopenaq-monthly-spend-high · > $8"
 
     BillingSNS:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Notification Service (Amazon SNS)"
-      Title: "SNS\nopenaq_alerts_billing\n→ billing email"
+      Title: "SNS openaq_alerts_billing\n→ billing email"
 
     # ── Scheduling & Security ─────────────────────────────────────────────────────
     SchedulingSecurityRow:
@@ -95,12 +95,12 @@ Diagram:
     EventBridge:
       Type: AWS::Diagram::Resource
       Preset: "Amazon EventBridge"
-      Title: "EventBridge Scheduler\n6 schedules\n01:00 · 02:00 · 02:30 · 03:00 UTC daily\nEvery 30 min · Every hour"
+      Title: "EventBridge Scheduler\n6 schedules · 01:00/02:00/02:30/03:00 UTC · 30 min · 1 h"
 
     SecretsManager:
       Type: AWS::Diagram::Resource
       Preset: "AWS Secrets Manager"
-      Title: "Secrets Manager\nopenaq/api_key\n(OPENAQ_API_KEY)"
+      Title: "Secrets Manager\nopenaq/api_key"
 
     # ── Ingestion Layer ───────────────────────────────────────────────────────────
     IngestionRow:
@@ -113,51 +113,46 @@ Diagram:
     BatchSync:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_batch_sync\npython3.12 · 512 MB · 900 s\n3-month rolling sync\nThreadPoolExecutor(8)"
+      Title: "openaq_batch_sync\n512 MB · 900 s · daily 01:00 UTC"
 
     StreamingProducer:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_streaming_producer\npython3.12 · 256 MB · 120 s\nValidation + retry\n(Gap 3 & 4 IoT Lens)"
+      Title: "openaq_streaming_producer\n256 MB · 120 s · every 30 min"
 
     WeatherIngest:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_weather_ingest\npython3.12 · 256 MB · 300 s\n21 stations × 1 request\nOpen-Meteo ERA5 hourly"
+      Title: "openaq_weather_ingest\n256 MB · 300 s · daily 02:00 UTC"
 
     # ── Storage Layer ─────────────────────────────────────────────────────────────
     StorageRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
         - S3Batch
-        - KinesisStack
+        - KinesisStream
+        - Firehose
         - S3Weather
 
     S3Batch:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "S3 raw/batch/\nlocationid= · year= · month=\nCSV.GZ · OpenCSVSerde\n(no expiry — full history)"
-
-    KinesisStack:
-      Type: AWS::Diagram::HorizontalStack
-      Children:
-        - KinesisStream
-        - Firehose
+      Title: "S3 raw/batch/\nCSV.GZ · locationid / year / month"
 
     KinesisStream:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Kinesis"
-      Title: "Kinesis Data Streams\nopenaq_stream · ON_DEMAND\n7-day retention"
+      Title: "Kinesis Data Streams\nopenaq_stream · ON_DEMAND · 7-day retention"
 
     Firehose:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Data Firehose"
-      Title: "Kinesis Firehose\nopenaq_firehose · GZIP\n128 MB / 300 s buffer\nraw/stream/{yyyy}/{MM}/{dd}/{HH}/"
+      Title: "Amazon Data Firehose\nopenaq_firehose · GZIP · 128 MB / 300 s"
 
     S3Weather:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "S3 raw/weather/\n{location_id}/{yyyy}/{MM}/{dd}/\nNDJSON · ERA5 hourly"
+      Title: "S3 raw/weather/\nNDJSON · location / yyyy / MM / dd"
 
     # ── Catalog & Query Layer ─────────────────────────────────────────────────────
     CatalogRow:
@@ -170,17 +165,17 @@ Diagram:
     GlueGroup:
       Type: AWS::Diagram::Resource
       Preset: "AWS Glue"
-      Title: "Glue Data Catalog\nopenaq_raw (batch · stream · weather)\nPartition Projection\n(no Crawler needed)"
+      Title: "Glue Data Catalog\nopenaq_raw · partition projection"
 
     AthenaGroup:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Athena"
-      Title: "Athena · openaq_workgroup\n10 GB scan guard\n60-min query result reuse\n$5/TB — avg 63.6 KB/query"
+      Title: "Athena · openaq_workgroup\n10 GB scan guard · avg 63.6 KB/query"
 
     SQSDLQ:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Queue Service (Amazon SQS)"
-      Title: "SQS DLQ\nopenaq_streaming_dlq\n1-day retention\n(Gap 1 IoT Lens)"
+      Title: "SQS DLQ\nopenaq_streaming_dlq · 1-day TTL"
 
     # ── Transformation Layer ──────────────────────────────────────────────────────
     TransformRow:
@@ -191,46 +186,36 @@ Diagram:
     CodeBuild:
       Type: AWS::Diagram::Resource
       Preset: "AWS CodeBuild"
-      Title: "CodeBuild · openaq-dbt-runner\nBUILD_GENERAL1_SMALL · 30 min timeout\nghr.io/dbt-labs/dbt-athena:1.10.0\n17 models · 2 seeds · 85 tests\n(02:30 UTC daily)"
+      Title: "CodeBuild · openaq-dbt-runner\n17 models · 2 seeds · 85 tests · 02:30 UTC"
 
     # ── Serving Layer ─────────────────────────────────────────────────────────────
     ServingRow:
       Type: AWS::Diagram::HorizontalStack
       Children:
-        - AQIApiGroup
-        - ForecastGroup
-
-    AQIApiGroup:
-      Type: AWS::Diagram::HorizontalStack
-      Children:
         - AQIApi
         - APIGateway
+        - ECR
+        - ForecastLambda
 
     AQIApi:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_aqi_api\npython3.12 · 256 MB · 60 s\nAthena → GeoJSON\n3600 s /tmp cache"
+      Title: "openaq_aqi_api\n256 MB · 60 s · Athena → GeoJSON"
 
     APIGateway:
       Type: AWS::Diagram::Resource
       Preset: "Amazon API Gateway"
-      Title: "API Gateway HTTP API\nGET /\nCORS enabled\n→ Leaflet map"
-
-    ForecastGroup:
-      Type: AWS::Diagram::HorizontalStack
-      Children:
-        - ECR
-        - ForecastLambda
+      Title: "API Gateway HTTP API\nGET / · CORS enabled"
 
     ECR:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Elastic Container Registry (Amazon ECR)"
-      Title: "ECR\nopenaq-forecast-generate\nstatsmodels · pandas\npyarrow · boto3"
+      Title: "ECR\nopenaq-forecast-generate"
 
     ForecastLambda:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_forecast_generate\nContainer · 3008 MB · 900 s\nSARIMA(1,1,1)(1,0,1,7)\n7-day PM2.5 forecast\n(03:00 UTC daily)"
+      Title: "openaq_forecast_generate\n3008 MB · 900 s · SARIMA 7-day PM2.5"
 
     # ── Monitoring Layer ──────────────────────────────────────────────────────────
     MonitoringRow:
@@ -243,23 +228,23 @@ Diagram:
     CompletenessCheck:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "openaq_completeness_check\npython3.12 · 256 MB · 120 s\nCount active stations\nEmit MissingStations metric\n(every hour)"
+      Title: "openaq_completeness_check\n256 MB · 120 s · every hour"
 
     CloudWatch:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch\nMetrics: ForecastRMSE · MissingStations\nAlarms (3): RMSE > 25 µg/m³\nMissingStations > 3 (2 × 1 h)\nKinesis iterator age > 5 min\nDashboard: openaq_pipeline"
+      Title: "CloudWatch · openaq_pipeline\n3 alarms: RMSE · MissingStations · KinesisAge"
 
     SNS:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Notification Service (Amazon SNS)"
-      Title: "SNS\nopenaq_alerts → alert_email\nHigh RMSE · Low coverage"
+      Title: "SNS openaq_alerts\n→ alert_email"
 
     # ── End Users ─────────────────────────────────────────────────────────────────
     ExternalUsers:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "Leaflet Map\n(S3 static site · browser)\n21 station markers\nUS EPA AQI colour scale\nXSS-safe escHtml()"
+      Title: "Leaflet Map\n21 stations · US EPA AQI · XSS-safe"
 
   Links:
 
@@ -382,7 +367,7 @@ Diagram:
       LineColor: "rgba(221,0,49,255)"
       Labels:
         SourceLeft:
-          Title: "on unhandled exception"
+          Title: "on exception"
 
     - Source: KinesisStream
       SourcePosition: S
@@ -482,7 +467,7 @@ Diagram:
         Type: Open
       Labels:
         SourceRight:
-          Title: "GeoJSON FeatureCollection"
+          Title: "GeoJSON"
 
     - Source: APIGateway
       SourcePosition: S

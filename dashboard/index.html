@@ -196,6 +196,17 @@
   };
   legend.addTo(map);
 
+  // ── XSS protection ───────────────────────────────────────────────────────────
+  function escHtml(s) {
+    if (s == null) return "";
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   // ── Data loading ─────────────────────────────────────────────────────────────
   function radiusForAqi(aqi) {
     if (aqi == null) return 10;
@@ -208,22 +219,22 @@
 
   function buildPopup(p) {
     const col = AQI_COLOURS[p.health_category] || "#cccccc";
-    const pollutantLabel = (p.dominant_pollutant || "").replace("pm25","PM2.5").replace("pm10","PM10");
+    const pollutantLabel = escHtml((p.dominant_pollutant || "").replace("pm25","PM2.5").replace("pm10","PM10"));
     const pm25Line = p.pm25_avg != null
-      ? `PM2.5: <span>${p.pm25_avg} µg/m³</span><br/>`
+      ? `PM2.5: <span>${escHtml(p.pm25_avg)} µg/m³</span><br/>`
       : "";
     const cigLine = p.cigarette_equivalent != null
-      ? `<div class="popup-cig" title="1 cigarette ≈ 22 µg/m³ PM2.5/day (Berkeley Earth)">🚬 ${p.cigarette_equivalent} cigarette${p.cigarette_equivalent === 1 ? "" : "s"}/day</div>`
+      ? `<div class="popup-cig" title="1 cigarette ≈ 22 µg/m³ PM2.5/day (Berkeley Earth)">🚬 ${escHtml(p.cigarette_equivalent)} cigarette${p.cigarette_equivalent === 1 ? "" : "s"}/day</div>`
       : "";
     return `
-      <div class="popup-title">${p.location_name}</div>
-      <div class="popup-aqi" style="color:${col}">${p.composite_aqi ?? "N/A"}</div>
-      <div class="popup-category" style="background:${col}">${p.health_category || "Unknown"}</div>
+      <div class="popup-title">${escHtml(p.location_name)}</div>
+      <div class="popup-aqi" style="color:${col}">${escHtml(p.composite_aqi) || "N/A"}</div>
+      <div class="popup-category" style="background:${col}">${escHtml(p.health_category) || "Unknown"}</div>
       <div class="popup-meta">
         ${pm25Line}
         Dominant pollutant: <span>${pollutantLabel || "—"}</span><br/>
-        City: <span>${p.city}</span><br/>
-        Date: <span>${p.measurement_date}</span>
+        City: <span>${escHtml(p.city)}</span><br/>
+        Date: <span>${escHtml(p.measurement_date)}</span>
       </div>
       ${cigLine}
       <div class="sensor-badge">${p.sensor_type === "reference" ? "🔬 Reference-grade" : "📡 Low-cost sensor"}</div>
