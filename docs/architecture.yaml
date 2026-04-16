@@ -58,6 +58,7 @@ Diagram:
         - StorageRow
         - QueryRow
         - ServingRow
+        - DashboardRow
         - MonitorRow
 
     BillingRegion:
@@ -170,6 +171,23 @@ Diagram:
       Preset: "AWS Lambda"
       Title: "forecast_generate (ECR)\nSARIMA 7-day PM2.5"
 
+    # ── Dashboards ────────────────────────────────────────────────────────────────
+    DashboardRow:
+      Type: AWS::Diagram::HorizontalStack
+      Children:
+        - S3Dashboard
+        - QuickSightDashboard
+
+    S3Dashboard:
+      Type: AWS::Diagram::Resource
+      Preset: "Amazon Simple Storage Service (Amazon S3)"
+      Title: "S3 Static Site\ndashboard/index.html"
+
+    QuickSightDashboard:
+      Type: AWS::Diagram::Resource
+      Preset: "Amazon QuickSight"
+      Title: "Amazon QuickSight\nanalytics dashboard"
+
     # ── Monitoring ────────────────────────────────────────────────────────────────
     MonitorRow:
       Type: AWS::Diagram::HorizontalStack
@@ -202,12 +220,12 @@ Diagram:
     UserCol:
       Type: AWS::Diagram::HorizontalStack
       Children:
-        - LeafletMap
+        - EndUser
 
-    LeafletMap:
+    EndUser:
       Type: AWS::Diagram::Resource
       Preset: User
-      Title: "Leaflet Map\n21 stations · US EPA AQI"
+      Title: "End User\nbrowser"
 
   Links:
 
@@ -385,10 +403,32 @@ Diagram:
         SourceRight:
           Title: "mart_lagged_features"
 
-    # ── Serving → User (E→W: AWS into right panel) ────────────────────────────────
+    # ── Serving → Dashboards ─────────────────────────────────────────────────────
     - Source: AQIService
+      SourcePosition: S
+      Target: S3Dashboard
+      TargetPosition: N
+      TargetArrowHead:
+        Type: Open
+
+    - Source: Athena
+      SourcePosition: S
+      Target: QuickSightDashboard
+      TargetPosition: N
+      TargetArrowHead:
+        Type: Open
+
+    # ── Dashboards → User (E→W: AWS into right panel) ────────────────────────────
+    - Source: S3Dashboard
       SourcePosition: E
-      Target: LeafletMap
+      Target: EndUser
+      TargetPosition: W
+      TargetArrowHead:
+        Type: Open
+
+    - Source: QuickSightDashboard
+      SourcePosition: E
+      Target: EndUser
       TargetPosition: W
       TargetArrowHead:
         Type: Open
