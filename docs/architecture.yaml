@@ -112,7 +112,7 @@ Diagram:
     S3Batch:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
-      Title: "S3 raw/batch/\nlocationid= · year= · month=\nCSV.GZ · OpenCSVSerde\nLifecycle: Intelligent-Tiering"
+      Title: "S3 raw/batch/\nlocationid= · year= · month=\nCSV.GZ · OpenCSVSerde\n(no expiry — full history)"
 
     KinesisStack:
       Type: AWS::Diagram::HorizontalStack
@@ -127,7 +127,7 @@ Diagram:
 
     Firehose:
       Type: AWS::Diagram::Resource
-      Preset: "Amazon Kinesis Data Firehose"
+      Preset: "Amazon Data Firehose"
       Title: "Kinesis Firehose\nopenaq_firehose · GZIP\n128 MB / 300 s buffer\nraw/stream/{yyyy}/{MM}/{dd}/{HH}/"
 
     S3Weather:
@@ -200,7 +200,7 @@ Diagram:
 
     ECR:
       Type: AWS::Diagram::Resource
-      Preset: "Amazon Elastic Container Registry"
+      Preset: "Amazon Elastic Container Registry (Amazon ECR)"
       Title: "ECR\nopenaq-forecast-generate\nstatsmodels · pandas\npyarrow · boto3"
 
     ForecastLambda:
@@ -224,7 +224,7 @@ Diagram:
     CloudWatch:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch\nMetrics: ForecastRMSE · MissingStations\nAlarms: RMSE > 25 µg/m³\nMissingStations > 3 (2 × 1 h)\nDashboard: openaq_pipeline"
+      Title: "CloudWatch\nMetrics: ForecastRMSE · MissingStations\nAlarms (4): RMSE > 25 µg/m³\nMissingStations > 3 (2 × 1 h)\nKinesis iterator age > 5 min\nBilling > $8/month\nDashboard: openaq_pipeline"
 
     SNS:
       Type: AWS::Diagram::Resource
@@ -248,7 +248,7 @@ Diagram:
         Type: Open
       Labels:
         TargetLeft:
-          Title: "S3 sync (requester-pays)"
+          Title: "S3 sync (requester-pays)\n+ SNS event trigger"
 
     - Source: OpenAQAPI
       SourcePosition: S
