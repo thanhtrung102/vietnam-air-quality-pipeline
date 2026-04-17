@@ -20,7 +20,7 @@
 resource "aws_secretsmanager_secret" "openaq_api_key" {
   name                    = "openaq/api_key"
   description             = "OpenAQ v3 API key for openaq_streaming_producer Lambda"
-  recovery_window_in_days = 0   # immediate delete on destroy; change to 7+ in production
+  recovery_window_in_days = 7   # 7-day recovery window; use --force-delete-without-recovery for immediate teardown
 
   tags = local.common_tags
 }

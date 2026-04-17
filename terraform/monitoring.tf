@@ -145,6 +145,31 @@ resource "aws_cloudwatch_dashboard" "openaq_pipeline" {
   })
 }
 
+# ── CloudWatch Alarm: CodeBuild dbt runner failed (WAF OPS 9) ─────────────────
+# Fires when any dbt run fails, alerting before mart tables go stale.
+# FailedBuilds is a CodeBuild native metric — no log filter required.
+
+resource "aws_cloudwatch_metric_alarm" "codebuild_failed" {
+  alarm_name          = "openaq-dbt-runner-failed"
+  alarm_description   = "openaq-dbt-runner CodeBuild build failed — dbt mart tables may be stale"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "FailedBuilds"
+  namespace           = "AWS/CodeBuild"
+  period              = 3600
+  statistic           = "Sum"
+  threshold           = 0
+
+  dimensions = {
+    ProjectName = aws_codebuild_project.dbt_runner.name
+  }
+
+  alarm_actions      = [aws_sns_topic.openaq_alerts.arn]
+  treat_missing_data = "notBreaching"
+
+  tags = local.common_tags
+}
+
 # S3 metrics filter for processed/ prefix
 resource "aws_s3_bucket_metric" "processed_prefix" {
   bucket = aws_s3_bucket.main.id

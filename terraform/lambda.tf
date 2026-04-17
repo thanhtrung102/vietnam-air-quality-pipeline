@@ -207,6 +207,20 @@ data "aws_iam_policy_document" "lambda_inline" {
 
     resources = [aws_sns_topic.openaq_alerts.arn]
   }
+
+  # X-Ray — distributed tracing (WAF OPS 8: traces as third observability signal)
+  statement {
+    sid    = "XRayTracing"
+    effect = "Allow"
+
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords",
+    ]
+
+    resources = ["*"]
+    # X-Ray actions do not support resource-level restrictions
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_inline" {
@@ -258,6 +272,11 @@ resource "aws_lambda_function" "batch_sync" {
   filename      = var.lambda_batch_zip_path
   timeout       = 900
   memory_size   = 512
+  architectures = ["arm64"]
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -286,6 +305,11 @@ resource "aws_lambda_function" "streaming_producer" {
   filename      = var.lambda_streaming_zip_path
   timeout       = 120
   memory_size   = 256
+  architectures = ["arm64"]
+
+  tracing_config {
+    mode = "Active"
+  }
 
   # Gap 1 (IoT Lens): Dead Letter Queue captures unhandled Lambda failures.
   # On crash (unhandled exception), the failed event JSON is sent to this queue.
@@ -373,6 +397,11 @@ resource "aws_scheduler_schedule" "batch_daily" {
     arn      = aws_lambda_function.batch_sync.arn
     role_arn = aws_iam_role.scheduler.arn
     input    = jsonencode({})
+
+    retry_policy {
+      maximum_event_age_in_seconds = 3600  # retry window: 1 hour
+      maximum_retry_attempts       = 2
+    }
   }
 }
 
@@ -392,6 +421,11 @@ resource "aws_scheduler_schedule" "streaming_30min" {
     arn      = aws_lambda_function.streaming_producer.arn
     role_arn = aws_iam_role.scheduler.arn
     input    = jsonencode({})
+
+    retry_policy {
+      maximum_event_age_in_seconds = 1800  # 30 min — next schedule fires in 30 min anyway
+      maximum_retry_attempts       = 1
+    }
   }
 }
 
@@ -440,6 +474,11 @@ resource "aws_lambda_function" "aqi_api" {
   filename      = var.lambda_aqi_api_zip_path
   timeout       = 60
   memory_size   = 256
+  architectures = ["arm64"]
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -521,6 +560,11 @@ resource "aws_lambda_function" "completeness_check" {
   filename      = var.lambda_completeness_zip_path
   timeout       = 120
   memory_size   = 256
+  architectures = ["arm64"]
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -554,6 +598,11 @@ resource "aws_scheduler_schedule" "completeness_hourly" {
     arn      = aws_lambda_function.completeness_check.arn
     role_arn = aws_iam_role.scheduler.arn
     input    = jsonencode({})
+
+    retry_policy {
+      maximum_event_age_in_seconds = 3600
+      maximum_retry_attempts       = 2
+    }
   }
 }
 
@@ -610,6 +659,11 @@ resource "aws_lambda_function" "weather_ingest" {
   filename      = var.lambda_weather_zip_path
   timeout       = 300   # 21 stations × ~2s/req + S3 writes; 5 min is comfortable
   memory_size   = 256
+  architectures = ["arm64"]
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -637,6 +691,11 @@ resource "aws_scheduler_schedule" "weather_daily" {
     arn      = aws_lambda_function.weather_ingest.arn
     role_arn = aws_iam_role.scheduler.arn
     input    = jsonencode({})
+
+    retry_policy {
+      maximum_event_age_in_seconds = 3600
+      maximum_retry_attempts       = 2
+    }
   }
 }
 
@@ -866,7 +925,7 @@ resource "aws_lambda_function" "forecast_generate" {
   package_type  = "Image"
   image_uri     = var.forecast_lambda_image_uri
   timeout       = 900    # 15 minutes — SARIMA for 21 stations (Prophet removed: cmdstanpy incompatibility)
-  memory_size   = 3008   # 3 GB — statsmodels + numpy/pandas/pyarrow in-memory model objects
+  memory_size   = 1024   # 1 GB — statsmodels SARIMA; Prophet removed, 3 GB was over-allocated ~3x
 
   environment {
     variables = {
@@ -878,6 +937,10 @@ resource "aws_lambda_function" "forecast_generate" {
       HOLDOUT_DAYS        = "30"
       MIN_TRAIN_DAYS      = "60"
     }
+  }
+
+  tracing_config {
+    mode = "Active"
   }
 
   depends_on = [aws_cloudwatch_log_group.forecast_generate]
@@ -900,6 +963,11 @@ resource "aws_scheduler_schedule" "forecast_daily" {
     arn      = aws_lambda_function.forecast_generate[0].arn
     role_arn = aws_iam_role.scheduler.arn
     input    = jsonencode({})
+
+    retry_policy {
+      maximum_event_age_in_seconds = 3600
+      maximum_retry_attempts       = 2
+    }
   }
 }
 
