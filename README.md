@@ -68,7 +68,10 @@ aws lambda invoke --function-name openaq_weather_ingest \
   --payload '{"backfill_days": 365}' --cli-binary-format raw-in-base64-out \
   /tmp/weather.json
 
-# 4. Build all 17 dbt models
+# 4. Build all 17 dbt models (set S3 paths — profiles.yml reads these via env_var)
+export S3_DATA_DIR="s3://$S3_BUCKET_NAME/processed/"
+export S3_STAGING_DIR="s3://$S3_BUCKET_NAME/dbt-staging/"
+export AWS_DEFAULT_REGION="ap-southeast-1"
 cd transform/ && dbt seed --profiles-dir . && dbt build --full-refresh --profiles-dir .
 
 # 5. Build and push forecast Lambda image, then wire it
@@ -82,9 +85,11 @@ aws lambda invoke --function-name openaq_forecast_generate \
 cat /tmp/forecast.json
 # {"generated_at": "2026-04-17", "stations_ok": 3, "errors": 0, "sarima_records": 21, "alert_count": 0}
 
-# 7. Deploy dashboard
-aws s3 cp dashboard/index.html s3://$S3_BUCKET_NAME/dashboard/index.html \
-  --content-type text/html
+# 7. Deploy dashboard (inject your API URL — the map will be blank without this)
+AQI_API_URL=$(cd terraform && terraform output -raw aqi_api_url)
+sed "s|YOUR_API_GATEWAY_URL|$AQI_API_URL|" dashboard/index.html \
+  | aws s3 cp - s3://$S3_BUCKET_NAME/dashboard/index.html \
+    --content-type text/html
 ```
 
 ---

@@ -29,5 +29,7 @@ models:
     marts:
       +materialized: table
       +partitioned_by: ["measurement_date"]
-      +s3_data_dir: "s3://openaq-pipeline-thanhtrung102/processed/"
+      # s3_data_dir is intentionally absent here — it is controlled by the
+      # profile (profiles.yml dev/prod targets) via S3_DATA_DIR env var so that
+      # each operator writes to their own bucket without editing this file.
 

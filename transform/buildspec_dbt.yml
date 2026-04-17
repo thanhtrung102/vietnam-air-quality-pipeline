@@ -8,10 +8,10 @@ version: 0.2
 # Triggered by EventBridge Scheduler at 02:30 UTC daily, 90 minutes after
 # batch_sync Lambda (01:00 UTC) has finished syncing the archive.
 #
-# Source: s3://openaq-pipeline-thanhtrung102/codebuild-source.zip
+# Source: s3://<your-bucket>/codebuild-source.zip  (set by terraform local.bucket_name)
 #   Re-upload when models or seeds change:
 #     zip -r codebuild-source.zip . --exclude '.git/*' 'transform/dbt_packages/*'
-#     aws s3 cp codebuild-source.zip s3://openaq-pipeline-thanhtrung102/
+#     aws s3 cp codebuild-source.zip s3://openaq-pipeline-<suffix>/
 
 phases:
   pre_build:

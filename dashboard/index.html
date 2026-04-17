@@ -141,7 +141,9 @@
   // ── Configuration ────────────────────────────────────────────────────────────
   // Replace with your API Gateway URL after deploying lambda/aqi_api.
   // For local dev, set to the path of a static geojson file.
-  const API_URL = window.AQI_API_URL || "https://zv38v2bvqd.execute-api.ap-southeast-1.amazonaws.com/";
+  const API_URL = window.AQI_API_URL || "YOUR_API_GATEWAY_URL";
+  // Replace YOUR_API_GATEWAY_URL with the value of terraform output aqi_api_url,
+  // or set window.AQI_API_URL before this script loads.
 
   const AQI_COLOURS = {
     "Good":                           "#00e400",

@@ -1,12 +1,16 @@
 openaq_transform:
-  target: dev
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
   outputs:
     dev:
       type: athena
-      s3_staging_dir: s3://openaq-pipeline-thanhtrung102/dbt-staging/
+      # Replace YOURNAME with your s3_bucket_suffix from terraform.tfvars
+      s3_staging_dir: "s3://openaq-pipeline-YOURNAME/dbt-staging/"
+      s3_data_dir:    "s3://openaq-pipeline-YOURNAME/processed/"
       database: AwsDataCatalog
       schema: openaq_mart
       region_name: ap-southeast-1
       work_group: openaq_workgroup
-      aws_access_key_id: "your_access_key_id"
-      aws_secret_access_key: "your_secret_access_key"
+      # For local runs: fill in terraform-admin credentials
+      # For CodeBuild: leave blank — IAM role supplies credentials automatically
+      aws_access_key_id: "YOUR_ACCESS_KEY_ID"
+      aws_secret_access_key: "YOUR_SECRET_ACCESS_KEY"
