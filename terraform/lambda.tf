@@ -657,7 +657,7 @@ resource "aws_lambda_function" "weather_ingest" {
   runtime       = "python3.12"
   handler       = "handler.handler"
   filename      = var.lambda_weather_zip_path
-  timeout       = 300   # 21 stations × ~2s/req + S3 writes; 5 min is comfortable
+  timeout       = 900   # 21 stations × 365 days = 7,665 S3 writes; 5 min insufficient for backfill_days=365
   memory_size   = 256
   architectures = ["arm64"]
 

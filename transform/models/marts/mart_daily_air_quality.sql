@@ -66,6 +66,7 @@ aggregated as (
         station_lat,
         station_lon,
         sensor_type,
+        is_outlier_station,
 
         round(avg(measurement_value), 4)  as avg_value,
         round(max(measurement_value), 4)  as max_value,
@@ -86,7 +87,8 @@ aggregated as (
         location_name,
         station_lat,
         station_lon,
-        sensor_type
+        sensor_type,
+        is_outlier_station
 
 ),
 
