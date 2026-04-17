@@ -90,6 +90,10 @@ AQI_API_URL=$(cd terraform && terraform output -raw aqi_api_url)
 sed "s|YOUR_API_GATEWAY_URL|$AQI_API_URL|" dashboard/index.html \
   | aws s3 cp - s3://$S3_BUCKET_NAME/dashboard/index.html \
     --content-type text/html
+
+# Open the dashboard in your browser:
+terraform -chdir=terraform output -raw dashboard_url
+# http://openaq-pipeline-yourname.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html
 ```
 
 ---
@@ -145,4 +149,5 @@ Each marker popup shows: composite AQI, PM2.5 (µg/m³), dominant pollutant, cig
 | Forecast | AWS Lambda container (ECR) — SARIMA(1,1,1)(1,0,1,7) via statsmodels |
 | Weather | Open-Meteo ERA5 Archive API (free, no API key) |
 | Dashboard | Leaflet.js (S3 static site, served via API Gateway) |
+| Analytics | Amazon QuickSight — 4-sheet analysis, 9 DIRECT_QUERY datasets over `openaq_mart` |
 | Alerts | Amazon SNS + Amazon CloudWatch (ForecastRMSE, MissingStations alarms) |

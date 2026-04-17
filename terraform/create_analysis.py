@@ -16,15 +16,21 @@ so it can be imported into Terraform.
 
 import argparse
 import json
+import os
 import sys
 
 import boto3
 from botocore.exceptions import ClientError
 
-ACCOUNT_ID = "703668403514"
 REGION = "ap-southeast-1"
 ANALYSIS_ID = "openaq-air-quality-analysis"
 ANALYSIS_NAME = "Vietnam Air Quality Analysis"
+
+# Derive account ID at runtime so this script works for any AWS account.
+# The caller must have sts:GetCallerIdentity permission (included in the
+# terraform-admin IAM policy granted in Step 5.2).
+_sts = boto3.client("sts", region_name=REGION)
+ACCOUNT_ID = _sts.get_caller_identity()["Account"]
 
 USER_ARN = (
     f"arn:aws:quicksight:{REGION}:{ACCOUNT_ID}:user/default/terraform-admin"
@@ -1068,8 +1074,9 @@ def main():
 
     definition = build_definition()
 
-    # Always write the definition JSON
-    def_path = "D:/vietnam-air-quality-pipeline/terraform/quicksight_analysis_definition.json"
+    # Always write the definition JSON alongside this script (terraform/)
+    def_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "quicksight_analysis_definition.json")
     with open(def_path, "w", encoding="utf-8") as fh:
         json.dump(definition, fh, indent=2)
     print(f"Definition written: {def_path}")

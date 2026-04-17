@@ -1,0 +1,346 @@
+{
+  "type": "FeatureCollection",
+  "updated_at": "2026-04-17",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.818806, 21.021939]},
+      "properties": {
+        "location_id": 7441,
+        "location_name": "Hanoi (US Embassy)",
+        "city": "Hanoi",
+        "composite_aqi": 107,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 38.0,
+        "cigarette_equivalent": 1.7,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.819002, 21.02177]},
+      "properties": {
+        "location_id": 2539,
+        "location_name": "US Diplomatic Post: Hanoi",
+        "city": "Hanoi",
+        "composite_aqi": 105,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 37.2,
+        "cigarette_equivalent": 1.7,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.8000, 21.0478]},
+      "properties": {
+        "location_id": 1285357,
+        "location_name": "SPARTAN - Vietnam Acad. Sci.",
+        "city": "Hanoi",
+        "composite_aqi": 114,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 41.3,
+        "cigarette_equivalent": 1.9,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.7181, 21.0024]},
+      "properties": {
+        "location_id": 2161290,
+        "location_name": "An Khánh",
+        "city": "Hanoi",
+        "composite_aqi": 122,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 44.1,
+        "cigarette_equivalent": 2.0,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.7652, 21.0398]},
+      "properties": {
+        "location_id": 2161291,
+        "location_name": "Cầu Diễn",
+        "city": "Hanoi",
+        "composite_aqi": 125,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 45.3,
+        "cigarette_equivalent": 2.1,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.7999, 21.0152]},
+      "properties": {
+        "location_id": 2161292,
+        "location_name": "Số 46 phố Lưu Quang Vũ",
+        "city": "Hanoi",
+        "composite_aqi": 110,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 39.5,
+        "cigarette_equivalent": 1.8,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.8147, 21.0197]},
+      "properties": {
+        "location_id": 2161316,
+        "location_name": "Thành Công",
+        "city": "Hanoi",
+        "composite_aqi": 118,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 42.7,
+        "cigarette_equivalent": 1.9,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.7583, 21.2287]},
+      "properties": {
+        "location_id": 2161317,
+        "location_name": "Thanh Xuân - Sóc Sơn",
+        "city": "Hanoi",
+        "composite_aqi": 95,
+        "health_category": "Moderate",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 32.1,
+        "cigarette_equivalent": 1.5,
+        "measurement_date": "2026-04-17",
+        "colour": "#ffff00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.8338, 21.0639]},
+      "properties": {
+        "location_id": 2161318,
+        "location_name": "Tứ Liên",
+        "city": "Hanoi",
+        "composite_aqi": 120,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 43.6,
+        "cigarette_equivalent": 2.0,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.7703, 20.7339]},
+      "properties": {
+        "location_id": 2161319,
+        "location_name": "Vân Đình",
+        "city": "Hanoi",
+        "composite_aqi": 102,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 35.7,
+        "cigarette_equivalent": 1.6,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.9159, 21.1476]},
+      "properties": {
+        "location_id": 2161320,
+        "location_name": "Vân Hà",
+        "city": "Hanoi",
+        "composite_aqi": 132,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 48.2,
+        "cigarette_equivalent": 2.2,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.7856, 20.972]},
+      "properties": {
+        "location_id": 2161321,
+        "location_name": "Văn Quán",
+        "city": "Hanoi",
+        "composite_aqi": 112,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 40.4,
+        "cigarette_equivalent": 1.8,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.5773, 20.8994]},
+      "properties": {
+        "location_id": 2161323,
+        "location_name": "Xuân Mai",
+        "city": "Hanoi",
+        "composite_aqi": 88,
+        "health_category": "Moderate",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 29.8,
+        "cigarette_equivalent": 1.4,
+        "measurement_date": "2026-04-17",
+        "colour": "#ffff00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.8831, 21.0491]},
+      "properties": {
+        "location_id": 4946811,
+        "location_name": "556 Nguyễn Văn Cừ",
+        "city": "Hanoi",
+        "composite_aqi": 128,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 46.5,
+        "cigarette_equivalent": 2.1,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.7947, 21.0031]},
+      "properties": {
+        "location_id": 4946812,
+        "location_name": "Công viên Nhân Chính",
+        "city": "Hanoi",
+        "composite_aqi": 115,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 41.8,
+        "cigarette_equivalent": 1.9,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.8418, 21.0052]},
+      "properties": {
+        "location_id": 4946813,
+        "location_name": "Số 1 đường Giải Phóng",
+        "city": "Hanoi",
+        "composite_aqi": 143,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 52.4,
+        "cigarette_equivalent": 2.4,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [105.9441, 20.9933]},
+      "properties": {
+        "location_id": 6123215,
+        "location_name": "OceanPark",
+        "city": "Hanoi",
+        "composite_aqi": 108,
+        "health_category": "Unhealthy for Sensitive Groups",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "low_cost",
+        "pm25_avg": 38.4,
+        "cigarette_equivalent": 1.7,
+        "measurement_date": "2026-04-17",
+        "colour": "#ff7e00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [106.700035, 10.782773]},
+      "properties": {
+        "location_id": 7440,
+        "location_name": "US Diplomatic Post: Ho Chi Minh City",
+        "city": "Ho Chi Minh City",
+        "composite_aqi": 75,
+        "health_category": "Moderate",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 21.8,
+        "cigarette_equivalent": 1.0,
+        "measurement_date": "2026-04-17",
+        "colour": "#ffff00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [106.700722, 10.783041]},
+      "properties": {
+        "location_id": 2446,
+        "location_name": "US Diplomatic Post: Ho Chi Minh City (predecessor)",
+        "city": "Ho Chi Minh City",
+        "composite_aqi": 69,
+        "health_category": "Moderate",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "reference",
+        "pm25_avg": 19.4,
+        "cigarette_equivalent": 0.9,
+        "measurement_date": "2026-04-17",
+        "colour": "#ffff00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [106.661026, 10.774491]},
+      "properties": {
+        "location_id": 6068138,
+        "location_name": "Care Centre",
+        "city": "Ho Chi Minh City",
+        "composite_aqi": 63,
+        "health_category": "Moderate",
+        "dominant_pollutant": "pm25",
+        "sensor_type": "low_cost",
+        "pm25_avg": 17.1,
+        "cigarette_equivalent": 0.8,
+        "measurement_date": "2026-04-17",
+        "colour": "#ffff00"
+      }
+    }
+  ]
+}

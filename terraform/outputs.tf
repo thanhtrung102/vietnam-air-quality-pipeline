@@ -60,6 +60,13 @@ output "firehose_role_arn" {
   value       = aws_iam_role.firehose.arn
 }
 
+# ── Dashboard ────────────────────────────────────────────────────────────────
+
+output "dashboard_url" {
+  description = "S3 static website URL for the Leaflet station map (deploy dashboard/index.html here after terraform apply)"
+  value       = "http://${aws_s3_bucket_website_configuration.main.website_endpoint}/dashboard/index.html"
+}
+
 # ── AQI API ───────────────────────────────────────────────────────────────────
 
 output "aqi_api_url" {

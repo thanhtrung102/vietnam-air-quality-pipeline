@@ -74,6 +74,42 @@ resource "aws_s3_bucket_public_access_block" "main" {
   restrict_public_buckets = false
 }
 
+# ── S3 Static Website (Leaflet map) ──────────────────────────────────────────
+# Enables the s3-website endpoint so dashboard/index.html is publicly browsable.
+# Public read is scoped to the dashboard/ prefix only via the bucket policy below.
+
+resource "aws_s3_bucket_website_configuration" "main" {
+  bucket = aws_s3_bucket.main.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  # Must come after public_access_block or S3 rejects the website config
+  depends_on = [aws_s3_bucket_public_access_block.main]
+}
+
+# Public read scoped to dashboard/ prefix only — all other prefixes (raw/,
+# processed/, athena-results/) remain private.
+resource "aws_s3_bucket_policy" "main" {
+  bucket = aws_s3_bucket.main.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadDashboard"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.main.arn}/dashboard/*"
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.main]
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "main" {
   bucket = aws_s3_bucket.main.id
 
