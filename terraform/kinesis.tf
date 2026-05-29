@@ -4,6 +4,11 @@ resource "aws_kinesis_stream" "openaq" {
   name             = "openaq_stream"
   retention_period = 168 # 7 days — allows replay if Firehose delivery fails
 
+  # Server-side encryption at rest using the AWS-managed Kinesis KMS key
+  # (no key management overhead, no extra cost for the aws/kinesis alias).
+  encryption_type = "KMS"
+  kms_key_id      = "alias/aws/kinesis"
+
   # ON_DEMAND scales automatically and is significantly cheaper than PROVISIONED
   # for sparse workloads (21 stations × 30-min polling ≈ a few KB/hour).
   # shard_count must be omitted in ON_DEMAND mode.
@@ -123,9 +128,9 @@ resource "aws_kinesis_firehose_delivery_stream" "openaq" {
   }
 
   extended_s3_configuration {
-    role_arn           = aws_iam_role.firehose.arn
-    bucket_arn         = aws_s3_bucket.main.arn
-    prefix             = "raw/stream/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/!{timestamp:HH}/"
+    role_arn            = aws_iam_role.firehose.arn
+    bucket_arn          = aws_s3_bucket.main.arn
+    prefix              = "raw/stream/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/!{timestamp:HH}/"
     error_output_prefix = "raw/stream-errors/!{firehose:error-output-type}/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/"
 
     buffering_size     = 128

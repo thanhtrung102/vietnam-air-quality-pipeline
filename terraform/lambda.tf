@@ -71,9 +71,9 @@ data "aws_iam_policy_document" "lambda_inline" {
 
   # Athena requires GetBucketLocation to verify the query output bucket
   statement {
-    sid     = "ProjectBucketLocation"
-    effect  = "Allow"
-    actions = ["s3:GetBucketLocation"]
+    sid       = "ProjectBucketLocation"
+    effect    = "Allow"
+    actions   = ["s3:GetBucketLocation"]
     resources = [aws_s3_bucket.main.arn]
   }
 
@@ -167,14 +167,17 @@ data "aws_iam_policy_document" "lambda_inline" {
     ]
   }
 
-  # SQS — DLQ for streaming Lambda (Gap 1: IoT Lens dead-letter queue)
+  # SQS — DLQs for streaming (Gap 1) and batch_sync (2.3) Lambdas
   statement {
-    sid    = "StreamingDLQSend"
+    sid    = "LambdaDLQSend"
     effect = "Allow"
 
     actions = ["sqs:SendMessage"]
 
-    resources = [aws_sqs_queue.streaming_dlq.arn]
+    resources = [
+      aws_sqs_queue.streaming_dlq.arn,
+      aws_sqs_queue.batch_sync_dlq.arn,
+    ]
   }
 
   # Secrets Manager — retrieve OPENAQ_API_KEY (Gap 2: IoT Lens secrets rotation)
@@ -236,8 +239,22 @@ resource "aws_iam_role_policy" "lambda_inline" {
 
 resource "aws_sqs_queue" "streaming_dlq" {
   name                       = "openaq_streaming_dlq"
-  message_retention_seconds  = 86400            # 1 day — operator drains manually
-  visibility_timeout_seconds = 130              # > Lambda timeout (120s)
+  message_retention_seconds  = 86400 # 1 day — operator drains manually
+  visibility_timeout_seconds = 130   # > Lambda timeout (120s)
+
+  tags = local.common_tags
+}
+
+# ── SQS Dead Letter Queue: batch_sync Lambda (2.3) ───────────────────────────
+# Captures failed batch_sync invocations (unhandled exceptions during the
+# archive sweep). Mirrors streaming_dlq. Visibility timeout exceeds the
+# batch_sync Lambda timeout (900s) so an in-flight message is not redelivered
+# while still being processed.
+
+resource "aws_sqs_queue" "batch_sync_dlq" {
+  name                       = "openaq_batch_sync_dlq"
+  message_retention_seconds  = 86400 # 1 day — operator drains manually
+  visibility_timeout_seconds = 910   # > Lambda timeout (900s)
 
   tags = local.common_tags
 }
@@ -267,7 +284,7 @@ resource "aws_cloudwatch_log_group" "streaming_producer" {
 resource "aws_lambda_function" "batch_sync" {
   function_name = "openaq_batch_sync"
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "python3.12"
+  runtime       = var.lambda_runtime
   handler       = "handler.handler"
   filename      = var.lambda_batch_zip_path
   timeout       = 900
@@ -276,6 +293,11 @@ resource "aws_lambda_function" "batch_sync" {
 
   tracing_config {
     mode = "Active"
+  }
+
+  # 2.3: Dead Letter Queue captures unhandled batch_sync failures.
+  dead_letter_config {
+    target_arn = aws_sqs_queue.batch_sync_dlq.arn
   }
 
   environment {
@@ -300,7 +322,7 @@ resource "aws_lambda_function" "batch_sync" {
 resource "aws_lambda_function" "streaming_producer" {
   function_name = "openaq_streaming_producer"
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "python3.12"
+  runtime       = var.lambda_runtime
   handler       = "handler.handler"
   filename      = var.lambda_streaming_zip_path
   timeout       = 120
@@ -319,14 +341,15 @@ resource "aws_lambda_function" "streaming_producer" {
 
   environment {
     variables = {
-      # Gap 2 (IoT Lens): API key is now read from Secrets Manager at runtime
-      # (see lambda/streaming/handler.py _get_api_key()). OPENAQ_API_KEY env var
-      # is retained as an emergency fallback for local testing only — do NOT
-      # set it in production after secrets.tf is applied.
-      OPENAQ_API_KEY        = var.openaq_api_key
-      OPENAQ_SECRET_NAME    = aws_secretsmanager_secret.openaq_api_key.name
-      KINESIS_STREAM_NAME   = aws_kinesis_stream.openaq.name
-      STATION_IDS           = local.station_ids_csv
+      # Gap 2 (IoT Lens): the OpenAQ API key is read exclusively from Secrets
+      # Manager at runtime (see lambda/streaming/handler.py _get_api_key()).
+      # The plaintext OPENAQ_API_KEY env var was removed so the credential no
+      # longer lives in Lambda config or terraform.tfstate. Populate the secret
+      # before deploying:  aws secretsmanager put-secret-value
+      #   --secret-id openaq/api_key --secret-string "<key>"
+      OPENAQ_SECRET_NAME  = aws_secretsmanager_secret.openaq_api_key.name
+      KINESIS_STREAM_NAME = aws_kinesis_stream.openaq.name
+      STATION_IDS         = local.station_ids_csv
     }
   }
 
@@ -399,7 +422,7 @@ resource "aws_scheduler_schedule" "batch_daily" {
     input    = jsonencode({})
 
     retry_policy {
-      maximum_event_age_in_seconds = 3600  # retry window: 1 hour
+      maximum_event_age_in_seconds = 3600 # retry window: 1 hour
       maximum_retry_attempts       = 2
     }
   }
@@ -423,38 +446,23 @@ resource "aws_scheduler_schedule" "streaming_30min" {
     input    = jsonencode({})
 
     retry_policy {
-      maximum_event_age_in_seconds = 1800  # 30 min — next schedule fires in 30 min anyway
+      maximum_event_age_in_seconds = 1800 # 30 min — next schedule fires in 30 min anyway
       maximum_retry_attempts       = 1
     }
   }
 }
 
-# ── SNS event-driven batch sync (Improvement 3) ───────────────────────────────
+# ── SNS event-driven batch sync — REMOVED (2.2) ──────────────────────────────
 #
-# OpenAQ publishes an SNS notification to:
-#   arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created
-# for every new CSV.GZ written to the archive bucket.
-# SNS invokes the Lambda directly (cross-region, supported since 2021).
-# The EventBridge cron schedule is retained as a daily catch-all.
+# Previously the batch_sync Lambda was subscribed directly to the OpenAQ archive
+# SNS topic (arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created),
+# which fires once per CSV.GZ object written to the archive. Each invocation ran
+# a full 3-month sweep (SYNC_MONTHS=3) for all stations, so high-frequency object
+# publishes triggered many redundant full sweeps — wasteful and unbounded.
 #
-# NOTE: The SNS topic is owned by OpenAQ (account 817926761842) in us-east-1.
-
-# Subscribe batch_sync Lambda directly to the OpenAQ SNS topic.
-resource "aws_sns_topic_subscription" "openaq_events" {
-  provider  = aws.us_east_1
-  topic_arn = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"
-  protocol  = "lambda"
-  endpoint  = aws_lambda_function.batch_sync.arn
-}
-
-# Allow the OpenAQ SNS topic to invoke the batch_sync Lambda
-resource "aws_lambda_permission" "sns_invoke_batch" {
-  statement_id  = "AllowOpenAQSNSInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.batch_sync.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = "arn:aws:sns:us-east-1:817926761842:openaq-data-archive-object_created"
-}
+# The SNS subscription and its aws_lambda_permission have been dropped. The daily
+# EventBridge schedule (aws_scheduler_schedule.batch_daily, 01:00 UTC) is the sole
+# trigger and bounds the sweep to once per day.
 
 # ── Lambda: openaq_aqi_api ─────────────────────────────────────────────────────
 # HTTP API returning latest composite AQI per station as GeoJSON.
@@ -469,7 +477,7 @@ resource "aws_cloudwatch_log_group" "aqi_api" {
 resource "aws_lambda_function" "aqi_api" {
   function_name = "openaq_aqi_api"
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "python3.12"
+  runtime       = var.lambda_runtime
   handler       = "handler.handler"
   filename      = var.lambda_aqi_api_zip_path
   timeout       = 60
@@ -555,7 +563,7 @@ resource "aws_cloudwatch_log_group" "completeness_check" {
 resource "aws_lambda_function" "completeness_check" {
   function_name = "openaq_completeness_check"
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "python3.12"
+  runtime       = var.lambda_runtime
   handler       = "handler.handler"
   filename      = var.lambda_completeness_zip_path
   timeout       = 120
@@ -568,14 +576,16 @@ resource "aws_lambda_function" "completeness_check" {
 
   environment {
     variables = {
-      S3_BUCKET_NAME      = local.bucket_name
-      ATHENA_DATABASE     = "openaq_mart"
-      ATHENA_WORKGROUP    = "openaq_workgroup"
-      EXPECTED_STATIONS   = "21"
+      S3_BUCKET_NAME    = local.bucket_name
+      ATHENA_DATABASE   = "openaq_mart"
+      ATHENA_WORKGROUP  = "openaq_workgroup"
+      EXPECTED_STATIONS = tostring(local.expected_stations)
       # Minimum active-station count before Lambda fires a direct SNS alert.
       # Lowered from default 18 (85%) because only ~5 VN stations actively
-      # report to OpenAQ as of 2026; alert only on catastrophic loss (< 3).
-      ALERT_THRESHOLD     = "3"
+      # report to OpenAQ as of 2026; alert only on catastrophic loss.
+      # Single-sourced via var.alert_threshold so it stays in lockstep with the
+      # missing_stations alarm threshold below.
+      ALERT_THRESHOLD     = tostring(var.alert_threshold)
       SNS_ALERT_TOPIC_ARN = aws_sns_topic.openaq_alerts.arn
     }
   }
@@ -592,7 +602,7 @@ resource "aws_scheduler_schedule" "completeness_hourly" {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(0 * * * ? *)"   # top of every hour
+  schedule_expression = "cron(0 * * * ? *)" # top of every hour
 
   target {
     arn      = aws_lambda_function.completeness_check.arn
@@ -616,20 +626,24 @@ resource "aws_lambda_permission" "completeness_scheduler" {
 
 
 # ── CloudWatch Alarm: MissingStations (Gap 6) ─────────────────────────────────
-# Fires when > 18 stations are missing (= fewer than 3 active) for 2 consecutive
-# 1-hour periods. Threshold = 21 − ALERT_THRESHOLD = 21 − 3 = 18.
+# Fires when more than (expected_stations - alert_threshold) stations are
+# missing for 2 consecutive 1-hour periods. The threshold is computed from the
+# same local.expected_stations and var.alert_threshold that drive the
+# completeness Lambda, so the alarm and the Lambda cannot silently desync.
 # Only ~5 VN stations actively report as of 2026, so this is a catastrophic-loss
 # signal, not a routine gap alarm.
 
 resource "aws_cloudwatch_metric_alarm" "missing_stations" {
-  alarm_name          = "openaq_missing_stations"
-  alarm_description   = "Fewer than 3 VN stations have data in mart_daily_aqi — catastrophic coverage loss"
-  metric_name         = "MissingStations"
-  namespace           = "OpenAQ/Pipeline"
-  statistic           = "Maximum"
-  period              = 3600          # 1-hour evaluation window
-  evaluation_periods  = 2             # alarm after 2 consecutive breaches
-  threshold           = 18            # 21 - 3 = 18; matches Lambda ALERT_THRESHOLD = 3
+  alarm_name         = "openaq_missing_stations"
+  alarm_description  = "More than (expected - alert_threshold) VN stations missing from mart_daily_aqi — catastrophic coverage loss"
+  metric_name        = "MissingStations"
+  namespace          = "OpenAQ/Pipeline"
+  statistic          = "Maximum"
+  period             = 3600 # 1-hour evaluation window
+  evaluation_periods = 2    # alarm after 2 consecutive breaches
+  # expected_stations - alert_threshold; kept in lockstep with the Lambda's
+  # EXPECTED_STATIONS and ALERT_THRESHOLD env vars above.
+  threshold           = local.expected_stations - var.alert_threshold
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "notBreaching"
 
@@ -654,10 +668,10 @@ resource "aws_cloudwatch_log_group" "weather_ingest" {
 resource "aws_lambda_function" "weather_ingest" {
   function_name = "openaq_weather_ingest"
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "python3.12"
+  runtime       = var.lambda_runtime
   handler       = "handler.handler"
   filename      = var.lambda_weather_zip_path
-  timeout       = 900   # 21 stations × 365 days = 7,665 S3 writes; 5 min insufficient for backfill_days=365
+  timeout       = 900 # 21 stations × 365 days = 7,665 S3 writes; 5 min insufficient for backfill_days=365
   memory_size   = 256
   architectures = ["arm64"]
 
@@ -668,7 +682,7 @@ resource "aws_lambda_function" "weather_ingest" {
   environment {
     variables = {
       S3_BUCKET_NAME = local.bucket_name
-      BACKFILL_DAYS  = "1"   # default: yesterday only; override via event payload
+      BACKFILL_DAYS  = "1" # default: yesterday only; override via event payload
     }
   }
 
@@ -718,7 +732,7 @@ resource "aws_lambda_permission" "weather_scheduler" {
 resource "aws_codebuild_project" "dbt_runner" {
   name          = "openaq-dbt-runner"
   service_role  = aws_iam_role.dbt_runner.arn
-  build_timeout = 30  # minutes; dbt run takes ~16 min
+  build_timeout = 30 # minutes; dbt run takes ~16 min
 
   artifacts {
     type = "NO_ARTIFACTS"
@@ -822,9 +836,9 @@ resource "aws_iam_role_policy" "dbt_runner" {
         ]
       },
       {
-        Sid    = "Logs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Sid      = "Logs"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/openaq-dbt-runner:*"
       },
     ]
@@ -924,8 +938,8 @@ resource "aws_lambda_function" "forecast_generate" {
   role          = aws_iam_role.lambda_exec.arn
   package_type  = "Image"
   image_uri     = var.forecast_lambda_image_uri
-  timeout       = 900    # 15 minutes — SARIMA for 21 stations (Prophet removed: cmdstanpy incompatibility)
-  memory_size   = 1024   # 1 GB — statsmodels SARIMA; Prophet removed, 3 GB was over-allocated ~3x
+  timeout       = 900  # 15 minutes — SARIMA for 21 stations (Prophet removed: cmdstanpy incompatibility)
+  memory_size   = 1024 # 1 GB — statsmodels SARIMA; Prophet removed, 3 GB was over-allocated ~3x
 
   environment {
     variables = {
@@ -1007,8 +1021,8 @@ resource "aws_cloudwatch_metric_alarm" "forecast_rmse_sarima" {
   metric_name         = "ForecastRMSE"
   namespace           = "OpenAQ/Pipeline"
   statistic           = "Average"
-  period              = 86400         # 1-day evaluation (Lambda runs once daily)
-  evaluation_periods  = 3             # alert after 3 consecutive breaches
+  period              = 86400 # 1-day evaluation (Lambda runs once daily)
+  evaluation_periods  = 3     # alert after 3 consecutive breaches
   threshold           = 25
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "notBreaching"

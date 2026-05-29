@@ -114,21 +114,21 @@ resource "aws_glue_catalog_table" "openaq_stream" {
   table_type    = "EXTERNAL_TABLE"
 
   parameters = {
-    EXTERNAL                     = "TRUE"
-    "classification"             = "json"
-    "projection.enabled"         = "true"
-    "projection.year.type"       = "integer"
-    "projection.year.range"      = "2024,2030"
-    "projection.month.type"      = "integer"
-    "projection.month.range"     = "1,12"
-    "projection.month.digits"    = "2"
-    "projection.day.type"        = "integer"
-    "projection.day.range"       = "1,31"
-    "projection.day.digits"      = "2"
-    "projection.hour.type"       = "integer"
-    "projection.hour.range"      = "0,23"
-    "projection.hour.digits"     = "2"
-    "storage.location.template"  = "s3://${aws_s3_bucket.main.bucket}/raw/stream/$${year}/$${month}/$${day}/$${hour}/"
+    EXTERNAL                    = "TRUE"
+    "classification"            = "json"
+    "projection.enabled"        = "true"
+    "projection.year.type"      = "integer"
+    "projection.year.range"     = "2024,2030"
+    "projection.month.type"     = "integer"
+    "projection.month.range"    = "1,12"
+    "projection.month.digits"   = "2"
+    "projection.day.type"       = "integer"
+    "projection.day.range"      = "1,31"
+    "projection.day.digits"     = "2"
+    "projection.hour.type"      = "integer"
+    "projection.hour.range"     = "0,23"
+    "projection.hour.digits"    = "2"
+    "storage.location.template" = "s3://${aws_s3_bucket.main.bucket}/raw/stream/$${year}/$${month}/$${day}/$${hour}/"
   }
 
   storage_descriptor {
@@ -213,20 +213,20 @@ resource "aws_glue_catalog_table" "weather" {
   table_type    = "EXTERNAL_TABLE"
 
   parameters = {
-    EXTERNAL                          = "TRUE"
-    "classification"                  = "json"
-    "projection.enabled"              = "true"
-    "projection.location_id.type"     = "enum"
-    "projection.location_id.values"   = local.station_ids_csv
-    "projection.year.type"            = "integer"
-    "projection.year.range"           = "2016,2030"
-    "projection.month.type"           = "integer"
-    "projection.month.range"          = "1,12"
-    "projection.month.digits"         = "2"
-    "projection.day.type"             = "integer"
-    "projection.day.range"            = "1,31"
-    "projection.day.digits"           = "2"
-    "storage.location.template"       = "s3://${aws_s3_bucket.main.bucket}/raw/weather/$${location_id}/$${year}/$${month}/$${day}/"
+    EXTERNAL                        = "TRUE"
+    "classification"                = "json"
+    "projection.enabled"            = "true"
+    "projection.location_id.type"   = "enum"
+    "projection.location_id.values" = local.station_ids_csv
+    "projection.year.type"          = "integer"
+    "projection.year.range"         = "2016,2030"
+    "projection.month.type"         = "integer"
+    "projection.month.range"        = "1,12"
+    "projection.month.digits"       = "2"
+    "projection.day.type"           = "integer"
+    "projection.day.range"          = "1,31"
+    "projection.day.digits"         = "2"
+    "storage.location.template"     = "s3://${aws_s3_bucket.main.bucket}/raw/weather/$${location_id}/$${year}/$${month}/$${day}/"
   }
 
   storage_descriptor {

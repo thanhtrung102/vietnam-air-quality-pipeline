@@ -22,11 +22,19 @@ provider "aws" {
 locals {
   bucket_name = "${var.project_name}-${var.s3_bucket_suffix}"
 
-  # Single source of truth for all 21 monitored Vietnamese station IDs.
-  # Used by: Glue partition projections (both tables), batch_sync env var,
-  # streaming_producer env var.  Weather_ingest embeds lat/lon per station
-  # and cannot be driven by this list alone.
-  station_ids_csv = "7441,2539,1285357,2161290,2161291,2161292,2161316,2161317,2161318,2161319,2161320,2161321,2161323,4946811,4946812,4946813,6123215,7440,2446,6068138,6273386"
+  # Single source of truth for all monitored Vietnamese station IDs.
+  # Derived from the dbt seed transform/seeds/vn_stations.csv so the roster
+  # cannot drift between the seed and the infra. Used by: Glue partition
+  # projections (both tables), batch_sync env var, streaming_producer env var.
+  # Weather_ingest embeds lat/lon per station and cannot be driven by this list
+  # alone.
+  stations        = csvdecode(file("${path.module}/../transform/seeds/vn_stations.csv"))
+  station_ids_csv = join(",", [for s in local.stations : s.location_id])
+
+  # Expected station count for the completeness check, derived from the seed
+  # roster. Drives both the completeness Lambda EXPECTED_STATIONS env var and the
+  # missing_stations alarm threshold (expected_stations - var.alert_threshold).
+  expected_stations = length(local.stations)
 
   common_tags = {
     Project   = var.project_name
@@ -64,8 +72,8 @@ resource "aws_s3_bucket_public_access_block" "main" {
   bucket = aws_s3_bucket.main.id
 
   # ACL-based public access is blocked — we use bucket policies, not ACLs.
-  block_public_acls   = true
-  ignore_public_acls  = true
+  block_public_acls  = true
+  ignore_public_acls = true
 
   # Dashboard is served as an S3 static website using a public bucket policy
   # scoped to the dashboard/ prefix. These two must stay false or the
@@ -108,6 +116,29 @@ resource "aws_s3_bucket_policy" "main" {
   })
 
   depends_on = [aws_s3_bucket_public_access_block.main]
+}
+
+# ── Dashboard object: Terraform-managed upload of the Leaflet map (3.5) ───────
+# Uploads dashboard/index.html with the real API Gateway endpoint substituted
+# for the YOUR_API_GATEWAY_URL placeholder, so the page works without manual
+# post-deploy editing. index.html reads `window.AQI_API_URL || "YOUR_API_GATEWAY_URL"`,
+# so swapping the placeholder token is the least-invasive substitution and
+# leaves the source file unmodified (no template markers required).
+# source_hash forces re-upload whenever the file or the API endpoint changes.
+resource "aws_s3_object" "dashboard_index" {
+  bucket       = aws_s3_bucket.main.id
+  key          = "dashboard/index.html"
+  content_type = "text/html"
+
+  content = replace(
+    file("${path.module}/../dashboard/index.html"),
+    "YOUR_API_GATEWAY_URL",
+    aws_apigatewayv2_api.aqi_api.api_endpoint,
+  )
+
+  depends_on = [aws_s3_bucket_policy.main]
+
+  tags = local.common_tags
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "main" {
@@ -191,7 +222,9 @@ resource "aws_athena_workgroup" "openaq" {
   description = "Athena workgroup for OpenAQ pipeline queries and dbt runs"
 
   configuration {
-    enforce_workgroup_configuration    = false
+    # Enforced so the 10 GB bytes-scanned cutoff and SSE_S3 result encryption
+    # below cannot be overridden by client-side StartQueryExecution settings.
+    enforce_workgroup_configuration    = true
     publish_cloudwatch_metrics_enabled = true
 
     result_configuration {
@@ -209,8 +242,13 @@ resource "aws_athena_workgroup" "openaq" {
 }
 
 # ── Post-deploy: Athena query result reuse ────────────────────────────────────
-# The AWS Terraform provider does not expose query result reuse natively.
-# This null_resource calls the AWS CLI once after the workgroup is created/updated.
+# The AWS Terraform provider (~> 5.0) does NOT expose query-result-reuse on the
+# managed aws_athena_workgroup resource. Result reuse is an Athena per-query
+# feature (StartQueryExecution ResultReuseConfiguration) and the only workgroup-
+# level toggle (EnableQueryResultReuse) is reachable solely via the
+# UpdateWorkGroup API / CLI — there is no corresponding workgroup argument.
+# This null_resource therefore remains as the supported mechanism; it calls the
+# AWS CLI once after the workgroup is created/updated.
 # Idempotent: repeated UpdateWorkGroup calls with the same values are a no-op.
 # Requires: AWS CLI installed and caller credentials with athena:UpdateWorkGroup.
 
@@ -226,7 +264,8 @@ resource "null_resource" "athena_result_reuse" {
       aws athena update-work-group \
         --work-group ${aws_athena_workgroup.openaq.name} \
         --configuration-updates '{"EnableQueryResultReuse":true,"QueryResultReuseConfiguration":{"MaxAgeInMinutes":60}}' \
-        --region ${var.aws_region}
+        --region ${var.aws_region} \
+        || echo "WARN: query result reuse not supported by this CLI version — non-fatal, continuing"
     EOC
   }
 }

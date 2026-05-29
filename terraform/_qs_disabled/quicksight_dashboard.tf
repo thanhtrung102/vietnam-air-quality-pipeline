@@ -129,8 +129,8 @@ resource "aws_quicksight_dashboard" "openaq" {
 
   dashboard_publish_options {
     ad_hoc_filtering_option { availability_status = "ENABLED" }
-    export_to_csv_option    { availability_status = "ENABLED" }
-    sheet_controls_option   { visibility_state    = "EXPANDED" }
+    export_to_csv_option { availability_status = "ENABLED" }
+    sheet_controls_option { visibility_state = "EXPANDED" }
   }
 
   permissions {

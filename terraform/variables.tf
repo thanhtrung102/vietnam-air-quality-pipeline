@@ -26,6 +26,23 @@ variable "openaq_api_key" {
   sensitive   = true
 }
 
+variable "lambda_runtime" {
+  description = "Runtime identifier for all zip-packaged Lambda functions"
+  type        = string
+  default     = "python3.12"
+}
+
+variable "alert_threshold" {
+  description = <<-EOT
+    Minimum active-station count before the completeness check fires an alert.
+    Single-sourced into the completeness Lambda ALERT_THRESHOLD env var AND the
+    missing_stations CloudWatch alarm threshold (expected_stations - alert_threshold)
+    so the two cannot silently desync.
+  EOT
+  type        = number
+  default     = 3
+}
+
 variable "lambda_batch_zip_path" {
   description = "Path to the batch sync Lambda zip file, relative to the terraform/ directory"
   type        = string
