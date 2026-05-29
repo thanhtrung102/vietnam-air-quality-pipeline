@@ -13,7 +13,7 @@ Coverage:
 
 import os
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -132,7 +132,10 @@ def test_handler_below_threshold_fresh_data():
 
 def test_handler_below_threshold_stale_archive():
     """Below threshold but archive is >7 days old → SNS suppressed."""
-    stale_date = (date.today() - timedelta(days=8)).isoformat()
+    # Use the handler's UTC clock basis (handler computes data_age from
+    # datetime.now(timezone.utc).date()); date.today() is local and drifts by a
+    # day near the local/UTC midnight boundary, making this test flaky.
+    stale_date = (datetime.now(timezone.utc).date() - timedelta(days=8)).isoformat()
     result, cw, sns = _run_handler(_make_athena_client(stale_date, 10))
 
     assert result["is_archive_stale"] is True
