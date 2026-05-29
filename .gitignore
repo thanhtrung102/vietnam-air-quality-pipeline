@@ -3,7 +3,9 @@
 
 # Terraform
 *.tfstate
+*.tfstate.*
 *.tfstate.backup
+*.backup
 .terraform/
 
 # Python
