@@ -1,5 +1,24 @@
 version: 2
 
+# ----------------------------------------------------------------------------
+# bi_disabled tag
+# ----------------------------------------------------------------------------
+# Marts tagged tags=['bi_disabled'] feed QuickSight-only dashboards or serve as
+# diagnostic/validation outputs. While the QuickSight (BI) layer and the forecast
+# compute layer are torn down for cost, these marts can be skipped from a run with:
+#
+#   dbt build  --exclude tag:bi_disabled
+#   dbt run    --exclude tag:bi_disabled
+#
+# Currently tagged: mart_health_summary, mart_exceedance_stats,
+# mart_annual_monthly_trend, mart_monthly_profile, mart_diurnal_profile,
+# mart_pollutant_ratio, mart_forecast_accuracy, mart_feature_stats.
+#
+# Note: mart_forecast_accuracy also depends on the Lambda-written external table
+# openaq_mart.mart_daily_forecast, which only exists once the forecast compute
+# layer is redeployed — another reason to exclude it while that layer is off.
+# ----------------------------------------------------------------------------
+
 models:
   - name: mart_daily_air_quality
     description: >
@@ -675,7 +694,12 @@ models:
         description: Daily mean wind speed at 10 m (m/s, 4 dp)
 
       - name: avg_wind_dir
-        description: Simple arithmetic mean of hourly wind directions (degrees). Not a circular mean — use with caution for prevailing-wind analysis.
+        description: >
+          Circular (vector) mean of hourly wind directions in degrees, normalised
+          to [0, 360): degrees(atan2(avg(sin θ), avg(cos θ))). Correctly handles
+          the 0°/360° wrap-around (unlike a plain arithmetic mean), so this is
+          valid for prevailing-wind analysis. Near-undefined when hourly directions
+          cancel (e.g. perfectly opposing winds yield a near-zero resultant vector).
 
       - name: calm_wind_hours
         description: Count of UTC hours where wind_speed < 2.0 m/s (stagnant conditions)

@@ -12,10 +12,14 @@ Transformations:
   - measurement_date derived from measured_at for mart partitioning
   - location_id cast to INT
   - lon rounded to 6 dp (floating-point noise observed in station 4946812)
-  - Filters: nulls, sentinel -999.0, negative values, null parameter,
-             values >= 500 (station 7440 emits 985.0 as a fill/error code;
-             500 µg/m³ is the US EPA AQI ceiling and physically implausible
-             as a sustained PM2.5 concentration)
+  - Filters (ALL parameters): null datetime/value/parameter/location_id,
+             sentinel -999.0, negative values.
+  - Filter (pm25 ONLY): value >= 500. Station 7440 emits 985.0 as a fill/error
+             code, and 500 µg/m³ is the US EPA PM2.5 AQI ceiling — physically
+             implausible as a sustained PM2.5 concentration. This ceiling is
+             intentionally NOT applied to other parameters: PM10 legitimately
+             exceeds 500 µg/m³ during dust/haze events, so a blanket ceiling
+             would silently drop valid high-PM10 readings.
 */
 
 with source as (
@@ -37,7 +41,10 @@ with source as (
       and value           is not null
       and value           != -999.0
       and value           >= 0
-      and value           < 500    -- filter fill/error code 985.0 from station 7440
+      -- pm25-specific ceiling: filter fill/error code 985.0 (station 7440) and
+      -- physically implausible sustained PM2.5. Other parameters (e.g. pm10 during
+      -- dust events) may legitimately exceed 500 µg/m³, so the ceiling is scoped.
+      and not (lower(parameter) = 'pm25' and value >= 500)
       and parameter       is not null
       and location_id     is not null
 

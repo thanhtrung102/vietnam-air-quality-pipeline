@@ -72,6 +72,37 @@ models:
           readings (currently station 6273386 only). 0 for all other stations.
           Downstream marts filter WHERE is_outlier_station = 0.
 
+  - name: int_city_daily_pm25
+    description: >
+      One city-level daily PM2.5 average per city × date. Collapses all
+      non-outlier PM2.5 stations in a city (parameter = 'pm25',
+      is_outlier_station = 0) into a single representative daily mean so
+      multi-station cities are not double-counted. Shared basis for
+      mart_health_summary, mart_exceedance_stats, and mart_annual_monthly_trend,
+      replacing the previously duplicated inline city_daily CTEs. pm25_city_avg
+      is intentionally unrounded; consuming marts apply their own rounding.
+
+    columns:
+      - name: city
+        description: City where the stations are located (Hanoi or Ho Chi Minh City)
+        tests:
+          - not_null
+
+      - name: province
+        description: Province / administrative division
+
+      - name: measurement_date
+        description: Calendar date of the city-level daily average
+        tests:
+          - not_null
+
+      - name: pm25_city_avg
+        description: >
+          Unrounded mean of station-level daily PM2.5 averages for the city/date
+          (µg/m³). Consuming marts re-apply rounding as needed.
+        tests:
+          - not_null
+
   - name: int_weather_enriched
     description: >
       Hourly ERA5 weather from stg_weather enriched with station metadata

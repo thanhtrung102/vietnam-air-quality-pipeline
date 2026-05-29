@@ -40,7 +40,8 @@ Note: mart_daily_forecast is an external table managed by the forecast_generate 
     materialized      = 'table',
     partitioned_by    = ['forecast_date'],
     format            = 'parquet',
-    write_compression = 'snappy'
+    write_compression = 'snappy',
+    tags              = ['bi_disabled']
 ) }}
 
 with latest_forecasts as (
@@ -125,7 +126,20 @@ matched as (
 
 ),
 
-with_rolling as (
+-- Observed rows only: a row is "observed" once its forecast_date has an actual.
+-- Rolling windows must be computed over this subset so that "rows between N
+-- preceding and current row" counts the last N OBSERVED forecast dates. If the
+-- future (NULL-actual) rows were left in the window, the row-count frame would
+-- straddle unobserved dates and the rolling RMSE/MAE/bias would silently average
+-- fewer than N real observations.
+observed as (
+
+    select * from matched
+    where actual_pm25 is not null
+
+),
+
+observed_rolling as (
 
     select
         location_id,
@@ -144,7 +158,7 @@ with_rolling as (
         abs_error,
         squared_error,
 
-        -- Rolling RMSE 7-day (only over rows that have actuals)
+        -- Rolling RMSE 7-day (last 7 observed forecast dates)
         round(
             sqrt(avg(squared_error) over (
                 partition by location_id, model
@@ -154,7 +168,7 @@ with_rolling as (
             2
         ) as rolling_rmse_7d,
 
-        -- Rolling RMSE 30-day
+        -- Rolling RMSE 30-day (last 30 observed forecast dates)
         round(
             sqrt(avg(squared_error) over (
                 partition by location_id, model
@@ -164,7 +178,7 @@ with_rolling as (
             2
         ) as rolling_rmse_30d,
 
-        -- Rolling MAE 30-day
+        -- Rolling MAE 30-day (last 30 observed forecast dates)
         round(
             avg(abs_error) over (
                 partition by location_id, model
@@ -187,8 +201,45 @@ with_rolling as (
         -- partition key last
         forecast_date
 
+    from observed
+
+),
+
+-- Future (not-yet-observed) rows are retained in the mart for visibility, but
+-- carry NULL error and NULL rolling metrics (they are excluded from the rolling
+-- window above).
+future_rows as (
+
+    select
+        location_id,
+        location_name,
+        city,
+        model,
+        generated_at,
+        forecast_pm25,
+        forecast_aqi,
+        forecast_aqi_category,
+        ci_lower_95,
+        ci_upper_95,
+        holdout_rmse,
+        actual_pm25,
+        error,
+        abs_error,
+        squared_error,
+
+        cast(null as double) as rolling_rmse_7d,
+        cast(null as double) as rolling_rmse_30d,
+        cast(null as double) as rolling_mae_30d,
+        cast(null as double) as rolling_bias_30d,
+
+        -- partition key last
+        forecast_date
+
     from matched
+    where actual_pm25 is null
 
 )
 
-select * from with_rolling
+select * from observed_rolling
+union all
+select * from future_rows

@@ -22,34 +22,27 @@ One representative daily avg per city per day is derived as the mean of all
 station avg_values for that parameter and date.
 */
 
-{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy', tags = ['bi_disabled']) }}
 
 with city_daily as (
 
-    -- Collapse multi-station cities to one city-level daily PM2.5 average
+    -- City-level daily PM2.5 average (multi-station collapse) sourced from the
+    -- shared int_city_daily_pm25 model. pm25_city_avg arrives unrounded; this
+    -- mart re-applies the historical round(..., 4) and derives its day-level
+    -- health flags exactly as before.
     select
         city,
         province,
         measurement_date,
-        year(measurement_date)          as year,
-        round(avg(avg_value), 4)        as pm25_city_avg,
-        round(avg(avg_value) / 22.0, 2) as cigarette_equivalent,
-        cast(avg(avg_value) <= 15 as int) as who_compliant_day,
+        year(measurement_date)              as year,
+        round(pm25_city_avg, 4)             as pm25_city_avg,
+        round(pm25_city_avg / 22.0, 2)      as cigarette_equivalent,
+        cast(pm25_city_avg <= 15 as int)    as who_compliant_day,
 
-        -- City-level AQI category derived from the city daily avg (not per-station)
-        case
-            when avg(avg_value) <=   9.0 then 'Good'
-            when avg(avg_value) <=  35.4 then 'Moderate'
-            when avg(avg_value) <=  55.4 then 'Unhealthy for Sensitive Groups'
-            when avg(avg_value) <= 125.4 then 'Unhealthy'
-            when avg(avg_value) <= 225.4 then 'Very Unhealthy'
-            else                              'Hazardous'
-        end as aqi_category
+        -- City-level AQI category derived from the city daily avg (shared macro)
+        {{ get_aqi_category("'pm25'", 'pm25_city_avg') }} as aqi_category
 
-    from {{ ref('mart_daily_air_quality') }}
-    where parameter = 'pm25'
-      and is_outlier_station = 0
-    group by city, province, measurement_date
+    from {{ ref('int_city_daily_pm25') }}
 
 ),
 

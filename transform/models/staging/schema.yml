@@ -50,6 +50,11 @@ models:
         description: Measurement unit string (µg/m³, ppm, ppb)
 
       - name: measurement_value
-        description: Measured concentration as DOUBLE (renamed from value; sentinel -999.0 excluded)
+        description: >
+          Measured concentration as DOUBLE (renamed from value). Excluded for all
+          parameters: NULL, sentinel -999.0, and negative values. A 500 µg/m³
+          ceiling is applied ONLY to pm25 (filters the 985.0 fill/error code from
+          station 7440); other parameters such as pm10 may legitimately exceed
+          500 µg/m³ during dust/haze events and are not capped.
         tests:
           - not_null

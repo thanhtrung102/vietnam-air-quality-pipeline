@@ -34,27 +34,22 @@ Validation expectation:
   HCMC January:  2023 ~22 µg/m³ → 2024 ~27 µg/m³ → 2025 ~36 µg/m³ (faster increase)
 */
 
-{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy', tags = ['bi_disabled']) }}
 
 with city_daily as (
 
-    -- Collapse multi-station cities to one city-level daily PM2.5 average
+    -- City-level daily PM2.5 average (multi-station collapse) from the shared
+    -- int_city_daily_pm25 model — identical basis to mart_health_summary and
+    -- mart_exceedance_stats. year / month derived here; output unchanged.
     select
         city,
         province,
         measurement_date,
         year(measurement_date)      as year,
         month(measurement_date)     as month_of_year,
-        avg(avg_value)              as pm25_city_avg
+        pm25_city_avg
 
-    from {{ ref('mart_daily_air_quality') }}
-    where parameter = 'pm25'
-      and is_outlier_station = 0
-
-    group by
-        city,
-        province,
-        measurement_date
+    from {{ ref('int_city_daily_pm25') }}
 
 )
 

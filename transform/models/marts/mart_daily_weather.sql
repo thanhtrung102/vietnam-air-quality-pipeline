@@ -8,8 +8,9 @@ Aggregations:
   - Temperature: avg/max/min across 24 UTC hours
   - Relative humidity: avg/max/min
   - Wind speed: avg (daily mean); calm_wind_hours = hours where wind_speed < 2 m/s
-  - Wind direction: not aggregated (circular mean requires trigonometry beyond
-    this mart's scope; avg_wind_dir is a simple numeric average — use with care)
+  - Wind direction: circular (vector) mean — atan2(avg(sin θ), avg(cos θ)),
+    normalised to [0, 360). A plain arithmetic mean is invalid for a circular
+    quantity (the mean of 350° and 10° is 0°, not 180°).
   - Precipitation: sum (daily total in mm)
   - Surface pressure: avg
   - Boundary layer height: avg and min (min captures morning inversion peak)
@@ -57,7 +58,21 @@ daily as (
         round(min(rh_2m),                   2) as min_rh_2m,
 
         round(avg(wind_speed),              4) as avg_wind_speed,
-        round(avg(wind_dir),                2) as avg_wind_dir,
+
+        -- Circular mean of wind direction. A plain arithmetic mean is wrong for an
+        -- angular quantity (e.g. mean of 350° and 10° is 0°/360°, not 180°).
+        -- atan2(mean sin, mean cos) gives the vector-mean bearing in (-180, 180];
+        -- mod(... + 360, 360) normalises to [0, 360).
+        round(
+            mod(
+                degrees(atan2(
+                    avg(sin(radians(wind_dir))),
+                    avg(cos(radians(wind_dir)))
+                )) + 360.0,
+                360.0
+            ),
+            2
+        ) as avg_wind_dir,
         count(case when wind_speed < 2.0 then 1 end) as calm_wind_hours,
 
         round(sum(precipitation_mm),        4) as total_precipitation_mm,

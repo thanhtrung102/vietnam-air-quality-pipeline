@@ -26,28 +26,22 @@ Note: grain is city × parameter; each city row is the average across all non-ou
 stations in that city on that date (same methodology as mart_health_summary city_daily CTE).
 */
 
-{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy', tags = ['bi_disabled']) }}
 
 with city_daily as (
 
-    -- Collapse multi-station cities to one city-level daily PM2.5 average
-    -- (mirrors the aggregation in mart_health_summary to ensure consistency)
+    -- City-level daily PM2.5 average (multi-station collapse) from the shared
+    -- int_city_daily_pm25 model. parameter is a constant 'pm25' literal here —
+    -- this mart filters to PM2.5 only — preserved so the grain/columns are unchanged.
     select
         city,
-        parameter,
+        'pm25'                      as parameter,
         measurement_date,
         year(measurement_date)      as year,
         month(measurement_date)     as month_of_year,
-        avg(avg_value)              as pm25_city_avg
+        pm25_city_avg
 
-    from {{ ref('mart_daily_air_quality') }}
-    where parameter = 'pm25'
-      and is_outlier_station = 0
-
-    group by
-        city,
-        parameter,
-        measurement_date
+    from {{ ref('int_city_daily_pm25') }}
 
 )
 

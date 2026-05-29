@@ -32,7 +32,8 @@ To avoid confusion with forecasting evaluation, the target correlation
     materialized      = 'table',
     partitioned_by    = [],
     format            = 'parquet',
-    write_compression = 'snappy'
+    write_compression = 'snappy',
+    tags              = ['bi_disabled']
 ) }}
 
 with features as (

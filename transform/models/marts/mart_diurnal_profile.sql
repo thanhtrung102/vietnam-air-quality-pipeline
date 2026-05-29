@@ -25,7 +25,7 @@ Use in dashboard:
     on location_id + parameter), colour = avg_value
 */
 
-{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy', tags = ['bi_disabled']) }}
 
 with labelled as (
 

@@ -26,7 +26,7 @@ so that aggregating by location_id still yields complete coverage for pm25_avg/p
 even when the ratio cannot be computed.
 */
 
-{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy', tags = ['bi_disabled']) }}
 
 -- Pivot raw rows into one row per station-day with each pollutant as a column.
 -- All downstream expressions reference simple column names — no repeated CASE WHEN.

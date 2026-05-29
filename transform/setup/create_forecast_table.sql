@@ -6,7 +6,7 @@
 --
 -- Partition Projection on:
 --   generated_at — DATE range (one partition per Lambda invocation day)
---   model        — ENUM (sarima | prophet)
+--   model        — ENUM (sarima)
 --
 -- Run against workgroup: openaq_workgroup (substitue {bucket} with actual bucket name)
 -- Prerequisites: openaq_mart Glue database must exist (created by Terraform).
@@ -27,7 +27,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS openaq_mart.mart_daily_forecast (
 )
 PARTITIONED BY (
     generated_at STRING  COMMENT 'Date the forecast was generated (YYYY-MM-DD)',
-    model        STRING  COMMENT 'Model type: sarima | prophet'
+    model        STRING  COMMENT 'Model type: sarima'
 )
 STORED AS PARQUET
 LOCATION 's3://{bucket}/processed/openaq_mart/mart_daily_forecast/'
@@ -42,9 +42,9 @@ TBLPROPERTIES (
     'projection.generated_at.range'  = '2026-01-01,NOW',
     'projection.generated_at.format' = 'yyyy-MM-dd',
 
-    -- model: enum
+    -- model: enum (Prophet removed — SARIMA only)
     'projection.model.type'          = 'enum',
-    'projection.model.values'        = 'sarima,prophet',
+    'projection.model.values'        = 'sarima',
 
     'storage.location.template'      = 's3://{bucket}/processed/openaq_mart/mart_daily_forecast/generated_at=${generated_at}/model=${model}/'
 );
