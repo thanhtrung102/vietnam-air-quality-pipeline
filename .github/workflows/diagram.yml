@@ -1,5 +1,8 @@
 name: Regenerate architecture diagram
 
+# This workflow ONLY regenerates docs/architecture.png from docs/architecture.yaml.
+# It performs no code validation — see validate.yml for terraform/python/dbt checks.
+
 on:
   push:
     paths:

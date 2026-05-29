@@ -15,8 +15,8 @@
 ## dbt
 - **Project name:** openaq_transform
 - **Adapter:** dbt-athena-community
-- **Mart table partitions on:** measurement_date
-- **Mart table clusters on:** parameter, location_id
+- **Mart table partitions on:** measurement_date (date-grain marts; `mart_forecast_accuracy` partitions on forecast_date). Analytical/aggregate marts use `partitioned_by = []` (unpartitioned).
+- **Mart table clustering:** none — no mart uses clustering or bucketing (no `bucketed_by`). Partition projection alone keeps Athena scans small.
 
 ## Naming Conventions
 - All identifiers: snake_case
@@ -59,10 +59,15 @@
 ## IAM
 - **Local dev user:** terraform-admin (pre-existing, not managed by Terraform)
 - **Orchestration:** EventBridge Scheduler + Lambda (terraform/lambda.tf) — Kestra Docker not available on build machine
-- **Lambda batch function:** openaq_batch_sync (900s timeout, daily at 01:00 UTC)
-- **Lambda streaming function:** openaq_streaming_producer (120s timeout, every 30 minutes)
-- **EventBridge schedule batch:** openaq_batch_daily
-- **EventBridge schedule streaming:** openaq_streaming_30min
+- **Lambda runtime:** python3.12
+- **Lambda functions (6 defined in terraform/lambda.tf):**
+  - `openaq_batch_sync` (512 MB, 900s timeout, daily at 01:00 UTC) — OpenAQ S3 archive historical sync
+  - `openaq_streaming_producer` (256 MB, 120s timeout, every 30 minutes) — OpenAQ REST API v3 → Kinesis
+  - `openaq_weather_ingest` (256 MB, 300s timeout, daily at 02:00 UTC) — Open-Meteo ERA5 → S3
+  - `openaq_aqi_api` (behind API Gateway, GeoJSON/CORS) — serves the Leaflet dashboard
+  - `openaq_completeness_check` (hourly) — emits the MissingStations CloudWatch metric
+  - `openaq_forecast_generate` (ECR container image, SARIMA 7-day PM2.5) — **gated/not deployed by default**: created only when `var.forecast_lambda_image_uri != ""` (`count`-gated in lambda.tf). Requires building and pushing the ECR image first.
+- **EventBridge schedules:** openaq_batch_daily, openaq_streaming_30min, openaq_weather_daily, openaq_dbt_daily (CodeBuild), openaq_completeness_hourly, openaq_forecast_daily (forecast schedule is also gated on the forecast image)
 
 ## Rules
 - **Never hardcode API keys** — always read from environment variables

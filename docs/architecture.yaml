@@ -176,17 +176,14 @@ Diagram:
       Type: AWS::Diagram::HorizontalStack
       Children:
         - S3Dashboard
-        - QuickSightDashboard
 
     S3Dashboard:
       Type: AWS::Diagram::Resource
       Preset: "Amazon Simple Storage Service (Amazon S3)"
       Title: "S3 Static Site\ndashboard/index.html"
 
-    QuickSightDashboard:
-      Type: AWS::Diagram::Resource
-      Preset: "Amazon QuickSight"
-      Title: "Amazon QuickSight\nanalytics dashboard"
+    # QuickSightDashboard node removed — QuickSight is disabled in this deployment
+    # (QuickSight Standard, not Enterprise; quicksight_*.tf parked in terraform/_qs_disabled/).
 
     # ── Monitoring ────────────────────────────────────────────────────────────────
     MonitorRow:
@@ -411,22 +408,11 @@ Diagram:
       TargetArrowHead:
         Type: Open
 
-    - Source: Athena
-      SourcePosition: S
-      Target: QuickSightDashboard
-      TargetPosition: N
-      TargetArrowHead:
-        Type: Open
+    # QuickSight edges removed (Athena → QuickSightDashboard, QuickSightDashboard → EndUser)
+    # — QuickSight is disabled in this deployment.
 
     # ── Dashboards → User (E→W: AWS into right panel) ────────────────────────────
     - Source: S3Dashboard
-      SourcePosition: E
-      Target: EndUser
-      TargetPosition: W
-      TargetArrowHead:
-        Type: Open
-
-    - Source: QuickSightDashboard
       SourcePosition: E
       Target: EndUser
       TargetPosition: W
