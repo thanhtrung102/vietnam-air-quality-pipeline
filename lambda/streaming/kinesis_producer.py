@@ -140,9 +140,14 @@ def _load_config() -> dict:
     if raw_ids.strip():
         try:
             station_ids = [int(x.strip()) for x in raw_ids.split(",") if x.strip()]
-        except ValueError:
+        except ValueError as exc:
+            # Raise (not sys.exit) so the Lambda handler's `except ValueError`
+            # returns a structured error instead of crashing with SystemExit.
+            # The __main__ CLI block below still exits non-zero on this ValueError.
             log.error("STATION_IDS must be comma-separated integers, got: %s", raw_ids)
-            sys.exit(1)
+            raise ValueError(
+                f"STATION_IDS must be comma-separated integers, got: {raw_ids!r}"
+            ) from exc
     else:
         station_ids = list(_DEFAULT_STATION_IDS)
 
@@ -392,7 +397,13 @@ def main():
     p.add_argument("--loop", action="store_true", help="Poll every 2 hours continuously")
     args = p.parse_args()
 
-    cfg     = _load_config()
+    try:
+        cfg = _load_config()
+    except ValueError as exc:
+        # CLI entrypoint: exit non-zero on bad config. The Lambda handler
+        # (handler.py) catches this same ValueError and returns a structured error.
+        log.error("%s", exc)
+        sys.exit(1)
     kinesis = boto3.client("kinesis", region_name=cfg["region"])
 
     log.info("producer started — stream=%s  stations=%d",

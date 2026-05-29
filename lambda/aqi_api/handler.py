@@ -148,27 +148,35 @@ def handler(event, context):
 
     features = []
     for row in rows:
+        # Skip any single malformed row (missing/non-numeric required fields)
+        # rather than aborting the whole 200 response. Every field touched while
+        # building the feature lives inside this try so one bad row can never
+        # raise an unhandled exception that turns a partial success into a 500.
         try:
             lat = float(row["station_lat"])
             lon = float(row["station_lon"])
             aqi = int(row["composite_aqi"]) if row["composite_aqi"] else None
-        except (ValueError, KeyError):
+
+            location_id = int(row["location_id"])
+            location_name = row["location_name"]
+            city = row["city"]
+
+            category = row.get("health_category", "")
+            raw_cig = row.get("cigarette_equivalent", "")
+            cig = round(float(raw_cig), 1) if raw_cig else None
+
+            raw_pm25 = row.get("pm25_avg", "")
+            pm25 = round(float(raw_pm25), 1) if raw_pm25 else None
+        except (ValueError, KeyError, TypeError):
             continue
-
-        category = row.get("health_category", "")
-        raw_cig = row.get("cigarette_equivalent", "")
-        cig = round(float(raw_cig), 1) if raw_cig else None
-
-        raw_pm25 = row.get("pm25_avg", "")
-        pm25 = round(float(raw_pm25), 1) if raw_pm25 else None
 
         features.append({
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": [lon, lat]},
             "properties": {
-                "location_id": int(row["location_id"]),
-                "location_name": row["location_name"],
-                "city": row["city"],
+                "location_id": location_id,
+                "location_name": location_name,
+                "city": city,
                 "composite_aqi": aqi,
                 "health_category": category,
                 "dominant_pollutant": row.get("dominant_pollutant", ""),

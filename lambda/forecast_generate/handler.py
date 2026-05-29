@@ -176,6 +176,56 @@ def _holdout_rmse(predicted: np.ndarray, actual: np.ndarray) -> float:
     return float(np.sqrt(np.mean((predicted - actual) ** 2)))
 
 
+# Cap walk-forward steps so a long holdout window cannot blow the Lambda
+# runtime budget; we still get a statistically meaningful 1-step error.
+_MAX_BACKTEST_STEPS = 30
+
+
+def _walk_forward_rmse(pm25_ser: "pd.Series", holdout_days: int) -> float:
+    """Rolling 1-step-ahead walk-forward backtest RMSE over the holdout window.
+
+    Why this replaces the old approach: previously we fit on series[:-holdout]
+    then produced a single `holdout_days`-step-ahead forecast and compared it to
+    the holdout actuals. A SARIMA forecast mean-reverts toward the series mean as
+    the horizon grows, so steps 5..30 mostly measured "distance from the mean",
+    not real predictive skill — inflating RMSE and making it horizon-dependent.
+
+    Instead we evaluate the model the way it is actually used day-to-day: at each
+    holdout step predict ONLY 1 step ahead, score it against the real value, then
+    extend the fitted state with that observed value (statsmodels `.append()`,
+    refit=False — a Kalman state update, not a full re-optimisation) and advance.
+    The aggregated 1-step errors give an honest, horizon-independent RMSE.
+
+    Runtime is bounded: one initial fit plus up to `_MAX_BACKTEST_STEPS` cheap
+    state extensions (no per-step re-optimisation).
+    """
+    n = len(pm25_ser)
+    steps = min(holdout_days, _MAX_BACKTEST_STEPS, max(n - MIN_TRAIN_DAYS, 0))
+    if steps < 1:
+        # Not enough data to hold anything out — fall back to in-sample-free 0.0
+        return 0.0
+
+    split = n - steps
+    train = pm25_ser.iloc[:split]
+    actuals = pm25_ser.iloc[split:].values
+
+    result = _fit_sarima(train)
+
+    sq_errors = []
+    for i in range(steps):
+        one_step = result.get_forecast(steps=1)
+        pred = float(np.maximum(0, one_step.predicted_mean.values)[0])
+        actual = float(actuals[i])
+        sq_errors.append((pred - actual) ** 2)
+
+        # Extend the fitted state with the now-observed value (no re-optimisation)
+        # so the next 1-step forecast uses all data up to and including step i.
+        observed = pm25_ser.iloc[split + i : split + i + 1]
+        result = result.append(observed, refit=False)
+
+    return float(np.sqrt(np.mean(sq_errors)))
+
+
 # ── CloudWatch metric emission ────────────────────────────────────────────────
 
 def _emit_rmse_metric(cw_client, city: str, rmse: float) -> None:
@@ -269,18 +319,15 @@ def handler(event, context):
 
         pm25_ser = sdf.set_index("measurement_date")["avg_pm25"]
 
-        sarima_result_ho = sarima_full = None
+        sarima_full = None
         try:
-            # ── Holdout A/B split ──────────────────────────────────────────
-            train_pm25 = pm25_ser.iloc[:-HOLDOUT_DAYS]
-            actual_ho  = pm25_ser.iloc[-HOLDOUT_DAYS:].values
+            # ── Rolling 1-step walk-forward backtest over the holdout window ─
+            # Replaces the old single HOLDOUT_DAYS-step-ahead forecast, whose
+            # RMSE was inflated by SARIMA mean-reversion at long horizons. See
+            # _walk_forward_rmse for the full rationale.
+            sarima_rmse = _walk_forward_rmse(pm25_ser, HOLDOUT_DAYS)
 
-            # ── SARIMA holdout ─────────────────────────────────────────────
-            sarima_result_ho = _fit_sarima(train_pm25)
-            sarima_ho_pred, _, _ = _forecast_sarima(sarima_result_ho, HOLDOUT_DAYS)
-            sarima_rmse = _holdout_rmse(sarima_ho_pred, actual_ho)
-
-            logger.info("Station %s (%s): SARIMA RMSE=%.2f", loc_id, city, sarima_rmse)
+            logger.info("Station %s (%s): SARIMA walk-forward RMSE=%.2f", loc_id, city, sarima_rmse)
             city_rmse.setdefault(city, []).append(sarima_rmse)
 
             # ── Full-series refit + 7-day forecast ─────────────────────────
@@ -312,7 +359,7 @@ def handler(event, context):
             logger.error("Station %s failed: %s", loc_id, exc, exc_info=True)
             errors += 1
         finally:
-            sarima_result_ho = sarima_full = None
+            sarima_full = None
             gc.collect()
 
     # ── Emit city-level RMSE metrics to CloudWatch ────────────────────────
