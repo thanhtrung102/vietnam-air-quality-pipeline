@@ -282,15 +282,15 @@ resource "aws_cloudwatch_log_group" "streaming_producer" {
 # Timeout 900s covers aws s3 sync cross-region (us-east-1 → ap-southeast-1).
 
 resource "aws_lambda_function" "batch_sync" {
-  function_name = "openaq_batch_sync"
-  role          = aws_iam_role.lambda_exec.arn
-  runtime       = var.lambda_runtime
-  handler       = "handler.handler"
+  function_name    = "openaq_batch_sync"
+  role             = aws_iam_role.lambda_exec.arn
+  runtime          = var.lambda_runtime
+  handler          = "handler.handler"
   filename         = var.lambda_batch_zip_path
   source_code_hash = filebase64sha256(var.lambda_batch_zip_path)
-  timeout       = 900
-  memory_size   = 512
-  architectures = ["arm64"]
+  timeout          = 900
+  memory_size      = 512
+  architectures    = ["arm64"]
 
   tracing_config {
     mode = "Active"
@@ -321,15 +321,15 @@ resource "aws_lambda_function" "batch_sync" {
 # (setting a reserved Lambda env var causes an API error on apply).
 
 resource "aws_lambda_function" "streaming_producer" {
-  function_name = "openaq_streaming_producer"
-  role          = aws_iam_role.lambda_exec.arn
-  runtime       = var.lambda_runtime
-  handler       = "handler.handler"
+  function_name    = "openaq_streaming_producer"
+  role             = aws_iam_role.lambda_exec.arn
+  runtime          = var.lambda_runtime
+  handler          = "handler.handler"
   filename         = var.lambda_streaming_zip_path
   source_code_hash = filebase64sha256(var.lambda_streaming_zip_path)
-  timeout       = 120
-  memory_size   = 256
-  architectures = ["arm64"]
+  timeout          = 120
+  memory_size      = 256
+  architectures    = ["arm64"]
 
   tracing_config {
     mode = "Active"
@@ -477,15 +477,15 @@ resource "aws_cloudwatch_log_group" "aqi_api" {
 }
 
 resource "aws_lambda_function" "aqi_api" {
-  function_name = "openaq_aqi_api"
-  role          = aws_iam_role.lambda_exec.arn
-  runtime       = var.lambda_runtime
-  handler       = "handler.handler"
+  function_name    = "openaq_aqi_api"
+  role             = aws_iam_role.lambda_exec.arn
+  runtime          = var.lambda_runtime
+  handler          = "handler.handler"
   filename         = var.lambda_aqi_api_zip_path
   source_code_hash = filebase64sha256(var.lambda_aqi_api_zip_path)
-  timeout       = 60
-  memory_size   = 256
-  architectures = ["arm64"]
+  timeout          = 60
+  memory_size      = 256
+  architectures    = ["arm64"]
 
   tracing_config {
     mode = "Active"
@@ -564,15 +564,15 @@ resource "aws_cloudwatch_log_group" "completeness_check" {
 }
 
 resource "aws_lambda_function" "completeness_check" {
-  function_name = "openaq_completeness_check"
-  role          = aws_iam_role.lambda_exec.arn
-  runtime       = var.lambda_runtime
-  handler       = "handler.handler"
+  function_name    = "openaq_completeness_check"
+  role             = aws_iam_role.lambda_exec.arn
+  runtime          = var.lambda_runtime
+  handler          = "handler.handler"
   filename         = var.lambda_completeness_zip_path
   source_code_hash = filebase64sha256(var.lambda_completeness_zip_path)
-  timeout       = 120
-  memory_size   = 256
-  architectures = ["arm64"]
+  timeout          = 120
+  memory_size      = 256
+  architectures    = ["arm64"]
 
   tracing_config {
     mode = "Active"
@@ -670,15 +670,15 @@ resource "aws_cloudwatch_log_group" "weather_ingest" {
 }
 
 resource "aws_lambda_function" "weather_ingest" {
-  function_name = "openaq_weather_ingest"
-  role          = aws_iam_role.lambda_exec.arn
-  runtime       = var.lambda_runtime
-  handler       = "handler.handler"
+  function_name    = "openaq_weather_ingest"
+  role             = aws_iam_role.lambda_exec.arn
+  runtime          = var.lambda_runtime
+  handler          = "handler.handler"
   filename         = var.lambda_weather_zip_path
   source_code_hash = filebase64sha256(var.lambda_weather_zip_path)
-  timeout       = 900 # 21 stations × 365 days = 7,665 S3 writes; 5 min insufficient for backfill_days=365
-  memory_size   = 256
-  architectures = ["arm64"]
+  timeout          = 900 # 21 stations × 365 days = 7,665 S3 writes; 5 min insufficient for backfill_days=365
+  memory_size      = 256
+  architectures    = ["arm64"]
 
   tracing_config {
     mode = "Active"
@@ -734,8 +734,30 @@ resource "aws_lambda_permission" "weather_scheduler" {
 # Schedule: 02:30 UTC — after weather_ingest (02:00) and before forecast (03:00).
 # The project reads the transform/ source from S3 (uploaded by CI or manually).
 
+# dbt CodeBuild source — packaged and uploaded by Terraform so the transform
+# layer is reproducible from `terraform apply` alone (previously the zip was
+# built and uploaded by hand). archive_file is pure-Go (no local `zip`/`aws`
+# dependency), so any operator can deploy. The zip holds the transform/ contents
+# at its root; buildspec_dbt.yml's `if [ -d transform ]` guard handles both that
+# layout and the legacy whole-repo layout.
+data "archive_file" "codebuild_source" {
+  type        = "zip"
+  source_dir  = "${path.module}/../transform"
+  output_path = "${path.module}/codebuild-source.zip"
+  # Local dbt artifacts; regenerated in the build (dbt deps / dbt run) — never ship them.
+  excludes = ["dbt_packages", "logs", "target", ".user.yml", "package-lock.yml"]
+}
+
+resource "aws_s3_object" "codebuild_source" {
+  bucket = aws_s3_bucket.main.id
+  key    = "codebuild-source.zip"
+  source = data.archive_file.codebuild_source.output_path
+  etag   = data.archive_file.codebuild_source.output_md5
+}
+
 resource "aws_codebuild_project" "dbt_runner" {
   name          = "openaq-dbt-runner"
+  depends_on    = [aws_s3_object.codebuild_source]
   service_role  = aws_iam_role.dbt_runner.arn
   build_timeout = 30 # minutes; dbt run takes ~16 min
 
@@ -770,9 +792,11 @@ resource "aws_codebuild_project" "dbt_runner" {
   }
 
   source {
-    type      = "S3"
-    location  = "${local.bucket_name}/codebuild-source.zip"
-    buildspec = "transform/buildspec_dbt.yml"
+    type     = "S3"
+    location = "${local.bucket_name}/codebuild-source.zip"
+    # Zip root == transform/ contents (archive_file source_dir), so the buildspec
+    # is at the root of the source, not under transform/.
+    buildspec = "buildspec_dbt.yml"
   }
 
   logs_config {

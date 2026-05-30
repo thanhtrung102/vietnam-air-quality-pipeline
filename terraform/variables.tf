@@ -20,12 +20,6 @@ variable "alert_email" {
   type        = string
 }
 
-variable "openaq_api_key" {
-  description = "OpenAQ v3 API key for the streaming Lambda function"
-  type        = string
-  sensitive   = true
-}
-
 variable "lambda_runtime" {
   description = "Runtime identifier for all zip-packaged Lambda functions"
   type        = string

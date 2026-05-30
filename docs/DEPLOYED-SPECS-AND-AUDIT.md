@@ -112,7 +112,7 @@ Open-Meteo ERA5 ──(weather_ingest Lambda, daily 02:00 UTC)──────
 | `openaq_forecast_generate` | 1024MB / 900s | EventBridge 03:00 UTC | 🔴 **NOT deployed** (`forecast_lambda_image_uri=""` gates `count=0`) |
 
 - **HTTP API Gateway** `openaq-aqi-api` → `https://lfek8fdabb.execute-api.ap-southeast-1.amazonaws.com`, `$default` stage, CORS `*`.
-- **CodeBuild** `openaq-dbt-runner` — BUILD_GENERAL1_SMALL, image `ghcr.io/dbt-labs/dbt-athena:1.10.0`, 30-min timeout, S3 source + `transform/buildspec_dbt.yml`.
+- **CodeBuild** `openaq-dbt-runner` — BUILD_GENERAL1_SMALL, image `aws/codebuild/standard:7.0` (pip-installs `dbt-athena-community`; the old `ghcr.io/dbt-labs/dbt-athena` image is GHCR-rate-limited from CodeBuild NAT IPs), 30-min timeout. S3 source `codebuild-source.zip` is **built + uploaded by Terraform** (`archive_file` + `aws_s3_object`); buildspec `buildspec_dbt.yml` at the zip root.
 - **EventBridge schedules** (UTC, all ENABLED): batch `cron(0 1)`, weather `cron(0 2)`, dbt `cron(30 2)`, streaming `cron(0/30)`, completeness `cron(0 *)`.
 
 ### Messaging, secrets, observability

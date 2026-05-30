@@ -10,7 +10,7 @@
 
 | Lens | Score | One-line verdict |
 |---|---|---|
-| Reproducibility | **3** | Pinned providers, single-sourced roster, real CI — but from-zero deploy needs manual zip-build + codebuild-source upload, and local-only state. |
+| Reproducibility | **3** → now stronger | Pinned providers, single-sourced roster, real CI — but from-zero deploy needs manual zip-build + codebuild-source upload, and local-only state. *(Resolved 2026-05-30: Lambda `source_code_hash` + codebuild-source now built/uploaded by Terraform; only local state remains — see Resolution status.)* |
 | Reliability | **3** | Good app-layer retry/idempotency; orchestration-layer failure capture is weaker than docs imply (DLQs largely inert on the synchronous scheduled paths). |
 | Security | **3** | Encryption solid, runtime role least-privilege, secret hardened; residual: unauthenticated API with no throttle, over-broad CI Glue role, local unencrypted state. |
 | Cost | **3** | Correct guardrails (10GB cap, projection, bi_disabled). Full-CTAS daily rebuild is an architectural smell but negligible $ at 1.38M rows today. |
@@ -66,13 +66,15 @@ Of 15 material findings put to a skeptic: **1 upheld high · 8 confirmed but dow
 The HIGH/MEDIUM findings above were acted on the same day; this block is the current truth (the
 scorecard and verdict table are preserved as the point-in-time evaluation).
 
-- ✅ **batch_sync silent per-station failure** → `BatchStationFailures` metric + `openaq-batch-station-failures` alarm shipped. **It immediately earned its keep:** the first live run surfaced `BatchStationFailures=5` — all 5 *active* stations failing PutObject with `MissingContentLength` (a streaming-Body-without-length bug), so new batch data had been silently not syncing (this is why the mart was stuck at 2026-05-20). Root-caused and fixed (`_copy_object` now passes `ContentLength`); redeployed and re-verified.
+- ✅ **batch_sync silent per-station failure** → `BatchStationFailures` metric + `openaq-batch-station-failures` alarm shipped. **It immediately earned its keep:** the first live run surfaced `BatchStationFailures=5` — all 5 *active* stations failing PutObject (streaming a non-seekable `StreamingBody`: `MissingContentLength`, then `SignatureDoesNotMatch`), so new batch data had been silently not syncing (this is why the mart was stuck at 2026-05-20). Fixed `_copy_object` to read the object into bytes; redeployed and re-verified live: `success=63 failed=0 copied=34`.
 - ✅ **No direct Lambda Errors / DLQ-depth alarms** → per-function `Errors` ×5, `aqi_api` Throttles, both DLQ-depth alarms shipped (14 openaq alarms live).
 - ✅ **Stale-suppression masks dead pipeline** → `DaysSinceLastNewMart` metric (NOT suppressed) + `openaq-mart-stale` alarm (>21d) shipped; verified emitting (=10).
 - ✅ **weather_ingest no alarm / all-stations outage silent** → `WeatherIngestErrors` metric + `openaq-weather-ingest-errors` alarm shipped; verified emitting (=0).
 - ✅ **mart-expiry under `athena-results/` 7-day rule** → `enforce_workgroup_configuration=false`; dbt marts now write to `processed/openaq_mart/` (Intelligent-Tiering, off the expiry path). The action #3 mechanism above ("repoint to `athena-results/query/`") was proven infeasible — under enforcement Athena rejects CTAS `external_location` and marts would still nest under the expired prefix. Verified live; see DATA-LIFECYCLE.md §6.
 - ✅ **No `source_code_hash`** → added to all 5 Lambda functions; rebuilt zips now redeploy (proven this round).
-- ⏳ **Still open:** codebuild-source.zip out-of-band packaging; dual secret-bootstrap path; public API throttle/WAF; local Terraform state → remote backend; CI dbt_runner Glue role scope-down.
+- ✅ **codebuild-source.zip built/uploaded by hand** → now packaged + uploaded by Terraform (`archive_file` + `aws_s3_object`, pure-Go so no local `zip` needed); buildspec moved to the zip root. The dbt transform layer is now reproducible from `terraform apply` alone. Verified live: a fresh dbt build consumed the Terraform-built zip and succeeded.
+- ✅ **Dual secret-bootstrap path** → removed the unused `openaq_api_key` variable + its dead `terraform.tfvars` copy; Secrets Manager (post-deploy `postdeploy.sh` injection) is now the single path. `terraform plan` showed zero infra diff, confirming it was dead config.
+- ⏳ **Still open:** public API throttle/WAF/reserved-concurrency; local Terraform state → remote backend; CI dbt_runner Glue role scope-down.
 
 ## Process note
 The verification step refuted/softened more than half the initial findings — including two I'd previously have reported with confidence (the "no runbook" and "tfstate held the secret" claims). Treat any single-pass review of this codebase with that prior: it presents worse than it is on first read, because the workshop docs and the secret-migration design aren't obvious without checking the artifacts.
