@@ -156,7 +156,7 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 | dbt build | **PASS=12, ERROR=0** (805 s) | CodeBuild log |
 | `int_measurements_enriched` | **1,361,731 rows** | dbt run log |
 | `mart_daily_air_quality` | **18,303 rows** | Athena count |
-| `mart_daily_aqi` | **309 rows, 2 stations** | Athena count |
+| `mart_daily_aqi` | **4,704 rows, 17 stations** (2023-01-01→2026-05-20) | Athena count |
 | `mart_lagged_features` (forecast input) | **4,684 rows** | Athena count |
 | Seeds | 61 holidays, 21 stations | dbt seed log |
 | Streaming ingest | 66 records published, 0 failed | Lambda invoke |
@@ -167,12 +167,14 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 
 ## 6. Honest Caveats (what is NOT yet true)
 
-1. **Data freshness.** The marts currently span **2023-01-01 → 2023-09-09** (the raw S3 archive in the
-   bucket is from a 2023 backfill). So `aqi_api` returns a **valid but empty** GeoJSON (its 7-day window
-   finds nothing recent), and `completeness_check` correctly reports `is_archive_stale: true`
-   (data_age 994 days). **The pipeline is proven correct end-to-end; it just needs current data.** The
-   scheduled `batch_sync`/`streaming` Lambdas will advance it on their next runs (or invoke `batch_sync`
-   with a wider `SYNC_MONTHS` / run `ingestion/historical/sync_historical.sh` to backfill 2024-2026).
+1. **Data freshness.** The marts span **2023-01-01 → 2026-05-20** (1.38 M raw batch rows; the
+   `mart_daily_aqi` figure of "309 rows / 2023-09-09" in an earlier draft was a stale read taken
+   *mid-build* — the completed build yields 4,704 AQI rows across 17 stations to 2026-05-20). The
+   **latest date (2026-05-20) is still ~10 days behind wall-clock**, so `aqi_api`'s 7-day window
+   returns a **valid but empty** GeoJSON and `completeness_check` reports `is_archive_stale: true`.
+   This is the OpenAQ archive's normal lag, not a pipeline fault — the scheduled `batch_sync`/`streaming`
+   Lambdas advance it on their next runs (or run `ingestion/historical/sync_historical.sh` to backfill
+   the most recent weeks). **The pipeline is proven correct end-to-end.**
 2. **Forecast subsystem** is gated off (no ECR image) — by design.
 3. **QuickSight** is disabled (account is Standard edition, not Enterprise) — by design; 8 marts that fed
    it are excluded from the default dbt build via `tag:bi_disabled`.
