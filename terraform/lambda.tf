@@ -487,6 +487,12 @@ resource "aws_lambda_function" "aqi_api" {
   memory_size      = 256
   architectures    = ["arm64"]
 
+  # Caps blast radius of a traffic flood on the public endpoint: at most 10
+  # concurrent executions (Athena queries / cost), and excess invocations throttle
+  # — surfaced by the openaq-aqi-api-throttles alarm. Account default unreserved
+  # pool (1000) easily absorbs the 10 reserved here.
+  reserved_concurrent_executions = 10
+
   tracing_config {
     mode = "Active"
   }
@@ -540,6 +546,15 @@ resource "aws_apigatewayv2_stage" "aqi_api" {
   api_id      = aws_apigatewayv2_api.aqi_api.id
   name        = "$default"
   auto_deploy = true
+
+  # Cost/abuse guard on the public, unauthenticated endpoint. The dashboard makes
+  # a handful of GETs per load and the Lambda caches for 1h, so 10 req/s steady
+  # (burst 20) is generous for legitimate use while capping a scraper/flood. Paired
+  # with the Lambda reserved concurrency below and the aqi_api_throttles alarm.
+  default_route_settings {
+    throttling_burst_limit = 20
+    throttling_rate_limit  = 10
+  }
 
   tags = local.common_tags
 }
@@ -860,12 +875,24 @@ resource "aws_iam_role_policy" "dbt_runner" {
         ]
         Resource = [
           "arn:aws:athena:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:workgroup/openaq_workgroup",
+          # catalog grant covers GetDatabases / GetDataCatalog (account-level list
+          # ops dbt-athena runs at startup). Database/table grants are scoped to the
+          # databases this dbt project actually touches — previously database/* +
+          # table/*, which let the runner delete ANY Glue database in the account.
+          # Live databases (verified 2026-05-31): default, openaq_mart, openaq_raw.
+          #   openaq_raw   — sources (batch/stream/weather), read
+          #   openaq_mart* — marts + seeds (openaq_mart) AND dbt's --store-failures
+          #                  audit schema openaq_mart_dbt_test__audit, created lazily
+          #                  only on a stored failure; the wildcard covers it safely.
+          #   default      — Glue/Athena default database
+          # userDefinedFunction/* dropped: dbt-athena creates no UDFs.
           "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
-          # dbt creates a transient openaq_mart_dbt_test__audit database, so the
-          # Glue grants cover all databases/tables in this account+region.
-          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/*",
-          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/*",
-          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:userDefinedFunction/*",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_raw",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_mart*",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/default",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_raw/*",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_mart*/*",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/default/*",
         ]
       },
       {

@@ -34,10 +34,13 @@ phases:
       - if [ -d transform ]; then cd transform; fi
       # Install dbt_utils package (packages.yml: dbt-labs/dbt_utils >=1.0.0)
       - dbt deps --profiles-dir . --project-dir .
-      # Source-freshness gate: surface stale raw sources (SLAs declared in
-      # sources.yml). Non-blocking — mirrors the dbt test posture below; the
-      # warning appears in the CodeBuild log without failing the nightly build.
-      - dbt source freshness --profiles-dir . --project-dir . || echo "WARN dbt source freshness exceeded SLA"
+      # NOTE: `dbt source freshness` is intentionally NOT run here. dbt-athena
+      # computes source freshness from Glue table metadata (`last_modified`) and
+      # returns it as a string, so it errors on every source regardless of actual
+      # freshness (dbt-athena #631) — a gate that always warns is noise. Source
+      # freshness is instead enforced by the singular test
+      # tests/assert_batch_source_fresh.sql (query-based, runs in the post_build
+      # `dbt test` step) plus the deployed DaysSinceLastNewMart CloudWatch alarm.
 
   build:
     commands:

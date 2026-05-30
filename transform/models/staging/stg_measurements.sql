@@ -1,7 +1,7 @@
 /*
-stg_measurements — staging view over the unified raw_measurements external table.
+stg_measurements — staging view over the unified `batch` measurements external table.
 
-Source: openaq_raw.raw_measurements (partition-projected Athena external table,
+Source: openaq_raw.batch (partition-projected Athena external table,
         raw/batch/ prefix, OpenCSVSerde handles quoted and unquoted CSV rows).
 
 Transformations:

@@ -3,7 +3,7 @@ version: 2
 models:
   - name: stg_measurements
     description: >
-      Staging view over openaq_raw.raw_measurements. Casts and renames columns,
+      Staging view over openaq_raw.batch. Casts and renames columns,
       filters sentinel values and nulls, and derives measurement_date for
       downstream mart partitioning.
 

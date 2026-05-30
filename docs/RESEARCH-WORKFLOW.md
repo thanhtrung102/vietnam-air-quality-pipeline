@@ -63,8 +63,15 @@ Validate/challenge choices against authoritative AWS patterns:
 - **dbt-expectations** range/set tests (PM2.5 0–1000, RH 0–100, wind 0–360); **Elementary**
   `volume_anomalies`/`freshness_anomalies`/`column_anomalies` (a missed batch sync silently shrinks a
   day-partition — Elementary catches it).
-- **Gate the DAG on `dbt source freshness`** (SLAs already declared in `sources.yml`); enforce
-  `contract: {enforced: true}` on the consumer marts (`mart_daily_aqi`, `mart_daily_air_quality`).
+- **Freshness gating on Athena: do NOT use `dbt source freshness`.** dbt-athena computes it from
+  Glue metadata (`last_modified`) returned as a string, so it errors on every source regardless of
+  actual freshness ([dbt-athena #631](https://github.com/dbt-labs/dbt-athena/issues/631)) — and the
+  `loaded_at_field` override the dbt docs say forces query-based freshness is ignored by the adapter.
+  *Verified live 2026-05-31:* a CodeBuild run errored on all 3 freshness-configured sources while the
+  non-blocking gate masked it as a constant WARN. Instead enforce freshness with a **singular
+  query-based test** (`select max(from_iso8601_timestamp(ts)) … having … < current_timestamp - interval`)
+  in the non-blocking `dbt test` step, backed by the deployed `DaysSinceLastNewMart` CloudWatch alarm.
+  Still enforce `contract: {enforced: true}` on the consumer marts (`mart_daily_aqi`, `mart_daily_air_quality`).
 - **Idempotent backfill** = partition overwrite: marts are `partitioned_by=['measurement_date']`, so
   `incremental` + `insert_overwrite` keyed on date is the cheapest idempotent path **when** full-refresh
   scan cost justifies it (not before). Iceberg `merge` + Write-Audit-Publish only if row-level
