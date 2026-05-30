@@ -813,27 +813,37 @@ resource "aws_iam_role_policy" "dbt_runner" {
         Sid    = "AthenaAndGlue"
         Effect = "Allow"
         Action = [
+          # Athena: dbt-athena calls GetWorkGroup on startup, plus query lifecycle.
           "athena:StartQueryExecution", "athena:GetQueryExecution",
           "athena:GetQueryResults", "athena:StopQueryExecution",
-          "glue:GetDatabase", "glue:GetDatabases", "glue:CreateDatabase",
-          "glue:GetTable", "glue:GetTables", "glue:BatchDeleteTable",
+          "athena:GetWorkGroup", "athena:GetDataCatalog",
+          "athena:ListDatabases", "athena:GetDatabase", "athena:GetTableMetadata",
+          # Glue: full catalog management for the openaq_mart schema dbt builds,
+          # incl. the openaq_mart_dbt_test__audit schema dbt creates for tests and
+          # GetTableVersion(s) which the adapter reads when relations already exist.
+          "glue:GetDatabase", "glue:GetDatabases", "glue:CreateDatabase", "glue:DeleteDatabase",
+          "glue:GetTable", "glue:GetTables", "glue:CreateTable", "glue:UpdateTable",
+          "glue:DeleteTable", "glue:BatchDeleteTable",
+          "glue:GetTableVersion", "glue:GetTableVersions", "glue:DeleteTableVersion", "glue:BatchDeleteTableVersion",
           "glue:GetPartition", "glue:GetPartitions", "glue:BatchGetPartition",
-          "glue:CreateTable", "glue:UpdateTable", "glue:DeleteTable",
           "glue:CreatePartition", "glue:BatchCreatePartition",
           "glue:UpdatePartition", "glue:DeletePartition", "glue:BatchDeletePartition",
         ]
         Resource = [
           "arn:aws:athena:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:workgroup/openaq_workgroup",
           "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
-          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_mart",
-          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_mart/*",
-          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/openaq_raw",
-          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/openaq_raw/*",
+          # dbt creates a transient openaq_mart_dbt_test__audit database, so the
+          # Glue grants cover all databases/tables in this account+region.
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/*",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/*",
+          "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:userDefinedFunction/*",
         ]
       },
       {
         Sid    = "S3ReadWrite"
         Effect = "Allow"
+        # GetBucketLocation is required by Athena StartQueryExecution to verify
+        # the query-results output bucket.
         Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket", "s3:GetBucketLocation"]
         Resource = [
           "arn:aws:s3:::${local.bucket_name}",
