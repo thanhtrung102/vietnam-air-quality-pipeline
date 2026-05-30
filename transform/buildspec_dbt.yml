@@ -14,9 +14,24 @@ version: 0.2
 #     aws s3 cp codebuild-source.zip s3://openaq-pipeline-<suffix>/
 
 phases:
+  install:
+    # dbt-athena is installed via pip on the AWS-managed CodeBuild image
+    # (aws/codebuild/standard:7.0). We no longer use ghcr.io/dbt-labs/dbt-athena
+    # (anonymous GHCR pulls are rate-limited from CodeBuild's shared NAT IPs ->
+    # CannotPullImageManifestError).
+    runtime-versions:
+      python: 3.12
+    commands:
+      - python --version
+      - pip install --quiet --upgrade pip
+      - pip install --quiet dbt-athena-community
+      - dbt --version
   pre_build:
     commands:
-      - cd transform
+      # CodeBuild runs the buildspec from the dir containing it (transform/) when
+      # the project buildspec path is transform/buildspec_dbt.yml, but runs from
+      # the source root when invoked another way — cd only if not already there.
+      - if [ -d transform ]; then cd transform; fi
       # Install dbt_utils package (packages.yml: dbt-labs/dbt_utils >=1.0.0)
       - dbt deps --profiles-dir . --project-dir .
 
@@ -25,10 +40,13 @@ phases:
       # Seeds before marts: vn_stations and vn_holidays are referenced by
       # int_measurements_enriched and mart_daily_aqi.
       - dbt seed --profiles-dir . --project-dir . --select vn_stations vn_holidays
-      - dbt run  --profiles-dir . --project-dir .
+      # Exclude bi_disabled marts: they feed only the disabled QuickSight layer or
+      # the not-yet-deployed forecast table (mart_forecast_accuracy reads the
+      # Lambda-written mart_daily_forecast). Re-include when those are enabled.
+      - dbt run  --profiles-dir . --project-dir . --exclude tag:bi_disabled
 
   post_build:
     commands:
       # Non-blocking tests: failures appear in CloudWatch but don't fail the build.
-      - dbt test --profiles-dir . --project-dir . --store-failures || echo "WARN dbt tests had failures"
+      - dbt test --profiles-dir . --project-dir . --exclude tag:bi_disabled --store-failures || echo "WARN dbt tests had failures"
       - echo "dbt run complete at $(date -u)"

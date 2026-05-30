@@ -740,8 +740,11 @@ resource "aws_codebuild_project" "dbt_runner" {
 
   environment {
     compute_type = "BUILD_GENERAL1_SMALL"
-    image        = "ghcr.io/dbt-labs/dbt-athena:1.10.0"
-    type         = "LINUX_CONTAINER"
+    # AWS-managed image + pip install dbt-athena-community (see buildspec_dbt.yml).
+    # The previous ghcr.io/dbt-labs/dbt-athena image is rate-limited from
+    # CodeBuild's shared NAT IPs (CannotPullImageManifestError: denied).
+    image = "aws/codebuild/standard:7.0"
+    type  = "LINUX_CONTAINER"
 
     environment_variable {
       name  = "AWS_DEFAULT_REGION"
@@ -812,9 +815,11 @@ resource "aws_iam_role_policy" "dbt_runner" {
         Action = [
           "athena:StartQueryExecution", "athena:GetQueryExecution",
           "athena:GetQueryResults", "athena:StopQueryExecution",
-          "glue:GetDatabase", "glue:GetTable", "glue:GetTables",
-          "glue:GetPartitions", "glue:CreateTable", "glue:UpdateTable",
-          "glue:DeleteTable", "glue:CreatePartition", "glue:BatchCreatePartition",
+          "glue:GetDatabase", "glue:GetDatabases", "glue:CreateDatabase",
+          "glue:GetTable", "glue:GetTables", "glue:BatchDeleteTable",
+          "glue:GetPartition", "glue:GetPartitions", "glue:BatchGetPartition",
+          "glue:CreateTable", "glue:UpdateTable", "glue:DeleteTable",
+          "glue:CreatePartition", "glue:BatchCreatePartition",
           "glue:UpdatePartition", "glue:DeletePartition", "glue:BatchDeletePartition",
         ]
         Resource = [
@@ -829,7 +834,7 @@ resource "aws_iam_role_policy" "dbt_runner" {
       {
         Sid    = "S3ReadWrite"
         Effect = "Allow"
-        Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+        Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket", "s3:GetBucketLocation"]
         Resource = [
           "arn:aws:s3:::${local.bucket_name}",
           "arn:aws:s3:::${local.bucket_name}/*",
