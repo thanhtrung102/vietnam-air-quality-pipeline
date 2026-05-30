@@ -75,5 +75,10 @@
   - `openaq_forecast_generate` (ECR container image, SARIMA 7-day PM2.5) — **gated/not deployed by default**: created only when `var.forecast_lambda_image_uri != ""` (`count`-gated in lambda.tf). Requires building and pushing the ECR image first.
 - **EventBridge schedules:** openaq_batch_daily, openaq_streaming_30min, openaq_weather_daily, openaq_dbt_daily (CodeBuild), openaq_completeness_hourly, openaq_forecast_daily (forecast schedule is also gated on the forecast image)
 
+## Research method
+- Open every development cycle with `docs/RESEARCH-WORKFLOW.md` — the project's reusable research
+  workflow (live-state recon, domain-correctness check, reference-arch grounding, data-eng rigor,
+  constraint envelope). Verify findings against live AWS before they inform a plan.
+
 ## Rules
 - **Never hardcode API keys** — always read from environment variables
