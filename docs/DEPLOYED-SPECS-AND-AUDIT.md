@@ -95,16 +95,16 @@ Open-Meteo ERA5 ──(weather_ingest Lambda, daily 02:00 UTC)──────
   Query-result-reuse set out-of-band via a `null_resource` local-exec (not state-tracked).
 
 ### Ingestion
-- **Kinesis** `openaq_stream` — ON_DEMAND, 168h retention, **encryption NONE**.
+- **Kinesis** `openaq_stream` — ON_DEMAND, 168h retention, **KMS encryption** (`alias/aws/kinesis`).
 - **Firehose** `openaq_firehose` — Kinesis → S3 `raw/stream/yyyy/MM/dd/HH/`, GZIP, 128MB/300s buffer.
 
 ### Compute (5 zip Lambdas — all python3.12 / arm64 / X-Ray active / 14-day logs)
 | Function | Mem/Timeout | Trigger | Notes |
 |---|---|---|---|
 | `openaq_aqi_api` | 256MB / 60s | HTTP API GW `GET /` | GeoJSON over `mart_daily_aqi`, /tmp cache 3600s |
-| `openaq_batch_sync` | 512MB / 900s | EventBridge 01:00 UTC **+ OpenAQ SNS** | 21 stations, SYNC_MONTHS=3, ThreadPool(8). **No DLQ** |
+| `openaq_batch_sync` | 512MB / 900s | EventBridge 01:00 UTC | 21 stations, SYNC_MONTHS=3, ThreadPool(8). **DLQ wired** (`openaq_batch_sync_dlq`). Emits `BatchStationFailures` |
 | `openaq_completeness_check` | 256MB / 120s | EventBridge hourly | EXPECTED=21, ALERT_THRESHOLD=3, emits MissingStations |
-| `openaq_streaming_producer` | 256MB / 120s | EventBridge 0/30 | **DLQ wired**. Has both OPENAQ_SECRET_NAME and a populated OPENAQ_API_KEY |
+| `openaq_streaming_producer` | 256MB / 120s | EventBridge 0/30 | **DLQ wired**. Env keys = `OPENAQ_SECRET_NAME`, `KINESIS_STREAM_NAME`, `STATION_IDS` (plaintext `OPENAQ_API_KEY` removed — key now read from Secrets Manager only) |
 | `openaq_weather_ingest` | 256MB / 900s | EventBridge 02:00 UTC | ERA5, BACKFILL_DAYS=1, 21 hardcoded coords |
 | `openaq_forecast_generate` | 1024MB / 900s | EventBridge 03:00 UTC | 🔴 **NOT deployed** (`forecast_lambda_image_uri=""` gates `count=0`) |
 
@@ -113,12 +113,17 @@ Open-Meteo ERA5 ──(weather_ingest Lambda, daily 02:00 UTC)──────
 - **EventBridge schedules** (UTC, all ENABLED): batch `cron(0 1)`, weather `cron(0 2)`, dbt `cron(30 2)`, streaming `cron(0/30)`, completeness `cron(0 *)`.
 
 ### Messaging, secrets, observability
-- **SQS** `openaq_streaming_dlq` (1-day retention) — attached to streaming only.
-- **Secrets Manager** `openaq/api_key` — version is still **`REPLACE_ME`** (never populated).
-- **SNS** `openaq_alerts` (email) + `openaq_alerts_billing` (us-east-1, email); cross-region
-  subscription of batch_sync to OpenAQ's public archive topic.
-- **CloudWatch**: dashboard `openaq_pipeline` (2 widgets); 4 alarms — kinesis_iterator_age >300s,
-  billing >$8 (us-east-1), codebuild_failed >0, missing_stations >18.
+- **SQS** `openaq_streaming_dlq` + `openaq_batch_sync_dlq` (both 1-day retention) — wired to the
+  streaming and batch_sync Lambdas respectively.
+- **Secrets Manager** `openaq/api_key` — **populated** with a real key (verified live by length,
+  64 chars; value not printed). The `REPLACE_ME` placeholder was replaced by a post-deploy version.
+- **SNS** `openaq_alerts` (email) + `openaq_alerts_billing` (us-east-1, email). The former
+  cross-region subscription of batch_sync to OpenAQ's public archive topic was **removed** (batch_sync
+  is EventBridge-triggered only).
+- **CloudWatch**: dashboard `openaq_pipeline` (2 widgets); **14 alarms** — 3 original
+  (`kinesis_iterator_age >300s`, `codebuild_failed >0`, `missing_stations`) + `billing >$8` (us-east-1)
+  + **11 added 2026-05-30**: per-function `Errors` ×5, `aqi_api` Throttles, both DLQ-depth, batch
+  `BatchStationFailures`, weather `WeatherIngestErrors`, and `mart-stale` (`DaysSinceLastNewMart>21`).
 - **ECR** `openaq-forecast-generate` — exists but **empty/unused** (forecast gated off).
 
 ### NOT deployed (0 resources in state)

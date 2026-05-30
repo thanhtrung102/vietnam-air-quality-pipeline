@@ -52,7 +52,7 @@ yields the figures above. `mart_daily_air_quality` = 18,303 rows, `mart_lagged_f
   - `stream` — LOCATION `raw/stream/`, JsonSerDe, partitions year/month/day/hour, 10 cols (adds ingested_at).
   - `weather` — LOCATION `raw/weather/`, JsonSerDe, partitions location_id/year/month/day, 9 cols.
 - **Prefix consistency check:** every writer prefix matches its Glue LOCATION ✅ (batch/stream/weather all aligned).
-- **Athena** workgroup `openaq_workgroup`: **EnforceWorkGroupConfiguration=true**, output `s3://…/athena-results/`, 10 GB scan cap (verified live).
+- **Athena** workgroup `openaq_workgroup`: **EnforceWorkGroupConfiguration=false**, output `s3://…/athena-results/`, 10 GB scan cap + SSE_S3 as defaults (verified live). Enforcement disabled 2026-05-30 so dbt marts write to `processed/` — see §6.
 
 ---
 

@@ -37,8 +37,8 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
                               ┌───────────────────── CATALOG ─────────────────────┐                       │
                               │ Glue databases: openaq_raw (3 ext tables,          │◀──────────────────────┘
                               │   partition projection)  +  openaq_mart            │
-                              │ Athena workgroup openaq_workgroup (enforced,       │
-                              │   10 GB scan cap, SSE_S3 results)                  │
+                              │ Athena workgroup openaq_workgroup (defaults:       │
+                              │   10 GB scan cap, SSE_S3 results; not enforced)    │
                               └────────────────────────────────────────────────────┘
                                                        │
                        ┌──────────────────── TRANSFORM (dbt on CodeBuild) ─────────────────────┐
@@ -66,7 +66,10 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 - **Kinesis** `openaq_stream` (on-demand, **KMS SSE** `alias/aws/kinesis`), **Firehose** `openaq_firehose`.
 - **Glue**: `openaq_raw` (batch/stream/weather ext tables, partition projection) + `openaq_mart`
   (13 dbt-built relations).
-- **Athena** workgroup `openaq_workgroup` — **`EnforceWorkGroupConfiguration=true`**, 10 GB scan cap.
+- **Athena** workgroup `openaq_workgroup` — `EnforceWorkGroupConfiguration=false`, 10 GB scan cap +
+  SSE_S3 as workgroup **defaults** (see Design decisions — enforcement was disabled so dbt marts
+  write to `processed/` instead of being trapped under the workgroup output). dbt marts live at
+  `processed/openaq_mart/{table}/{uuid}` (Intelligent-Tiering).
 - **API Gateway** `openaq-aqi-api` → `https://lfek8fdabb.execute-api.ap-southeast-1.amazonaws.com/`.
 - **CodeBuild** `openaq-dbt-runner` (image `aws/codebuild/standard:7.0` + pip `dbt-athena-community`).
 - **5 EventBridge schedules** (all ENABLED): batch 01:00, weather 02:00, dbt 02:30, streaming */30, completeness hourly.
@@ -107,8 +110,14 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 ### Storage / catalog
 - **Partition projection on Glue tables.** No `MSCK REPAIR` / `ADD PARTITION` calls — Athena computes
   partitions from the path template, so newly-landed data is queryable immediately.
-- **Athena workgroup enforced + 10 GB scan cap.** Makes the cost guardrail real (clients can't override
-  it) and forces SSE_S3 on query results.
+- **Athena workgroup 10 GB scan cap + SSE_S3 (as defaults, not enforced).** Originally
+  `EnforceWorkGroupConfiguration=true` to make the guardrail unoverridable — but enforcement forces
+  *all* query output (including dbt CTAS marts) under the workgroup location and **rejects** any CTAS
+  with an explicit `external_location`, which trapped the marts under `athena-results/` on the 7-day
+  expiry rule. Enforcement was therefore disabled (2026-05-30); the cap + encryption remain as
+  workgroup defaults that the pipeline's own queries never override, at-rest encryption is also
+  guaranteed by the bucket default SSE-S3, and the $8 billing alarm backstops scan cost. See
+  DATA-LIFECYCLE.md §6.
 - **arm64 + X-Ray on all Lambdas.** ~20 % cheaper per GB-s than x86; X-Ray gives the third observability
   signal (traces) for the WAF operational-excellence pillar.
 
@@ -151,7 +160,7 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 | Lambda runtime/arch | python3.12 / arm64 (all 5) | `get-function-configuration` |
 | Secret exposure | **0** plaintext keys in Lambda env / tfstate | env-key inspection |
 | Kinesis encryption | **KMS** (`alias/aws/kinesis`) | `describe-stream-summary` |
-| Athena guardrail | `EnforceWorkGroupConfiguration=true` | `get-work-group` |
+| Athena guardrail | 10 GB scan cap + SSE_S3 (defaults; `EnforceWorkGroupConfiguration=false`) | `get-work-group` |
 | EventBridge schedules | **5 / 5 ENABLED** | `scheduler list-schedules` |
 | dbt build | **PASS=12, ERROR=0** (805 s) | CodeBuild log |
 | `int_measurements_enriched` | **1,361,731 rows** | dbt run log |
