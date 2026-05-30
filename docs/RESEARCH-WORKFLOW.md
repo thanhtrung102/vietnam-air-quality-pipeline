@@ -84,9 +84,18 @@ wind, inversion are the biggest accuracy levers for Hanoi's winter-inversion/mon
 
 - **RESEARCH phase:** attach the relevant lanes to the fan-out; Lane 1 + Lane 5 always; Lanes 2/3/4 by
   task type. Synthesize → **adversarially verify each finding against live state** before it informs PLAN.
-- **The discipline that matters most:** *verify live; refute the hypothesis.* Today's worked example —
-  Lane 2 raised "UTC day-window misalignment"; Lane 1's live probe **refuted the headline** (date is
-  local-correct) and found the real, smaller nuance (`measured_at` tz). Don't ship a hypothesis as a finding.
+- **The discipline that matters most:** *verify live; refute the hypothesis.* Don't ship a hypothesis
+  as a finding.
+- **HARD GATE — any timezone / numeric-correctness / "this is a bug" claim must be settled by a live
+  probe against *real data* before it enters a recommendation or a PLAN.** A literal/synthetic probe is
+  not enough (it may not match the real data's format), and code-reading alone is not enough (timezone
+  cast semantics are non-obvious). This gate is merge-blocking, not a post-hoc check.
+  - *Worked example 1:* Lane 2 raised "UTC day-window misalignment"; the live probe **refuted the
+    headline** (`measurement_date` is local-correct) and found only the smaller `measured_at` tz nuance.
+  - *Worked example 2 (why the gate is mandatory):* a later fan-out's recon **and** its adversarial-verify
+    agent both reasoned from code and **endorsed a "fix"** to `measurement_date` — which a live probe
+    against real `+07:00` data then showed would have **corrupted 411,190 rows (29%)**. Two agents
+    agreed and were both wrong; only the real-data probe caught it. Confident agreement is not verification.
 - Outputs feed PLAN; EXECUTE stays gated on explicit approval.
 
 ## Companion docs

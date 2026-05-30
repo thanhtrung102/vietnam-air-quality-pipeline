@@ -34,6 +34,10 @@ phases:
       - if [ -d transform ]; then cd transform; fi
       # Install dbt_utils package (packages.yml: dbt-labs/dbt_utils >=1.0.0)
       - dbt deps --profiles-dir . --project-dir .
+      # Source-freshness gate: surface stale raw sources (SLAs declared in
+      # sources.yml). Non-blocking — mirrors the dbt test posture below; the
+      # warning appears in the CodeBuild log without failing the nightly build.
+      - dbt source freshness --profiles-dir . --project-dir . || echo "WARN dbt source freshness exceeded SLA"
 
   build:
     commands:
