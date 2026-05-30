@@ -80,10 +80,17 @@ def _copy_object(s3_src, s3_dst, dst_bucket: str, src_key: str) -> None:
         Key=src_key,
         RequestPayer="requester",
     )
-    # Stream body directly to put_object rather than buffering the full file
-    # in Lambda memory. boto3 accepts a streaming Body for put_object.
+    # Read the object fully into memory before PutObject. Passing the raw
+    # StreamingBody fails two ways: without a length S3 returns
+    # MissingContentLength, and with a length botocore consumes the
+    # non-seekable stream to compute the SigV4 payload hash and can't re-send
+    # it (SignatureDoesNotMatch). The archive CSV.GZ files are tiny (sub-KB to
+    # a few KB), so buffering bytes is cheap and lets botocore hash and send
+    # identical content. (Before this, every NEW-object copy failed silently,
+    # so the active stations never synced.)
+    body = response["Body"].read()
     dst = _dst_key(src_key)
-    s3_dst.put_object(Bucket=dst_bucket, Key=dst, Body=response["Body"])
+    s3_dst.put_object(Bucket=dst_bucket, Key=dst, Body=body)
 
 
 def _sync_station(station_id: int, dst_bucket: str, dst_region: str, year: str, month: str) -> dict:

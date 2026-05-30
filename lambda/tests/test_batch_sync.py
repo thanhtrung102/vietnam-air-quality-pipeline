@@ -65,7 +65,8 @@ def test_exists_in_dst_missing_object_false():
 def test_copy_object_streams_with_requester_pays():
     s3_src = MagicMock()
     body = MagicMock()
-    s3_src.get_object.return_value = {"Body": body}
+    body.read.return_value = b"col1,col2\n1,2\n"
+    s3_src.get_object.return_value = {"Body": body, "ContentLength": 1234}
     s3_dst = MagicMock()
 
     src_key = "records/csv.gz/locationid=7441/year=2026/month=03/part-0.csv.gz"
@@ -77,7 +78,10 @@ def test_copy_object_streams_with_requester_pays():
     put_kwargs = s3_dst.put_object.call_args[1]
     assert put_kwargs["Bucket"] == "dst-bucket"
     assert put_kwargs["Key"] == "raw/batch/locationid=7441/year=2026/month=03/part-0.csv.gz"
-    assert put_kwargs["Body"] is body
+    # Body must be the in-memory bytes (not the raw StreamingBody): a non-seekable
+    # stream breaks SigV4 PutObject (MissingContentLength, then SignatureDoesNotMatch)
+    # so active stations silently failed to sync.
+    assert put_kwargs["Body"] == b"col1,col2\n1,2\n"
 
 
 # ── _sync_station ─────────────────────────────────────────────────────────────────
