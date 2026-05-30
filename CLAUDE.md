@@ -1,5 +1,9 @@
 # Vietnam Air Quality Pipeline — Project Context
 
+> Canonical source for project **facts**: AWS IDs, S3 prefixes, dbt facts, the station roster, and
+> rules. The deployed **resource inventory** lives in `docs/DEPLOYED-SPECS-AND-AUDIT.md`; the doc map
+> is in `README.md`.
+
 ## AWS Configuration
 - **Region:** ap-southeast-1
 - **S3 bucket name:** openaq-pipeline-thanhtrung102

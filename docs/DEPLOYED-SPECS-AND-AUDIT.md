@@ -5,6 +5,9 @@
 > handlers, the dbt project, the dashboard/ingestion code, docs, and CI.
 > Region: **ap-southeast-1**, account **703668403514**. Terraform 1.14.3, AWS provider ~>5.0,
 > state serial **585**, **80 resources**.
+>
+> **Canonical source of the deployed resource inventory.** Other docs link here rather than restate
+> resource specs, so the inventory lives in one place. Last reconciled against live AWS **2026-05-30**.
 
 ---
 

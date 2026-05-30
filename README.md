@@ -79,6 +79,11 @@ Each document owns one concern — read the one that matches your question.
 `ap-southeast-1`). The four `docs/*.md` analysis files and `CLAUDE.md` were last reconciled against
 live state on **2026-05-30**.
 
+**No-duplication convention:** each fact has one canonical owner and the others link to it, so they
+cannot drift. Canonical owners — **facts/roster:** `CLAUDE.md`; **deployed resource inventory:**
+`docs/DEPLOYED-SPECS-AND-AUDIT.md`; **design rationale + metrics:** `docs/PIPELINE-REPORT.md`;
+**data flow + governance:** `docs/DATA-LIFECYCLE.md`; **quality assessment:** `docs/ARCHITECTURE-EVALUATION.md`.
+
 ---
 
 ## Quick start

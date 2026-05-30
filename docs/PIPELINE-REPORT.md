@@ -59,22 +59,14 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
   by Terraform aws_s3_object)
 ```
 
-### Live resource inventory (verified 2026-05-30)
-- **5 Lambdas** (all `python3.12` / `arm64` / X-Ray active): `openaq_aqi_api` (256 MB/60 s),
-  `openaq_batch_sync` (512 MB/900 s, DLQ), `openaq_completeness_check` (256 MB/120 s),
-  `openaq_streaming_producer` (256 MB/120 s, DLQ), `openaq_weather_ingest` (256 MB/900 s).
-- **Kinesis** `openaq_stream` (on-demand, **KMS SSE** `alias/aws/kinesis`), **Firehose** `openaq_firehose`.
-- **Glue**: `openaq_raw` (batch/stream/weather ext tables, partition projection) + `openaq_mart`
-  (13 dbt-built relations).
-- **Athena** workgroup `openaq_workgroup` — `EnforceWorkGroupConfiguration=false`, 10 GB scan cap +
-  SSE_S3 as workgroup **defaults** (see Design decisions — enforcement was disabled so dbt marts
-  write to `processed/` instead of being trapped under the workgroup output). dbt marts live at
-  `processed/openaq_mart/{table}/{uuid}` (Intelligent-Tiering).
-- **API Gateway** `openaq-aqi-api` → `https://lfek8fdabb.execute-api.ap-southeast-1.amazonaws.com/`.
-- **CodeBuild** `openaq-dbt-runner` (image `aws/codebuild/standard:7.0` + pip `dbt-athena-community`).
-- **5 EventBridge schedules** (all ENABLED): batch 01:00, weather 02:00, dbt 02:30, streaming */30, completeness hourly.
-- **SQS** `openaq_streaming_dlq`, `openaq_batch_sync_dlq`; **Secrets Manager** `openaq/api_key` (real key);
-  **CloudWatch** dashboard + 4 alarms; **SNS** `openaq_alerts`.
+### Live resource inventory
+
+> **Canonical source:** `docs/DEPLOYED-SPECS-AND-AUDIT.md` holds the authoritative, live-verified
+> resource inventory (every Lambda's mem/timeout/trigger, Kinesis/Firehose, Glue, Athena workgroup,
+> the 14 CloudWatch alarms, DLQs, secret, schedules). It is not duplicated here so the two cannot
+> drift. The one design-relevant note: the Athena workgroup runs `enforce=false` (10 GB scan cap +
+> SSE_S3 as defaults) so dbt marts write to `processed/openaq_mart/` rather than being trapped under
+> the workgroup output — see Design Decisions below and DATA-LIFECYCLE.md §6.
 
 ---
 

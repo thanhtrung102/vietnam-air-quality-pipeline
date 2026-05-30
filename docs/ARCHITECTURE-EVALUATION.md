@@ -16,7 +16,7 @@
 | Cost | **3** | Correct guardrails (10GB cap, projection, bi_disabled). Full-CTAS daily rebuild is an architectural smell but negligible $ at 1.38M rows today. |
 | Scalability | **3** | Edges scale; the transform core (full-refresh over unbounded history) is the break point at ~5–10× history. |
 | Data Quality | **4** | Genuinely strong: parameter-aware filters, correct EPA-2024 AQI, circular wind mean, grain tests. Gaps are value-range tests + dead `corrected_pm25`. |
-| Observability | **3** | Credible skeleton (X-Ray, 4 alarms, completeness monitor) with a structural blind spot: the monitor self-suppresses on the exact "silently dead" case. |
+| Observability | **3** → now stronger | Credible skeleton (X-Ray, 4 alarms, completeness monitor) with a structural blind spot: the monitor self-suppresses on the exact "silently dead" case. *(Resolved 2026-05-30: now 14 alarms + the silent-death `DaysSinceLastNewMart` signal — see Resolution status.)* |
 | Maintainability | **4** | 85 passing tests across 6 handlers, real PR-gating CI, deduped roster, clean DRY. Gaps are deploy plumbing (no source_code_hash, manual zip). |
 
 **Overall ≈ 3.3 / 5 — strong portfolio-grade engineering; a few real production-hardening gaps.**
