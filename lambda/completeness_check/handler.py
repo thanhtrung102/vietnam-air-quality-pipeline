@@ -33,15 +33,29 @@ ALERT_THRESHOLD   = int(os.environ.get("ALERT_THRESHOLD",   "18"))
 MAX_WAIT          = 90     # seconds; leaves buffer before 120s Lambda timeout
 
 
-def _emit_metric(cw, missing_count: int) -> None:
-    """Emit MissingStations metric to CloudWatch."""
+def _emit_metric(cw, missing_count: int, data_age_days: int) -> None:
+    """Emit completeness metrics to CloudWatch.
+
+    MissingStations drives the existing coverage alarm. DaysSinceLastNewMart is
+    the true "pipeline silently dead" signal: it keeps climbing when the mart
+    stops advancing, and — unlike the SNS path below — is NOT suppressed when the
+    data is stale, so an alarm on it fires precisely in the case the SNS
+    stale-suppression mutes.
+    """
     cw.put_metric_data(
         Namespace="OpenAQ/Pipeline",
-        MetricData=[{
-            "MetricName": "MissingStations",
-            "Value": missing_count,
-            "Unit": "Count",
-        }],
+        MetricData=[
+            {
+                "MetricName": "MissingStations",
+                "Value": missing_count,
+                "Unit": "Count",
+            },
+            {
+                "MetricName": "DaysSinceLastNewMart",
+                "Value": data_age_days,
+                "Unit": "Count",
+            },
+        ],
     )
 
 
@@ -88,7 +102,7 @@ def handler(event, context):
         print(f"Station completeness: {active_count}/{EXPECTED_STATIONS} "
               f"({missing_count} missing) for {check_date} (data age: {data_age_days}d)")
 
-        _emit_metric(cw, missing_count)
+        _emit_metric(cw, missing_count, data_age_days)
 
         # Suppress SNS alert when the archive itself is stale (>7 days old).
         # A stale archive is an upstream data availability issue, not a pipeline

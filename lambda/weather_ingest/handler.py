@@ -188,4 +188,27 @@ def handler(event, context):
         "Completed: %d written, %d errors (backfill_days=%d, stations=%d, requests=%d)",
         total_written, error_count, backfill_days, len(STATIONS), len(STATIONS),
     )
+
+    # An all-stations Open-Meteo outage currently returns success with 0 rows
+    # written and no alarm — silently degrading the weather and forecast marts.
+    # Emit the per-run error count (0 too, for a baseline) so a CloudWatch alarm
+    # can page on systemic failure. Never let metric emission fail the ingest.
+    _emit_error_metric(error_count)
+
     return {"total_written": total_written, "errors": error_count}
+
+
+def _emit_error_metric(error_count: int) -> None:
+    """Emit WeatherIngestErrors to CloudWatch (namespace OpenAQ/Pipeline)."""
+    try:
+        cw = boto3.client("cloudwatch")
+        cw.put_metric_data(
+            Namespace="OpenAQ/Pipeline",
+            MetricData=[{
+                "MetricName": "WeatherIngestErrors",
+                "Value": error_count,
+                "Unit": "Count",
+            }],
+        )
+    except Exception as exc:  # noqa: BLE001 — never let metric emission fail the ingest
+        logger.warning("Could not emit WeatherIngestErrors metric: %s", exc)

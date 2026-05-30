@@ -179,3 +179,160 @@ resource "aws_s3_bucket_metric" "processed_prefix" {
     prefix = "processed/"
   }
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Silent-failure observability (architecture-evaluation HIGH findings)
+#
+# Before these alarms the orchestration layer could fail silently: batch_sync and
+# weather_ingest return success even when every station errors, and the only
+# freshness signal (completeness_check SNS) self-suppresses once data_age > 7d —
+# i.e. it goes quiet in exactly the "pipeline is dead" case. The handlers now emit
+# BatchStationFailures / WeatherIngestErrors / DaysSinceLastNewMart custom metrics;
+# the alarms below page on them, plus direct Lambda-error and DLQ-depth alarms.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Batch sync: any station failing its archive sweep is silent data loss.
+resource "aws_cloudwatch_metric_alarm" "batch_station_failures" {
+  alarm_name          = "openaq-batch-station-failures"
+  alarm_description   = "openaq_batch_sync reported >=1 failed station — archive data for that station is not being synced"
+  namespace           = "OpenAQ/Pipeline"
+  metric_name         = "BatchStationFailures"
+  statistic           = "Maximum"
+  period              = 86400 # batch runs once daily (01:00 UTC)
+  evaluation_periods  = 1
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+  ok_actions    = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
+}
+
+# Weather ingest: tolerate the odd transient single-station failure, but page on a
+# systemic Open-Meteo outage (>5 of 21 stations failing in one run) that would
+# silently starve the weather + forecast marts.
+resource "aws_cloudwatch_metric_alarm" "weather_ingest_errors" {
+  alarm_name          = "openaq-weather-ingest-errors"
+  alarm_description   = "openaq_weather_ingest failed for >5 stations in one run — systemic Open-Meteo outage degrading weather/forecast marts"
+  namespace           = "OpenAQ/Pipeline"
+  metric_name         = "WeatherIngestErrors"
+  statistic           = "Maximum"
+  period              = 86400 # weather runs once daily (02:00 UTC)
+  evaluation_periods  = 1
+  threshold           = 5
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
+}
+
+# Mart freshness — the true "pipeline silently dead" signal that the SNS
+# stale-suppression mutes. Healthy steady state runs ~10 days behind today
+# (OpenAQ archive publish lag + 3-month batch window), so the threshold is set
+# generously at 21 days: only a stalled mart (gap growing unbounded) trips it.
+resource "aws_cloudwatch_metric_alarm" "mart_freshness" {
+  alarm_name          = "openaq-mart-stale"
+  alarm_description   = "mart_daily_aqi newest measurement_date is >21 days old — dbt build has likely stalled (silent-death signal the SNS path suppresses)"
+  namespace           = "OpenAQ/Pipeline"
+  metric_name         = "DaysSinceLastNewMart"
+  statistic           = "Maximum"
+  period              = 3600
+  evaluation_periods  = 2 # 2 consecutive hourly checks, to ride out a transient Athena failure
+  threshold           = 21
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching" # completeness Lambda errors are covered by its own alarm below
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+  ok_actions    = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
+}
+
+# Direct Lambda Errors alarms — previously only indirect/lagging proxies existed.
+locals {
+  lambda_error_alarm_targets = {
+    aqi_api            = aws_lambda_function.aqi_api.function_name
+    streaming_producer = aws_lambda_function.streaming_producer.function_name
+    batch_sync         = aws_lambda_function.batch_sync.function_name
+    weather_ingest     = aws_lambda_function.weather_ingest.function_name
+    completeness_check = aws_lambda_function.completeness_check.function_name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+  for_each = local.lambda_error_alarm_targets
+
+  alarm_name          = "openaq-${each.key}-errors"
+  alarm_description   = "${each.value} reported >=1 invocation error"
+  namespace           = "AWS/Lambda"
+  metric_name         = "Errors"
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = each.value
+  }
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
+}
+
+# aqi_api is the only public, unthrottled entry point — alarm on throttling so a
+# traffic spike that starves the shared Lambda concurrency pool is visible.
+resource "aws_cloudwatch_metric_alarm" "aqi_api_throttles" {
+  alarm_name          = "openaq-aqi-api-throttles"
+  alarm_description   = "${aws_lambda_function.aqi_api.function_name} is being throttled — public API hitting the concurrency ceiling"
+  namespace           = "AWS/Lambda"
+  metric_name         = "Throttles"
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = aws_lambda_function.aqi_api.function_name
+  }
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
+}
+
+# DLQ depth — any message landing in a dead-letter queue is an unrecovered
+# failure that needs an operator. The DLQs existed but nothing watched them.
+resource "aws_cloudwatch_metric_alarm" "dlq_depth" {
+  for_each = {
+    streaming  = aws_sqs_queue.streaming_dlq.name
+    batch_sync = aws_sqs_queue.batch_sync_dlq.name
+  }
+
+  alarm_name          = "openaq-${each.key}-dlq-depth"
+  alarm_description   = "Messages present in ${each.value} — an invocation failed and was dead-lettered"
+  namespace           = "AWS/SQS"
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  statistic           = "Maximum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    QueueName = each.value
+  }
+
+  alarm_actions = [aws_sns_topic.openaq_alerts.arn]
+
+  tags = local.common_tags
+}

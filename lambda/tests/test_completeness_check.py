@@ -89,16 +89,17 @@ def _run_handler(athena_client, cw_client=None, sns_client=None):
 # ── _emit_metric ───────────────────────────────────────────────────────────────
 
 def test_emit_metric_calls_put_metric_data():
-    """_emit_metric emits MissingStations to OpenAQ/Pipeline namespace."""
+    """_emit_metric emits MissingStations + DaysSinceLastNewMart to OpenAQ/Pipeline."""
     cw = MagicMock()
-    h._emit_metric(cw, 4)
+    h._emit_metric(cw, 4, 12)
     cw.put_metric_data.assert_called_once()
     kwargs = cw.put_metric_data.call_args[1]
     assert kwargs["Namespace"] == "OpenAQ/Pipeline"
-    metric = kwargs["MetricData"][0]
-    assert metric["MetricName"] == "MissingStations"
-    assert metric["Value"] == 4
-    assert metric["Unit"] == "Count"
+    by_name = {m["MetricName"]: m for m in kwargs["MetricData"]}
+    assert by_name["MissingStations"]["Value"] == 4
+    assert by_name["MissingStations"]["Unit"] == "Count"
+    assert by_name["DaysSinceLastNewMart"]["Value"] == 12
+    assert by_name["DaysSinceLastNewMart"]["Unit"] == "Count"
 
 
 # ── Handler tests ──────────────────────────────────────────────────────────────

@@ -162,4 +162,28 @@ def handler(event, context):
     )
     if failed:
         print(f"Failed stations: {failed}")
+
+    # Per-station failures are otherwise invisible: the handler returns success
+    # even when a station consistently errors, so nothing retries or alarms.
+    # Emit the failure count (0 too, to establish a baseline) so a CloudWatch
+    # alarm can page on persistent silent data loss. Metric emission must never
+    # mask the sync result, so swallow its own errors.
+    _emit_failure_metric(len(failed))
+
     return {"success": success, "failed": failed, "copied": total_copied, "skipped": total_skipped}
+
+
+def _emit_failure_metric(failed_count: int) -> None:
+    """Emit BatchStationFailures to CloudWatch (namespace OpenAQ/Pipeline)."""
+    try:
+        cw = boto3.client("cloudwatch")
+        cw.put_metric_data(
+            Namespace="OpenAQ/Pipeline",
+            MetricData=[{
+                "MetricName": "BatchStationFailures",
+                "Value": failed_count,
+                "Unit": "Count",
+            }],
+        )
+    except Exception as exc:  # noqa: BLE001 — never let metric emission fail the sync
+        print(f"WARN could not emit BatchStationFailures metric: {exc}", file=sys.stderr)

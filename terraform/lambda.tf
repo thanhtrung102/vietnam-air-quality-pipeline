@@ -286,7 +286,8 @@ resource "aws_lambda_function" "batch_sync" {
   role          = aws_iam_role.lambda_exec.arn
   runtime       = var.lambda_runtime
   handler       = "handler.handler"
-  filename      = var.lambda_batch_zip_path
+  filename         = var.lambda_batch_zip_path
+  source_code_hash = filebase64sha256(var.lambda_batch_zip_path)
   timeout       = 900
   memory_size   = 512
   architectures = ["arm64"]
@@ -324,7 +325,8 @@ resource "aws_lambda_function" "streaming_producer" {
   role          = aws_iam_role.lambda_exec.arn
   runtime       = var.lambda_runtime
   handler       = "handler.handler"
-  filename      = var.lambda_streaming_zip_path
+  filename         = var.lambda_streaming_zip_path
+  source_code_hash = filebase64sha256(var.lambda_streaming_zip_path)
   timeout       = 120
   memory_size   = 256
   architectures = ["arm64"]
@@ -479,7 +481,8 @@ resource "aws_lambda_function" "aqi_api" {
   role          = aws_iam_role.lambda_exec.arn
   runtime       = var.lambda_runtime
   handler       = "handler.handler"
-  filename      = var.lambda_aqi_api_zip_path
+  filename         = var.lambda_aqi_api_zip_path
+  source_code_hash = filebase64sha256(var.lambda_aqi_api_zip_path)
   timeout       = 60
   memory_size   = 256
   architectures = ["arm64"]
@@ -565,7 +568,8 @@ resource "aws_lambda_function" "completeness_check" {
   role          = aws_iam_role.lambda_exec.arn
   runtime       = var.lambda_runtime
   handler       = "handler.handler"
-  filename      = var.lambda_completeness_zip_path
+  filename         = var.lambda_completeness_zip_path
+  source_code_hash = filebase64sha256(var.lambda_completeness_zip_path)
   timeout       = 120
   memory_size   = 256
   architectures = ["arm64"]
@@ -670,7 +674,8 @@ resource "aws_lambda_function" "weather_ingest" {
   role          = aws_iam_role.lambda_exec.arn
   runtime       = var.lambda_runtime
   handler       = "handler.handler"
-  filename      = var.lambda_weather_zip_path
+  filename         = var.lambda_weather_zip_path
+  source_code_hash = filebase64sha256(var.lambda_weather_zip_path)
   timeout       = 900 # 21 stations × 365 days = 7,665 S3 writes; 5 min insufficient for backfill_days=365
   memory_size   = 256
   architectures = ["arm64"]
