@@ -91,19 +91,41 @@ Kinesis retention 7 days; Firehose log group 14 days; DLQs 1 day.
 
 ---
 
-## 6. ⚠️ Lifecycle issue found (and how to fix)
+## 6. ✅ Lifecycle issue — RESOLVED (2026-05-30)
 
-**The dbt marts are physically stored under `athena-results/`, which has a 7-day expiry — so the marts get auto-deleted weekly.**
+**Was:** dbt marts were physically stored under `athena-results/tables/`, which has a 7-day
+expiry — so the marts sat on a weekly delete path.
 
-- Verified live: `mart_daily_aqi` LOCATION = `s3://…/athena-results/tables/f1cb5ff3-…`; `mart_daily_air_quality` = `athena-results/tables/27bda353-…`.
-- **Root cause:** the workgroup output is `s3://…/athena-results/` and (since the cleanup set) **`EnforceWorkGroupConfiguration=true`**, which makes Athena override dbt's `s3_data_dir=processed/` for CTAS table data. So marts land in `athena-results/tables/` instead of `processed/`, and the `expire-athena-results` 7-day rule will purge them.
-- **Impact:** marts survive day-to-day only because the daily dbt build re-creates them; but any >7-day gap in the dbt schedule (or the 7-day rule firing between builds on a partition) risks data loss, and it muddles the cost-tiering intent (`processed/` Intelligent-Tiering is unused).
-- **Fix options (pick one):**
-  1. Narrow the expiry rule to the actual query-output prefix (e.g. `athena-results/query/`) and point the workgroup `ResultConfiguration.OutputLocation` there, leaving `athena-results/tables/` unexpired; **or**
-  2. Set the dbt-athena models' `s3_data_naming`/external location to write under `processed/` and keep enforce=true but set the workgroup output to a separate results-only prefix; **or**
-  3. Simplest: change the workgroup output location to `s3://…/athena-results/query/` so dbt's `s3_data_dir` (processed/) is used for table data and only transient query results fall under the 7-day rule.
+- Root cause: the workgroup had `EnforceWorkGroupConfiguration=true`. Enforcement forces **all**
+  query output (including dbt CTAS table data) under the workgroup `OutputLocation`, and Athena
+  **rejects** any CTAS carrying an explicit `external_location` under an enforcing workgroup
+  (probe-verified: *"submitted to an Athena Workgroup that enforces a centralized output location
+  … remove the 'external_location' property"*). So dbt could not honor `s3_data_dir=processed/`;
+  marts fell back to `{workgroup_output}/tables/{uuid}`.
+- This also invalidated the originally proposed fix ("repoint workgroup output to
+  `athena-results/query/`"): under enforcement, marts would simply move to
+  `athena-results/query/tables/`, still inside the expired prefix.
 
-This is a regression introduced by the `enforce_workgroup_configuration=true` hardening in this cleanup round — flagged here rather than silently fixed, since the right option depends on whether you want marts under `processed/` (Intelligent-Tiering) or a non-expiring `athena-results/tables/`.
+**Fix applied:** set `enforce_workgroup_configuration = false` (`main.tf`; applied live via
+`athena update-work-group` after a provider-plugin crash mid-`apply`, then state reconciled to
+no-drift). With enforcement off, dbt-athena emits `external_location = s3_data_dir` and Athena
+honors it, so marts now write to `processed/`.
+
+- **Verified live after a full dbt build (2026-05-30):**
+  - `mart_daily_aqi` → `s3://…/processed/openaq_mart/mart_daily_aqi/4acf6dd7-…` (4,704 rows / 17 stations / max 2026-05-20 — unchanged)
+  - `mart_daily_air_quality` → `s3://…/processed/openaq_mart/mart_daily_air_quality/d80bd725-…`
+  - `mart_lagged_features` → `s3://…/processed/openaq_mart/mart_lagged_features/9418d819-…`
+  - `processed/` carries Intelligent-Tiering (no expiry); the cost-tiering intent is now realized.
+- **No security regression:** the 10 GB scan cutoff and SSE_S3 result encryption remain in the
+  workgroup config as **defaults** (still applied to the pipeline's own Lambda/dbt queries, which
+  never override them); at-rest encryption is independently guaranteed by the bucket's **default
+  SSE-S3 (AES256, BucketKeyEnabled, SSE-C blocked)**, and the $8 billing alarm backstops scan cost.
+- **Reusable lesson:** `enforce_workgroup_configuration=true` is incompatible with dbt-athena
+  directing CTAS data to a non-workgroup prefix — verify engine constraints with a one-off probe
+  before planning an Athena/dbt infra change.
+
+The `expire-athena-results` (7-day) rule on `athena-results/` is now correct as-is: it only
+governs transient query-result files written there by the Lambdas, not the marts.
 
 ---
 

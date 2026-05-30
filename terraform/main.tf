@@ -222,9 +222,19 @@ resource "aws_athena_workgroup" "openaq" {
   description = "Athena workgroup for OpenAQ pipeline queries and dbt runs"
 
   configuration {
-    # Enforced so the 10 GB bytes-scanned cutoff and SSE_S3 result encryption
-    # below cannot be overridden by client-side StartQueryExecution settings.
-    enforce_workgroup_configuration    = true
+    # NOT enforced. Enforcement forces ALL query output — including dbt CTAS table
+    # data — under this workgroup's OutputLocation, and Athena REJECTS any CTAS
+    # carrying an explicit external_location under an enforcing workgroup
+    # (verified: "submitted to an Athena Workgroup that enforces a centralized
+    # output location ... remove the 'external_location' property"). That trapped
+    # the dbt marts under athena-results/, inheriting the 7-day expiry rule.
+    # With enforcement off, dbt-athena writes marts to s3_data_dir (processed/,
+    # Intelligent-Tiering) via external_location, off the expiry path entirely.
+    # The 10 GB cutoff + result encryption below remain as workgroup DEFAULTS
+    # (still applied to our pipeline/dbt queries, which never override them);
+    # at-rest encryption is independently guaranteed by the bucket's default
+    # SSE-S3 (AES256), and the $8 billing alarm backstops scan cost.
+    enforce_workgroup_configuration    = false
     publish_cloudwatch_metrics_enabled = true
 
     result_configuration {
