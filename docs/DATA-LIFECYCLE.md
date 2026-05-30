@@ -1,0 +1,117 @@
+# Vietnam Air Quality Pipeline — End-to-End Data Lifecycle
+
+> Compiled 2026-05-30. Source-of-truth = the codebase (file:line cited) cross-checked against
+> **live AWS** (account 703668403514, ap-southeast-1). Live row counts/dates are from Athena queries
+> run with result-reuse disabled. Companion: `docs/PIPELINE-REPORT.md`, `docs/DEPLOYED-SPECS-AND-AUDIT.md`.
+
+---
+
+## 0. Lifecycle at a glance (verified live)
+
+| Stage | Store | Format | Live volume | Live date span |
+|---|---|---|---|---|
+| Ingest → raw batch | `s3://…/raw/batch/` → Glue `openaq_raw.batch` | CSV.GZ | **1,376,278 rows, 18 stations** | 2023-01-01 → 2026-05-20 |
+| Ingest → raw stream | `s3://…/raw/stream/` → `openaq_raw.stream` | GZIP NDJSON | **1,011 rows, 4 stations** | 2016-11-09 → 2025-04-09 + fresh `2026/05/30/02/` |
+| Ingest → raw weather | `s3://…/raw/weather/` → `openaq_raw.weather` | NDJSON | **3,024 rows, 21 stations** | 2026-05-24 → 2026-05-29 |
+| Staging | `openaq_mart.stg_measurements` (view) | — | **1,361,731 rows** | 2023-01-01 → 2026-05-20 |
+| Mart | `openaq_mart.mart_daily_aqi` | Parquet | **4,704 rows, 17 stations** | 2023-01-01 → 2026-05-20 |
+
+(The earlier report's "309 rows / 2023-09-09" figure was a stale read mid-build; the completed build
+yields the figures above. `mart_daily_air_quality` = 18,303 rows, `mart_lagged_features` = 4,684 rows.)
+
+---
+
+## 1. INGEST
+
+### 1a. Batch — historical archive (`lambda/batch_sync/handler.py`)
+- **Source:** `s3://openaq-data-archive/records/csv.gz/locationid={id}/year={y}/month={m}/` (us-east-1, requester-pays).
+- **Dest:** `s3://openaq-pipeline-thanhtrung102/raw/batch/locationid={id}/year={y}/month={m}/` — `_dst_key()` `handler.py:62`.
+- **Window:** last `SYNC_MONTHS=3` months (`handler.py:128`); **21** station IDs (`handler.py:32-38`); ThreadPool(8).
+- **Idempotency:** ETag HEAD-compare skip (`handler.py:110`). **DLQ:** `openaq_batch_sync_dlq`. **Trigger:** EventBridge 01:00 UTC.
+- **Live:** 18 of 21 station prefixes present in S3 (3 stations have no 2023+ archive objects).
+
+### 1b. Streaming — near-real-time (`lambda/streaming/handler.py`, `kinesis_producer.py`)
+- **Source:** OpenAQ v3 `GET /v3/locations/{id}/latest` (`kinesis_producer.py:265`); key from **Secrets Manager** (`handler.py:_get_api_key`).
+- **Validation `_validate_reading` (`kinesis_producer.py:111-130`):** reject `value==-999.0`, `value<0`, `value>=500`, unknown parameter.
+- **Record (`kinesis_producer.py:292-303`):** flat JSON {location_id, sensors_id, location, datetime, lat, lon, parameter, units, value, ingested_at}; partition key = location_id; PutRecords ≤500.
+- **DLQ:** `openaq_streaming_dlq`. **Trigger:** EventBridge */30 min.
+- **Live proof:** invoke returned `{"success":66,"failed":0}`; Firehose delivered to `raw/stream/2026/05/30/02/…gz` (confirmed on S3).
+
+### 1c. Weather (`lambda/weather_ingest/handler.py`)
+- **Source:** Open-Meteo ERA5 archive (`handler.py:61`); 21 hardcoded coords (`handler.py:33-59`).
+- **Dest:** `raw/weather/{location_id}/{yyyy}/{MM}/{dd}/weather.ndjson` (`handler.py:121`), NDJSON, 24 rows/station/day.
+- **Trigger:** EventBridge 02:00 UTC; `BACKFILL_DAYS` env. **Live:** 3,024 rows, 21 stations, 2026-05-24→29 (6 days × 21 × ~24h).
+
+---
+
+## 2. LANDING + CATALOG
+
+- **Firehose** (`kinesis.tf`): `openaq_stream` (on-demand, 7-day retention, KMS) → `raw/stream/!{timestamp:yyyy/MM/dd/HH}/`, GZIP, 128 MB/300 s buffer; errors → `raw/stream-errors/`.
+- **Glue `openaq_raw`** (`glue_tables.tf`), all **partition-projected** (no MSCK):
+  - `batch` — LOCATION `raw/batch/`, OpenCSVSerde, skip-header, partitions locationid/year/month, 9 cols.
+  - `stream` — LOCATION `raw/stream/`, JsonSerDe, partitions year/month/day/hour, 10 cols (adds ingested_at).
+  - `weather` — LOCATION `raw/weather/`, JsonSerDe, partitions location_id/year/month/day, 9 cols.
+- **Prefix consistency check:** every writer prefix matches its Glue LOCATION ✅ (batch/stream/weather all aligned).
+- **Athena** workgroup `openaq_workgroup`: **EnforceWorkGroupConfiguration=true**, output `s3://…/athena-results/`, 10 GB scan cap (verified live).
+
+---
+
+## 3. TRANSFORM (dbt-on-Athena, CodeBuild `openaq-dbt-runner`)
+
+Build order (`buildspec_dbt.yml`): `dbt seed vn_stations vn_holidays` → `dbt run --exclude tag:bi_disabled` → `dbt test`. Last build: **PASS=12, ERROR=0**, 805 s.
+
+- **Staging (views):** `stg_measurements.sql` reads `openaq_raw.batch`; filters null/`-999`/`value<0`/`pm25 value>=500` (`:40-49`); `from_iso8601_timestamp(datetime)` handles `+07:00`; derives `measurement_date`. `stg_weather.sql` casts ERA5 hourly.
+- **Intermediate (tables):** `int_measurements_enriched.sql` INNER JOINs the **`vn_stations` seed** (`:69`) = the 21-station allowlist; adds city/province/coords/sensor_type/is_outlier_station. **Live: 1,361,731 rows.**
+- **Marts (tables, Parquet/Snappy):**
+  - `mart_daily_air_quality` — grain date×station×parameter; EPA-2024 AQI, WHO/QCVN exceedance, cigarette-equiv, low-cost humidity correction. **18,303 rows.**
+  - `mart_daily_aqi` — composite max-AQI per station-day, dominant pollutant, filters `is_outlier_station=0`. **4,704 rows / 17 stations** (consumed by `aqi_api` + `completeness_check`).
+  - `mart_lagged_features` — AR lags, rolling means, calendar/holiday, weather covariates, `pm25_next1` target. **4,684 rows** (forecast input).
+- **`bi_disabled` tag** excludes 8 QuickSight-only / forecast-dependent marts from the default build.
+
+---
+
+## 4. SERVE
+
+- **`aqi_api`** (`handler.py:59-83`): Athena query, latest-row-per-station within `measurement_date >= DATE_ADD('day',-7,CURRENT_DATE)`; GeoJSON FeatureCollection; `/tmp` cache 3600 s. Live = HTTP 200, valid contract.
+- **`completeness_check`** (`handler.py`): counts distinct stations on latest date → CloudWatch `MissingStations`; SNS alert only if `active<threshold AND data_age<7d` (stale-suppression). Live = `{active:1, missing:20, is_archive_stale:true, data_age_days:994}` — correct behavior (no recent data).
+- **`forecast_generate`** (gated, not deployed): reads `mart_lagged_features`, SARIMA, writes `processed/openaq_mart/mart_daily_forecast/generated_at=…/model=sarima/`.
+
+---
+
+## 5. RETENTION / LIFECYCLE (live `get-bucket-lifecycle-configuration`)
+
+| Rule | Prefix | Action | Status |
+|---|---|---|---|
+| expire-athena-results | `athena-results/` | expire **7 days** | Enabled |
+| expire-raw-stream | `raw/stream/` | expire 60 days | Enabled |
+| expire-noncurrent-versions | (all) | expire noncurrent 7 days | Enabled |
+| processed-intelligent-tiering | `processed/` | INTELLIGENT_TIERING day 0 | Enabled |
+
+Kinesis retention 7 days; Firehose log group 14 days; DLQs 1 day.
+
+---
+
+## 6. ⚠️ Lifecycle issue found (and how to fix)
+
+**The dbt marts are physically stored under `athena-results/`, which has a 7-day expiry — so the marts get auto-deleted weekly.**
+
+- Verified live: `mart_daily_aqi` LOCATION = `s3://…/athena-results/tables/f1cb5ff3-…`; `mart_daily_air_quality` = `athena-results/tables/27bda353-…`.
+- **Root cause:** the workgroup output is `s3://…/athena-results/` and (since the cleanup set) **`EnforceWorkGroupConfiguration=true`**, which makes Athena override dbt's `s3_data_dir=processed/` for CTAS table data. So marts land in `athena-results/tables/` instead of `processed/`, and the `expire-athena-results` 7-day rule will purge them.
+- **Impact:** marts survive day-to-day only because the daily dbt build re-creates them; but any >7-day gap in the dbt schedule (or the 7-day rule firing between builds on a partition) risks data loss, and it muddles the cost-tiering intent (`processed/` Intelligent-Tiering is unused).
+- **Fix options (pick one):**
+  1. Narrow the expiry rule to the actual query-output prefix (e.g. `athena-results/query/`) and point the workgroup `ResultConfiguration.OutputLocation` there, leaving `athena-results/tables/` unexpired; **or**
+  2. Set the dbt-athena models' `s3_data_naming`/external location to write under `processed/` and keep enforce=true but set the workgroup output to a separate results-only prefix; **or**
+  3. Simplest: change the workgroup output location to `s3://…/athena-results/query/` so dbt's `s3_data_dir` (processed/) is used for table data and only transient query results fall under the 7-day rule.
+
+This is a regression introduced by the `enforce_workgroup_configuration=true` hardening in this cleanup round — flagged here rather than silently fixed, since the right option depends on whether you want marts under `processed/` (Intelligent-Tiering) or a non-expiring `athena-results/tables/`.
+
+---
+
+## 7. Data-quality gates (where rows are dropped, with reasons)
+
+| Stage | Filter | Reason | Location |
+|---|---|---|---|
+| streaming | `-999`, `<0`, `>=500`, unknown param | sentinel / implausible / fill-code | `kinesis_producer.py:122-129` |
+| staging | `-999`, `<0`, `pm25 value>=500`, null param/id | sentinel / fill-code (985.0 @7440); pm10 spared | `stg_measurements.sql:40-49` |
+| intermediate | INNER JOIN vn_stations | only 21 known stations | `int_measurements_enriched.sql:69` |
+| mart_daily_aqi | `is_outlier_station=0` | station 6273386 biased | `mart_daily_aqi.sql:52` |
