@@ -54,7 +54,9 @@
 | 6068138 | Ho Chi Minh City | Care Centre | to 2025-12 |
 | 6273386 | Ho Chi Minh City | VNUHCMUS Campus 1 | **active** |
 
-- See `docs/stations.md` for full details, data quality notes, and exclusion rationale
+- The table above is the authoritative roster (mirrored by the `vn_stations` dbt seed). Data-quality
+  notes and exclusion rationale: `docs/workshop/5.1-introduction.md` (Data Description) and
+  `docs/DATA-LIFECYCLE.md` §7.
 
 ## IAM
 - **Local dev user:** terraform-admin (pre-existing, not managed by Terraform)
