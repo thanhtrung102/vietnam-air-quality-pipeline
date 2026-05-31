@@ -114,6 +114,59 @@ terraform apply                      # provision the pipeline
 | Lambda unit tests | 85 passed / 0 failed |
 | Cost | ≈ $3.22 / month |
 
+## RIPER-5 agent harness
+
+This repo runs the [vibecode-pro-max-kit](https://github.com/withkynam/vibecode-pro-max-kit)
+RIPER-5 spec-driven workflow, installed as a **data-engineering subset** (no UI/web/browser or
+kit-maintenance surfaces — see [AGENTS.md](AGENTS.md)). The orchestrator detects intent, routes to a
+specialist sub-agent, and enforces the live-state-verification HARD GATE before any claim about
+deployed AWS or real data enters a plan or a "done" report. Project context routes through
+[`process/context/all-context.md`](process/context/all-context.md); shared workflow rules live in
+[`process/development-protocols/all-development-protocols.md`](process/development-protocols/all-development-protocols.md).
+
+Run the harness self-audit any time with `node .claude/skills/vc-audit-vc/scripts/*.mjs` and
+`node .claude/skills/vc-audit-context/scripts/*.mjs` (see the `vc-audit-vc` / `vc-audit-context`
+skills). `.claude/agents/` is canonical; `.codex/agents/*.toml` mirror them and `.agents/skills/`
+mirrors `.claude/skills/` for Codex discovery.
+
+### Agents
+
+| Agent | Phase / role |
+|---|---|
+| `vc-research-agent` | RESEARCH — read-only codebase + external fact-gathering |
+| `vc-innovate-agent` | INNOVATE — explore 2-3 approaches with trade-offs |
+| `vc-plan-agent` | PLAN — write the spec with blast-radius analysis |
+| `vc-execute-agent` | EXECUTE — implement to plan with a 50% check-in |
+| `vc-fast-mode-agent` | Compressed RESEARCH→INNOVATE→PLAN for small changes |
+| `vc-update-process-agent` | UPDATE PROCESS — capture learnings, scan for stale artifacts |
+| `vc-debugger` | Evidence-first debugging with hypothesis testing |
+| `vc-tester` | Diff-aware test running with auto-escalation |
+| `vc-code-reviewer` | Edge-case scout + security/correctness review |
+| `vc-code-simplifier` | Clarity refactoring with no behavior change |
+| `vc-git-manager` | Logical commit splitting from touched files |
+
+### Skills Catalog
+
+| Skill | Use it for |
+|---|---|
+| `vc-generate-context` | author/refresh `process/context/` knowledge docs |
+| `vc-generate-plan` | scaffold a date-stamped `_PLAN.md` artifact |
+| `vc-audit-context` | audit context routing, grouping, and discoverability |
+| `vc-audit-plans` | audit the plan/feature inventory for drift |
+| `vc-audit-vc` | audit harness health (agent parity, skills, README sync, protocols, seeds) |
+| `vc-scout` | scoped internal/external scouting before deeper work |
+| `vc-security` | STRIDE + OWASP review and secret-pattern scanning |
+| `vc-debug` | systematic root-cause debugging methodology |
+| `vc-sequential-thinking` | structured step-by-step reasoning for hard problems |
+| `vc-problem-solving` | lateral problem-solving techniques when stuck |
+| `vc-predict` | multi-persona debate to pressure-test a decision |
+| `vc-scenario` | enumerate edge cases and failure scenarios |
+| `vc-context-engineering` | context-window optimization and compression patterns |
+| `vc-docs` | initialize/summarize/update project documentation |
+| `vc-docs-seeker` | research-safe library/API documentation lookup |
+
+---
+
 ## License / attribution
 
 Data: [OpenAQ](https://openaq.org) (air quality) and [Open-Meteo ERA5](https://open-meteo.com)

@@ -6,11 +6,17 @@ Quality Pipeline — a serverless AWS data-engineering project). Keep aligned wi
 
 - `.claude/skills/` is the canonical source for shared skills/command-style workflows.
 - `.claude/agents/` is the canonical source for specialist + RIPER-5 mode agents.
-- `.codex/agents/` mirrors `.claude/agents/` for Codex subagent roles.
-- `.agents/skills/` mirrors `.claude/skills/` so Codex discovers the same skill tree (a real copy on
-  this Windows host, not a symlink — keep both in sync when adding skills).
+- `.codex/agents/*.toml` mirrors `.claude/agents/*.md` for Codex subagent roles (canonical Codex
+  format: `description = '''…'''` + `developer_instructions = '''…'''`, regenerated from the `.md`).
+- `.agents/skills/` mirrors `.claude/skills/` so Codex discovers the same skill tree (a byte-identical
+  copy on this Windows host, not a symlink — keep both in sync when adding skills). The audit enforces
+  this: `validate-skills`/`validate-context-discovery` fail on any mirror drift.
 
-Prefer updating `.claude/` directly, then mirror the Codex surface.
+Prefer updating `.claude/` directly, then mirror the Codex surface. After harness changes, run the
+audit suite (`node .claude/skills/vc-audit-vc/scripts/*.mjs` and
+`node .claude/skills/vc-audit-context/scripts/*.mjs`) and re-copy `.claude/skills/` → `.agents/skills/`.
+All harness text files are LF (`.gitattributes`) — CRLF silently breaks the validators' frontmatter
+parsers.
 
 See [process/context/all-context.md](process/context/all-context.md) for project context (the root
 router: 6 context groups, live-state, known-drift caveats).

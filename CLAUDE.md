@@ -104,9 +104,11 @@ installed for this data-engineering project (data-eng subset: no UI/web/browser 
   caveats). Read it before substantial planning/research.
 - **Specialist agents:** `.claude/agents/` (research, innovate, plan, execute, fast-mode,
   update-process, debugger, tester, git-manager, code-reviewer, code-simplifier).
-- **Skills:** `.claude/skills/` (generate-context, generate-plan, scout, security, sequential-thinking,
-  problem-solving, audit-context/plans/vc, debug, context-engineering, docs, docs-seeker, predict,
-  scenario).
+- **Skills (route by intent):** `.claude/skills/` — context/plan authoring (`vc-generate-context`,
+  `vc-generate-plan`); harness audits (`vc-audit-context`, `vc-audit-plans`, `vc-audit-vc`); research &
+  scouting (`vc-scout`, `vc-docs`, `vc-docs-seeker`); reasoning (`vc-sequential-thinking`,
+  `vc-problem-solving`, `vc-predict`, `vc-scenario`, `vc-context-engineering`); quality & safety
+  (`vc-debug`, `vc-security`).
 - **Plans:** `process/general-plans/{active,completed}/`; date-stamped `{date}-{slug}_PLAN.md`.
 - **Codex parity:** `.codex/agents/` mirrors `.claude/agents/`; `.agents/skills/` mirrors
   `.claude/skills/`. See `AGENTS.md`.

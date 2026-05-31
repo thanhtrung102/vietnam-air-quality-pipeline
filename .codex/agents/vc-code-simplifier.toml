@@ -1,11 +1,12 @@
----
-name: code-simplifier
-description: Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.
-model: sonnet
-permissionMode: acceptEdits
-tools: Glob, Grep, Read, Edit, MultiEdit, Write, NotebookEdit, Bash, TaskCreate, TaskGet, TaskUpdate, TaskList, Task(Explore)
----
+name = "vc-code-simplifier"
+tools = "Glob, Grep, Read, Edit, MultiEdit, Write, NotebookEdit, Bash, TaskCreate, TaskGet, TaskUpdate, TaskList, Task(Explore)"
+model = "sonnet"
+permission_mode = "acceptEdits"
+description = '''
+Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.
+'''
 
+developer_instructions = '''
 [MODE: EXECUTE]
 
 This agent is callable from RIPER-5 EXECUTE phase after code-reviewer passes.
@@ -64,3 +65,4 @@ End every response with the subagent status block:
 **Summary:** [1-2 sentence summary]
 **Concerns/Blockers:** [if applicable]
 ```
+'''

@@ -69,6 +69,38 @@ export function loadRoutingPolicy() {
   };
 }
 
+// The Codex skill-discovery surface `.agents/skills` is a symlink on POSIX, but a
+// committed byte-identical copy on this Windows host (see AGENTS.md). Accept either:
+// a symlink/junction that resolves to .claude/skills, OR a verified mirror — and in
+// the mirror case actively fail on drift so the copy can't silently fall out of sync.
+export function agentsSkillsMirrorStatus() {
+  const claudeAbs = abs(".claude/skills");
+  const agentsAbs = abs(".agents/skills");
+  if (!fs.existsSync(agentsAbs)) return { ok: false, reason: ".agents/skills missing" };
+  if (!fs.existsSync(claudeAbs)) return { ok: false, reason: ".claude/skills missing" };
+  try {
+    if (fs.realpathSync(agentsAbs) === fs.realpathSync(claudeAbs)) return { ok: true, mode: "symlink" };
+  } catch {
+    // realpath can throw on broken links; fall through to mirror comparison
+  }
+  const relFiles = [];
+  (function walk(dir) {
+    for (const entry of fs.readdirSync(path.join(claudeAbs, dir), { withFileTypes: true })) {
+      const rel = dir ? path.join(dir, entry.name) : entry.name;
+      if (entry.isDirectory()) walk(rel);
+      else relFiles.push(rel);
+    }
+  })("");
+  for (const rel of relFiles) {
+    const target = path.join(agentsAbs, rel);
+    if (!fs.existsSync(target)) return { ok: false, reason: `.agents/skills mirror missing ${rel} (re-copy from .claude/skills)` };
+    if (!fs.readFileSync(path.join(claudeAbs, rel)).equals(fs.readFileSync(target))) {
+      return { ok: false, reason: `.agents/skills mirror drift at ${rel} (re-copy from .claude/skills)` };
+    }
+  }
+  return { ok: true, mode: "mirror" };
+}
+
 export function listSkillDirs() {
   const skillsDir = abs(".claude/skills");
   if (!fs.existsSync(skillsDir)) return [];

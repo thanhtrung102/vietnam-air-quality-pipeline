@@ -1,0 +1,345 @@
+{
+  "owner": "audit-context",
+  "generatedFrom": {
+    "skillsRoot": ".claude/skills",
+    "routingPolicy": ".claude/skills/vc-audit-context/references/skill-routing-policy.json",
+    "canonicalRoutingSurfaces": [
+      "AGENTS.md",
+      "CLAUDE.md"
+    ]
+  },
+  "skillCount": 15,
+  "skills": [
+    {
+      "folder": "vc-audit-context",
+      "name": "vc:audit-context",
+      "description": "Audit Flowser context routing, shared-skill discoverability, and Claude/Codex wiring. Use when context docs or skill surfaces move, split, or drift.",
+      "aliases": [
+        "vc-audit-context",
+        "vc:audit-context"
+      ],
+      "normalizedName": "vcauditcontext",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/audit-context.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-audit-plans",
+      "name": "vc:audit-plans",
+      "description": "Audit active Flowser plan files for staleness, completion, and routing truth. Use when cleaning up plans, reconciling active work, or archiving completed artifacts.",
+      "aliases": [
+        "vc-audit-plans",
+        "vc:audit-plans"
+      ],
+      "normalizedName": "vcauditplans",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/audit-plans.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-audit-vc",
+      "name": "vc:audit-vc",
+      "description": "Audit agent harness health: Claude/Codex agent parity, skill registry consistency, README.md sync, and protocol file wiring. Use when agents, skills, README.md, or development-protocol files move, split, or drift.",
+      "aliases": [
+        "vc-audit-vc",
+        "vc:audit-vc"
+      ],
+      "normalizedName": "vcauditvc",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-context-engineering",
+      "name": "vc:context-engineering",
+      "description": "Check context limits, optimize token usage, and debug context failures. Use when asking about rate limits, usage warnings, memory systems, or context-aware agent design.",
+      "aliases": [
+        "vc-context-engineering",
+        "vc:context-engineering"
+      ],
+      "normalizedName": "vccontextengineering",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/context-compression.md",
+        "references/context-degradation.md",
+        "references/context-fundamentals.md",
+        "references/context-optimization.md",
+        "references/evaluation.md",
+        "references/memory-systems.md",
+        "references/multi-agent-patterns.md",
+        "references/project-development.md",
+        "references/runtime-awareness.md",
+        "references/tool-design.md",
+        "scripts/compression_evaluator.py",
+        "scripts/context_analyzer.py"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-debug",
+      "name": "vc:debug",
+      "description": "Debug systematically with root-cause analysis before fixes. Use for bugs, test failures, unexpected behavior, performance issues, CI failures, or system investigation.",
+      "aliases": [
+        "vc-debug",
+        "vc:debug"
+      ],
+      "normalizedName": "vcdebug",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/defense-in-depth.md",
+        "references/frontend-verification.md",
+        "references/investigation-methodology.md",
+        "references/log-and-ci-analysis.md",
+        "references/performance-diagnostics.md",
+        "references/reporting-standards.md",
+        "references/root-cause-tracing.md",
+        "references/systematic-debugging.md",
+        "references/task-management-debugging.md",
+        "references/verification.md",
+        "scripts/find-polluter.sh"
+      ],
+      "mentionedSkills": [
+        "vc-docs-seeker",
+        "vc-problem-solving",
+        "vc-scout"
+      ]
+    },
+    {
+      "folder": "vc-docs",
+      "name": "vc:docs",
+      "description": "Use when you need to analyze a codebase and initialize, update, or summarize project documentation.",
+      "aliases": [
+        "vc-docs",
+        "vc:docs"
+      ],
+      "normalizedName": "vcdocs",
+      "routedFrom": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/init-workflow.md",
+        "references/summarize-workflow.md",
+        "references/update-workflow.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-docs-seeker",
+      "name": "vc:docs-seeker",
+      "description": "Search library/framework documentation via llms.txt (context7.com). Use for API docs, GitHub repository analysis, technical documentation lookup, latest library features.",
+      "aliases": [
+        "vc-docs-seeker",
+        "vc:docs-seeker"
+      ],
+      "normalizedName": "vcdocsseeker",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/advanced.md",
+        "references/context7-patterns.md",
+        "references/errors.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-generate-context",
+      "name": "vc:generate-context",
+      "description": "Generate or update Flowser's authoritative repository context at process/context/all-context.md. Use when repo context is missing, stale, or contradicted by code.",
+      "aliases": [
+        "vc-generate-context",
+        "vc:generate-context"
+      ],
+      "normalizedName": "vcgeneratecontext",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/generate-context.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-generate-plan",
+      "name": "vc:generate-plan",
+      "description": "Create or update Flowser implementation plans in the repo's SIMPLE or COMPLEX format. Use when turning an idea, PRD, or approved direction into a saved plan artifact.",
+      "aliases": [
+        "vc-generate-plan",
+        "vc:generate-plan"
+      ],
+      "normalizedName": "vcgenerateplan",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/generate-plan.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-predict",
+      "name": "vc:predict",
+      "description": "5 expert personas debate proposed changes before implementation. Catches architectural, security, performance, and UX issues early. Use before major features or risky changes.",
+      "aliases": [
+        "vc-predict",
+        "vc:predict"
+      ],
+      "normalizedName": "vcpredict",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [],
+      "mentionedSkills": [
+        "vc-scenario"
+      ]
+    },
+    {
+      "folder": "vc-problem-solving",
+      "name": "vc:problem-solving",
+      "description": "Apply systematic problem-solving techniques when stuck. Use for complexity spirals, innovation blocks, recurring patterns, assumption constraints, simplification cascades, scale uncertainty.",
+      "aliases": [
+        "vc-problem-solving",
+        "vc:problem-solving"
+      ],
+      "normalizedName": "vcproblemsolving",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/attribution.md",
+        "references/collision-zone-thinking.md",
+        "references/inversion-exercise.md",
+        "references/meta-pattern-recognition.md",
+        "references/scale-game.md",
+        "references/simplification-cascades.md",
+        "references/when-stuck.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-scenario",
+      "name": "vc:scenario",
+      "description": "Generate comprehensive edge cases and test scenarios by decomposing features across 12 dimensions. Use before implementation or testing to catch issues early.",
+      "aliases": [
+        "vc-scenario",
+        "vc:scenario"
+      ],
+      "normalizedName": "vcscenario",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [],
+      "mentionedSkills": [
+        "vc-predict"
+      ]
+    },
+    {
+      "folder": "vc-scout",
+      "name": "vc:scout",
+      "description": "Fast codebase scouting using shell search and optional parallel research agents. Use for file discovery, task context gathering, and quick scoped searches across directories.",
+      "aliases": [
+        "vc-scout",
+        "vc:scout"
+      ],
+      "normalizedName": "vcscout",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/external-scouting.md",
+        "references/internal-scouting.md",
+        "references/task-management-scouting.md"
+      ],
+      "mentionedSkills": []
+    },
+    {
+      "folder": "vc-security",
+      "name": "vc:security",
+      "description": "STRIDE + OWASP-based security audit with optional auto-fix. Scans code for vulnerabilities, categorizes by severity, and can iteratively fix findings using vc:autoresearch pattern.",
+      "aliases": [
+        "vc-security",
+        "vc:security"
+      ],
+      "normalizedName": "vcsecurity",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/stride-owasp-checklist.md"
+      ],
+      "mentionedSkills": [
+        "vc-predict",
+        "vc-scenario"
+      ]
+    },
+    {
+      "folder": "vc-sequential-thinking",
+      "name": "vc:sequential-thinking",
+      "description": "Apply step-by-step analysis for complex problems with revision capability. Use for multi-step reasoning, hypothesis verification, adaptive planning, problem decomposition, course correction.",
+      "aliases": [
+        "vc-sequential-thinking",
+        "vc:sequential-thinking"
+      ],
+      "normalizedName": "vcsequentialthinking",
+      "routedFrom": [
+        "CLAUDE.md"
+      ],
+      "allowlisted": false,
+      "allowlistReason": null,
+      "relativeReferences": [
+        "references/advanced-strategies.md",
+        "references/advanced-techniques.md",
+        "references/core-patterns.md",
+        "references/examples-api.md",
+        "references/examples-architecture.md",
+        "references/examples-debug.md",
+        "scripts/format-thought.js",
+        "scripts/process-thought.js"
+      ],
+      "mentionedSkills": []
+    }
+  ]
+}

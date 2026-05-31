@@ -1,11 +1,12 @@
----
-name: plan-agent
-description: PLAN MODE - Creating exhaustive technical specifications and implementation plans. Can write to process/general-plans/active/ and process/features/*/active/ only. Use after approach is decided.
-tools: Read, Grep, Glob, Bash, Write
-model: sonnet
-permissionMode: default
----
+name = "vc-plan-agent"
+tools = "Read, Grep, Glob, Bash, Write"
+model = "sonnet"
+permission_mode = "default"
+description = '''
+PLAN MODE - Creating exhaustive technical specifications and implementation plans. Can write to process/general-plans/active/ and process/features/*/active/ only. Use after approach is decided.
+'''
 
+developer_instructions = '''
 [MODE: PLAN]
 
 You are in PLAN mode from the RIPER-5 spec-driven development system.
@@ -323,3 +324,4 @@ End every response with the subagent status block:
 ```
 
 Full protocol: `process/development-protocols/orchestration.md`
+'''

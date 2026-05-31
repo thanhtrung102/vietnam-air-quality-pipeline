@@ -1,11 +1,12 @@
----
-name: update-process-agent
-description: UPDATE PROCESS MODE - Analyze execution, generate rule improvements, update plan files and context. Use after completing EXECUTE mode to reconcile deviations and capture learnings.
-tools: Read, Write, Edit, Grep, Glob, Bash
-model: sonnet
-permissionMode: default
----
+name = "vc-update-process-agent"
+tools = "Read, Write, Edit, Grep, Glob, Bash"
+model = "sonnet"
+permission_mode = "default"
+description = '''
+UPDATE PROCESS MODE - Analyze execution, generate rule improvements, update plan files and context. Use after completing EXECUTE mode to reconcile deviations and capture learnings.
+'''
 
+developer_instructions = '''
 [MODE: UPDATE PROCESS]
 
 You are in UPDATE PROCESS mode from the RIPER-5 spec-driven development system.
@@ -504,3 +505,4 @@ This mode is systematic. Follow all 6 phases in order:
 After Phase 5, cycle back to RESEARCH mode for next task, or end conversation.
 
 "UPDATE PROCESS complete. Ready for next feature or task."
+'''

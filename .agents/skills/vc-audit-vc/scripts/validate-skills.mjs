@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { parseFrontmatter, listSkillDirs, exists, abs } from "../../vc-audit-context/scripts/shared-skill-utils.mjs";
+import { parseFrontmatter, listSkillDirs, exists, abs, agentsSkillsMirrorStatus } from "../../vc-audit-context/scripts/shared-skill-utils.mjs";
 
 const root = process.cwd();
 const failures = [];
@@ -36,16 +36,8 @@ if (!fs.existsSync(skillsDir)) {
   fail(".claude/skills missing");
 }
 
-const agentsSkills = path.join(root, ".agents/skills");
-if (!fs.existsSync(agentsSkills)) {
-  fail(".agents/skills missing");
-} else if (fs.existsSync(skillsDir)) {
-  const source = fs.realpathSync(skillsDir);
-  const discovered = fs.realpathSync(agentsSkills);
-  if (source !== discovered) {
-    fail(".agents/skills does not resolve to .claude/skills");
-  }
-}
+const mirror = agentsSkillsMirrorStatus();
+if (!mirror.ok) fail(mirror.reason);
 
 const skillNames = listSkillDirs();
 

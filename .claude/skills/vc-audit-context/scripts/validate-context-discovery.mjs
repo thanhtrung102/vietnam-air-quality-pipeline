@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { agentsSkillsMirrorStatus } from "./shared-skill-utils.mjs";
 
 const root = process.cwd();
 const failures = [];
@@ -27,7 +28,9 @@ function walk(dir, predicate, out = []) {
   const abs = path.join(root, dir);
   if (!fs.existsSync(abs)) return out;
   for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
-    const rel = path.join(dir, entry.name);
+    // Forward-slash relative paths so downstream comparisons (doc === router,
+    // /^process\/context\//, routerText.includes(...)) work on Windows too.
+    const rel = `${dir}/${entry.name}`;
     if (entry.isDirectory()) walk(rel, predicate, out);
     else if (!predicate || predicate(rel)) out.push(rel);
   }
@@ -92,14 +95,8 @@ function normalizeForParity(text) {
   return text.replace(/\r\n/g, "\n").replace(/[ \t]+$/gm, "").trim();
 }
 
-const agentsSkills = path.join(root, ".agents/skills");
-if (!fs.existsSync(agentsSkills)) {
-  fail(".agents/skills missing");
-} else {
-  const real = fs.realpathSync(agentsSkills);
-  const expected = fs.realpathSync(path.join(root, ".claude/skills"));
-  if (real !== expected) fail(".agents/skills does not resolve to .claude/skills");
-}
+const mirror = agentsSkillsMirrorStatus();
+if (!mirror.ok) fail(mirror.reason);
 
 for (const skill of ["vc-audit-context", "vc-audit-plans", "vc-generate-context", "vc-generate-plan"]) {
   const file = `.claude/skills/${skill}/SKILL.md`;

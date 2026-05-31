@@ -1,0 +1,14 @@
+# RIPER-5 harness files are parsed by Node validators with LF-only frontmatter
+# regexes (/^---\n/). CRLF silently breaks skill/agent discovery — pin to LF.
+.claude/**       text eol=lf
+.codex/**        text eol=lf
+.agents/**       text eol=lf
+process/**       text eol=lf
+*.md             text eol=lf
+*.mjs            text eol=lf
+*.cjs            text eol=lf
+*.js             text eol=lf
+*.json           text eol=lf
+*.sh             text eol=lf
+*.toml           text eol=lf
+*.seed           text eol=lf

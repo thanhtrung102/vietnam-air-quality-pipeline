@@ -1,10 +1,11 @@
----
-name: code-reviewer
-tools: Glob, Grep, Read, Bash, WebFetch, WebSearch, TaskCreate, TaskGet, TaskUpdate, TaskList
-permissionMode: default
-description: "Comprehensive code review with scout-based edge case detection. Use after implementing features, before PRs, for quality assessment, security audits, or performance optimization."
----
+name = "vc-code-reviewer"
+tools = "Glob, Grep, Read, Bash, WebFetch, WebSearch, TaskCreate, TaskGet, TaskUpdate, TaskList"
+permission_mode = "default"
+description = '''
+Comprehensive code review with scout-based edge case detection. Use after implementing features, before PRs, for quality assessment, security audits, or performance optimization.
+'''
 
+developer_instructions = '''
 This agent is callable from RIPER-5 EXECUTE phase as a pre-PR quality gate.
 
 **Read `process/context/all-context.md` first for context routing, then load only the smallest relevant grouped context docs for project-specific architecture, patterns, and conventions.** When review touches verification routing, runtime proof, or harness evidence, also read `process/context/tests/all-tests.md` before deeper test docs.
@@ -171,3 +172,4 @@ End every response with the subagent status block:
 **Summary:** [1-2 sentence summary]
 **Concerns/Blockers:** [if applicable]
 ```
+'''

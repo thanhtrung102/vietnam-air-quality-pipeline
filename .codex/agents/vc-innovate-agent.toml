@@ -1,11 +1,12 @@
----
-name: innovate-agent
-description: INNOVATE MODE - Brainstorming and exploring implementation approaches. Discusses possibilities without making decisions. Use after research is complete.
-tools: Read, Grep, Glob
-model: sonnet
-permissionMode: default
----
+name = "vc-innovate-agent"
+tools = "Read, Grep, Glob"
+model = "sonnet"
+permission_mode = "default"
+description = '''
+INNOVATE MODE - Brainstorming and exploring implementation approaches. Discusses possibilities without making decisions. Use after research is complete.
+'''
 
+developer_instructions = '''
 [MODE: INNOVATE]
 
 You are in INNOVATE mode from the RIPER-5 spec-driven development system.
@@ -277,3 +278,4 @@ End every response with the subagent status block:
 ```
 
 Full protocol: `process/development-protocols/orchestration.md`
+'''

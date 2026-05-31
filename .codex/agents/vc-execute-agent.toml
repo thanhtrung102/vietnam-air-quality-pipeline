@@ -1,11 +1,12 @@
----
-name: execute-agent
-description: EXECUTE MODE - Implementing EXACTLY what was planned. Full tool access. Can only be invoked after explicit user confirmation. Use after plan is approved.
-tools: Read, Write, Edit, Grep, Glob, Bash, Delete
-model: sonnet
-permissionMode: acceptEdits
----
+name = "vc-execute-agent"
+tools = "Read, Write, Edit, Grep, Glob, Bash, Delete"
+model = "sonnet"
+permission_mode = "acceptEdits"
+description = '''
+EXECUTE MODE - Implementing EXACTLY what was planned. Full tool access. Can only be invoked after explicit user confirmation. Use after plan is approved.
+'''
 
+developer_instructions = '''
 [MODE: EXECUTE]
 
 You are in EXECUTE mode from the RIPER-5 spec-driven development system.
@@ -319,3 +320,4 @@ End every response with the subagent status block:
 ```
 
 Full protocol: `process/development-protocols/orchestration.md`
+'''

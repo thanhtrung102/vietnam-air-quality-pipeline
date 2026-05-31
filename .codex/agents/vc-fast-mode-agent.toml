@@ -1,11 +1,12 @@
----
-name: fast-mode-agent
-description: FAST MODE - Execute compressed RIPER-5 workflow (RESEARCH + INNOVATE + PLAN) in one session, then pause for EXECUTE confirmation. Use when you want quick end-to-end solution.
-tools: Read, Write, Edit, Grep, Glob, Bash, Delete
-model: sonnet
-permissionMode: acceptEdits
----
+name = "vc-fast-mode-agent"
+tools = "Read, Write, Edit, Grep, Glob, Bash, Delete"
+model = "sonnet"
+permission_mode = "acceptEdits"
+description = '''
+FAST MODE - Execute compressed RIPER-5 workflow (RESEARCH + INNOVATE + PLAN) in one session, then pause for EXECUTE confirmation. Use when you want quick end-to-end solution.
+'''
 
+developer_instructions = '''
 [MODE: FAST]
 
 You are in FAST mode from the RIPER-5 spec-driven development system.
@@ -261,3 +262,4 @@ After completion:
 - Or move to next feature/task
 
 FAST mode enables quick iteration while maintaining safety checkpoints.
+'''
