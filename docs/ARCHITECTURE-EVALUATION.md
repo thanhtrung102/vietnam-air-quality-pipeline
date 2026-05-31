@@ -50,7 +50,7 @@ Of 15 material findings put to a skeptic: **1 upheld high · 8 confirmed but dow
 
 **Sound (keep):** seed-as-single-source-of-truth roster via `csvdecode`; partition projection; 10GB scan cap + enforced workgroup; arm64 + GZIP + tiered expiry; pinned provider + AWS CodeBuild image (GHCR rate-limit pivot); forecast `count` gate; full-refresh table marts at *this* scale; circular-mean wind; pm25-only 500 ceiling; INNER-JOIN allowlist; `conftest` module-collision shim; secret-out-of-state via `ignore_changes` + post-deploy injection.
 
-**Questionable (revisit as it grows):** flat Terraform root with **local state** (→ S3+DynamoDB backend); **out-of-band artifact packaging** (→ `archive_file` + `aws_s3_object` + `source_code_hash`); **Kinesis ON_DEMAND** for ~KB/hour (→ 1 provisioned shard, or drop Kinesis→direct S3 PutObject); **full-CTAS** (→ incremental once history >1–2 yr); **completeness stale-suppression** conflating upstream-lag with pipeline-death.
+**Questionable (revisit as it grows):** flat Terraform root with ~~local state~~ (✅ 2026-05-31: moved to versioned/SSE-S3 remote backend with native `use_lockfile` — **no DynamoDB**, which the original suggestion over-specified for a single operator); **out-of-band artifact packaging** (→ `archive_file` + `aws_s3_object` + `source_code_hash`); **Kinesis ON_DEMAND** for ~KB/hour (→ 1 provisioned shard, or drop Kinesis→direct S3 PutObject); **full-CTAS** (→ incremental once history >1–2 yr); **completeness stale-suppression** conflating upstream-lag with pipeline-death.
 
 **Risky (address):** **batch_sync returns success on per-station failure** (→ emit `BatchStationFailures` metric + alarm, or raise over threshold); **proxy-only alarming** with no direct Lambda Errors/DLQ-depth alarms; **dual secret-bootstrap paths** (pick one).
 
@@ -80,10 +80,14 @@ scorecard and verdict table are preserved as the point-in-time evaluation).
   `burst=20 / rate=10` + `reserved_concurrent_executions=10` on `aqi_api`.
 - ✅ **CI dbt_runner Glue scope-down (rec #6)** → DONE & live: role `openaq_dbt_runner_role` scoped to
   `database/openaq_mart*`, `table/openaq_mart*/*`, `openaq_raw`, `default` — no account-wide wildcard.
-- ⏳ **Still genuinely open (verified 2026-05-31):** (1) public API has **no WAF** (throttle +
-  reserved-concurrency already cap the availability/cost blast radius; WAF is the lower-value remainder,
-  arguably out-of-envelope for a single-operator ~$3/mo project); (2) local Terraform state → encrypted
-  remote backend (S3 + DynamoDB lock).
+- ✅ **Local Terraform state → encrypted remote backend** → DONE & verified live 2026-05-31: state moved
+  to versioned/SSE-S3 bucket `openaq-tfstate-thanhtrung102` with native `use_lockfile` (NO DynamoDB —
+  out-of-envelope for a single operator); `terraform plan` clean no-op over 88 resources. Closed the
+  single-laptop durability SPOF (workstation was not backed up out-of-band).
+- ⏳ **Still genuinely open (verified 2026-05-31):** public API has **no WAF** — and this is a deliberate
+  **DECLINE**: throttle (burst 20/rate 10) + reserved-concurrency (10) already cap the availability/cost
+  blast radius, and WAFv2's ~$5+/mo floor exceeds the whole ~$3–8/mo envelope for a read-only public-data
+  GET. Recorded as accepted residual risk, not an open gap.
 
 ## Process note
 The verification step refuted/softened more than half the initial findings — including two I'd previously have reported with confidence (the "no runbook" and "tfstate held the secret" claims). Treat any single-pass review of this codebase with that prior: it presents worse than it is on first read, because the workshop docs and the secret-migration design aren't obvious without checking the artifacts.

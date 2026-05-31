@@ -2,7 +2,7 @@
 
 - **Date**: 2026-05-31
 - **Complexity**: COMPLEX (touches live Terraform state for 88 resources; one-time `init -migrate-state`)
-- **Status**: ACTIVE — PLAN phase complete; **BLOCKED on Decision D-1** + EXECUTE approval
+- **Status**: DONE — D-1 resolved (NO out-of-band backup) → adopted; migrated & verified live 2026-05-31
 - **RIPER-5 phase**: PLAN. **Do not run any terraform/state command from this document** — gated.
 - **Context router**: `process/context/all-context.md`; infra group `process/context/infra-terraform/all-infra-terraform.md`; verification gates from `process/context/tests/all-tests.md`.
 - Calibrated against `process/context/planning/example-complex-prd.md` and `all-planning.md`.
@@ -147,12 +147,23 @@ minimal and reversible.
 None. No managed resource, API, schema, or output changes. Backend location only; `terraform plan` no-op
 is the contract that nothing else moved.
 
-## Verification Evidence
+## Verification Evidence (EXECUTE, 2026-05-31)
 
-*(Filled during EXECUTE.)*
-- [ ] Phase 0 live state probe (done: 88 resources, no backend, no bucket, TF 1.14.3).
-- [ ] Bucket config (versioning/SSE/PAB) boto3 output.
-- [ ] `terraform init -migrate-state` log + `terraform plan` no-op output.
+- [x] **D-1 resolved by inspection:** tfstate on `D:\` (NOT under OneDrive `C:\Users\admin\OneDrive`),
+      gitignored (not on GitHub), File History service Stopped/Manual → **no out-of-band backup** → adopt.
+- [x] **Phase 0 live probe:** TF v1.14.3, no backend block, local state serial 654 / **88 resources**,
+      no pre-existing state bucket.
+- [x] **Phase 1 bucket:** `openaq-tfstate-thanhtrung102` created — versioning Enabled, SSE-S3 (AES256),
+      Public Access Block all-true, TLS-only bucket policy (boto3-verified).
+- [x] **Phase 2 migrate:** local backup `terraform.tfstate.premigrate-20260531` taken; `backend "s3"`
+      block added to `main.tf` (`use_lockfile=true`, no DynamoDB); `required_version` → `>= 1.10.0`;
+      `terraform init -migrate-state -force-copy` succeeded; remote state object present (88 resources).
+- [x] **Phase 3 no-op:** first `terraform plan` showed 1 change = `aws_s3_object.codebuild_source` etag
+      only (driven by this session's `transform/` edits via `archive_file`, NOT the backend move — zero
+      infra-resource diffs). Applied that single change (also exercised the native S3 lock live, which
+      deployed the Fix #3 + bi_disabled `transform/` edits into `codebuild-source.zip`); re-`plan` then
+      reported **"No changes. Your infrastructure matches the configuration."** — clean no-op over 88
+      resources. Docs flipped to remote-state-adopted.
 
 ## Resume and Execution Handoff
 

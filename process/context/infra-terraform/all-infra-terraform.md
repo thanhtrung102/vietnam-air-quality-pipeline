@@ -14,8 +14,10 @@ re-enabling QuickSight.
 
 ## Quick facts
 
-- **State:** local Terraform state (deliberate — single operator; see OPERATIONS-RUNBOOK). TF ≥1.5.0,
-  AWS provider ~>5.0. tfstate serial 585 / ~80 resources.
+- **State:** **remote S3 backend** (adopted 2026-05-31) — bucket `openaq-tfstate-thanhtrung102`, key
+  `openaq/terraform.tfstate`, versioned + SSE-S3, **native `use_lockfile` lock (no DynamoDB)**; backend
+  block in `main.tf` (bucket bootstrapped out-of-band). TF ≥1.10.0, AWS provider ~>5.0; ≈88 resources.
+  See OPERATIONS-RUNBOOK.
 - **Files:** `main.tf` (TF settings, S3 bucket/lifecycle/website, Athena workgroup, pipeline role,
   result-reuse `null_resource`), `glue_tables.tf` (raw external tables, partition projection),
   `kinesis.tf` (stream + Firehose), `lambda.tf` (role + 6 functions incl. gated forecast, schedules,

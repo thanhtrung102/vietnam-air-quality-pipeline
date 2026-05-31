@@ -1,5 +1,17 @@
 terraform {
-  required_version = ">= 1.5.0"
+  # >= 1.10.0 required for the S3 backend's native use_lockfile (no DynamoDB).
+  required_version = ">= 1.10.0"
+
+  # Remote state: encrypted, versioned S3 bucket with native S3 locking.
+  # The bucket is bootstrapped out-of-band (boto3) — NOT managed by this state —
+  # to avoid the chicken-and-egg of a state bucket inside its own state.
+  backend "s3" {
+    bucket       = "openaq-tfstate-thanhtrung102"
+    key          = "openaq/terraform.tfstate"
+    region       = "ap-southeast-1"
+    encrypt      = true
+    use_lockfile = true
+  }
 
   required_providers {
     aws = {

@@ -114,7 +114,7 @@ Two **process-support groups** back the RIPER-5 harness (cross-cutting, not doma
 ## Constraint Envelope (standing adversarial filter — RESEARCH-WORKFLOW Lane 5)
 
 Every recommendation must pass: **≤ ~$3–8/mo · single operator · serverless/scale-to-zero ·
-QuickSight Standard (BI gated) · ~5 actively-reporting stations · local Terraform state (deliberate).**
+QuickSight Standard (BI gated) · ~5 actively-reporting stations · remote S3 Terraform state (no DynamoDB).**
 Pre-reject as out-of-envelope (flag, don't propose): Timestream hot-path dual-write, Lake Formation
 fine-grained governance, Iceberg migration, EMR/Redshift, LSTM/Transformer forecasting, Amazon Forecast
 (closed to new customers since 2024-07-29 — gated SARIMA-in-Lambda is the correct choice).
@@ -151,7 +151,7 @@ vietnam-air-quality-pipeline/
 | Serving | API Gateway + `openaq_aqi_api` Lambda (GeoJSON/CORS) → static Leaflet dashboard |
 | Forecasting | gated SARIMA-in-Lambda (ECR container), 7-day PM2.5 — deploy-gated, off by default |
 | Orchestration | EventBridge Scheduler → Lambdas; CodeBuild for the daily dbt run |
-| IaC / CI | Terraform (local state, deliberate); GitHub Actions `validate.yml` (tf fmt/validate, pytest, dbt parse) |
+| IaC / CI | Terraform (remote S3 state + native lock, no DynamoDB; adopted 2026-05-31); GitHub Actions `validate.yml` (tf fmt/validate, pytest, dbt parse) |
 | Secrets | AWS Secrets Manager (OpenAQ API key); no plaintext keys in code |
 | Region / account | `ap-southeast-1` / `703668403514` · cost ≈ $3.22/mo |
 
@@ -197,8 +197,9 @@ The canonical knowledge sources behind this router:
 
 ## Open Questions / Outstanding Work
 
-- Open production-hardening items: `docs/ARCHITECTURE-EVALUATION.md` Resolution status — genuinely open
-  = remote Terraform state backend + API WAF (everything else verified DONE & live 2026-05-31).
+- Open production-hardening items: `docs/ARCHITECTURE-EVALUATION.md` Resolution status — remote Terraform
+  state backend DONE (2026-05-31); API WAF deliberately DECLINED (out-of-envelope). No in-envelope
+  production-hardening items remain open.
 - NO₂/O₃/SO₂/CO AQI sub-indices not yet in the mart (see `planning/example-complex-prd.md` for the NO₂ shape).
 - SARIMA forecaster is built but deploy-gated (`var.forecast_lambda_image_uri`); not validated on live data.
 - QuickSight BI is parked in `terraform/_qs_disabled/` (out of envelope by default).

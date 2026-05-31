@@ -122,7 +122,7 @@ Validate/challenge choices against authoritative AWS patterns:
 
 ### Lane 5 — Constraint envelope (the adversarial filter) **[always]**
 Every recommendation must pass: **≤ ~$3–8/mo · single operator · serverless/scale-to-zero ·
-QuickSight Standard (BI gated) · ~5 actively-reporting stations · local Terraform state.**
+QuickSight Standard (BI gated) · ~5 actively-reporting stations · remote S3 Terraform state (no DynamoDB).**
 Pre-reject as out-of-envelope (flag, don't propose): Timestream hot-path dual-write, Lake Formation
 fine-grained governance, Iceberg migration, LSTM/Transformer forecasting. Right-sized: full-refresh
 CTAS until scan cost hurts; SARIMA/Prophet + gradient-boosting-with-meteorology (boundary-layer height,

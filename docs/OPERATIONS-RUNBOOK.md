@@ -9,25 +9,27 @@
 
 The project's constraint envelope (RESEARCH-WORKFLOW.md, Lane 5) is the adversarial filter for
 every proposed change: **≤ ~$3–8/mo · single operator · serverless/scale-to-zero · ~5 actively
-reporting stations · local Terraform state.** Some commonly-suggested "best practices" are
-**intentionally not adopted** because they solve a problem this deployment does not have. They are
-recorded here so they are not re-proposed as gaps.
+reporting stations.** Some commonly-suggested "best practices" are **intentionally not adopted**
+because they solve a problem this deployment does not have. They are recorded here so they are not
+re-proposed as gaps.
 
-### Remote Terraform state (S3 backend + DynamoDB lock) — NOT adopted
+### Remote Terraform state — ADOPTED 2026-05-31 (durability-only S3 backend, NO DynamoDB)
 
-- **What it would add:** an S3 bucket for `terraform.tfstate` + a DynamoDB table for state locking,
-  replacing the current local `terraform.tfstate`.
-- **Why it's declined:** DynamoDB state locking exists to stop *concurrent* applies from two or more
-  operators/CI runners corrupting shared state. This pipeline is explicitly **single-operator**, so
-  there is no concurrent-apply contention to prevent. Remote state also adds standing cost (a
-  DynamoDB table) and a bootstrap chicken-and-egg (the backend bucket/table must exist before
-  `terraform init`), against a ≤$3–8/mo envelope.
-- **Residual risk accepted:** local state lives on one machine. Mitigation is operational, not
-  architectural — the repo is the source of truth for *configuration*, and `terraform.tfstate` is
-  git-ignored and should be backed up out-of-band if the workstation is not already backed up.
-- **Revisit when:** a second operator or any CI/CD runner gains `terraform apply` rights. At that
-  point concurrent-apply contention becomes real and remote state + locking becomes correct. This is
-  the single trigger — adopt it then, not before.
+- **What changed:** `terraform.tfstate` moved from local-only to an encrypted, versioned S3 bucket
+  `openaq-tfstate-thanhtrung102` (`key = openaq/terraform.tfstate`) with **native S3 locking**
+  (`use_lockfile = true`, Terraform ≥1.10). Backend block lives in `terraform/main.tf`. Migrated via
+  `terraform init -migrate-state`; `terraform plan` verified a clean no-op (88 resources intact).
+- **Why adopted:** the prior local-only state was a **single-laptop durability SPOF** — workstation
+  inspection (2026-05-31) found the tfstate was on `D:\` (not under OneDrive), gitignored (not on
+  GitHub), and File History was off, i.e. **not backed up out-of-band**. Versioned S3 removes that SPOF
+  for pennies/mo (in-envelope).
+- **DynamoDB still NOT adopted** (out-of-envelope): a lock table exists to stop *concurrent* applies from
+  multiple operators/CI. This pipeline is single-operator, so there is no contention to prevent — and TF
+  1.10+ native S3 `use_lockfile` already guards against self-clobber at zero standing cost. Revisit
+  DynamoDB only if a 2nd operator / CI gains apply rights.
+- **Bootstrap note:** the state bucket is created **out-of-band** (boto3, `terraform/postdeploy`-style),
+  not managed by the state it backs, to avoid the chicken-and-egg. A pre-migration local backup
+  (`terraform.tfstate.premigrate-*`, gitignored) is retained for one cycle.
 
 ## Procedures
 
