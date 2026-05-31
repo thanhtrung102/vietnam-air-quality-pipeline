@@ -59,7 +59,7 @@ No `README.md` files inside `process/context/`. Canonical entrypoints use `all-*
 
 ## Canonical Document Owners (no-duplication convention)
 
-Each fact has ONE canonical owner; others link to it so they cannot drift. (Defined in `README.md`.)
+Each fact has ONE canonical owner; others link to it so they cannot drift. (Defined in the root `README.md`.)
 
 | Concern | Canonical owner |
 |---|---|
@@ -197,7 +197,8 @@ The canonical knowledge sources behind this router:
 
 ## Open Questions / Outstanding Work
 
-- Improvement plan phasing: `docs/improvement_plan.md` (Phase 0 done; later IoT-Lens reliability gaps open).
+- Open production-hardening items: `docs/ARCHITECTURE-EVALUATION.md` Resolution status — genuinely open
+  = remote Terraform state backend + API WAF (everything else verified DONE & live 2026-05-31).
 - NO₂/O₃/SO₂/CO AQI sub-indices not yet in the mart (see `planning/example-complex-prd.md` for the NO₂ shape).
 - SARIMA forecaster is built but deploy-gated (`var.forecast_lambda_image_uri`); not validated on live data.
 - QuickSight BI is parked in `terraform/_qs_disabled/` (out of envelope by default).

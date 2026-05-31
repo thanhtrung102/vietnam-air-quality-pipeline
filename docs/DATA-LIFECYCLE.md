@@ -1,8 +1,10 @@
 # Vietnam Air Quality Pipeline — End-to-End Data Lifecycle
 
-> Compiled 2026-05-30. Source-of-truth = the codebase (file:line cited) cross-checked against
-> **live AWS** (account 703668403514, ap-southeast-1). Live row counts/dates are from Athena queries
-> run with result-reuse disabled. Companion: `docs/PIPELINE-REPORT.md`, `docs/DEPLOYED-SPECS-AND-AUDIT.md`.
+> Compiled 2026-05-30; **live counts re-probed 2026-05-31**. Source-of-truth = the codebase (file:line
+> cited) cross-checked against **live AWS** (account 703668403514, ap-southeast-1). Live row counts/dates
+> are from Athena queries run with result-reuse disabled. Companion: `docs/PIPELINE-REPORT.md`,
+> `docs/DEPLOYED-SPECS-AND-AUDIT.md`. Open a cycle via `docs/RESEARCH-WORKFLOW.md` and the context router
+> `process/context/all-context.md`; re-probe these counts before trusting them (HARD GATE).
 
 ---
 
@@ -10,11 +12,11 @@
 
 | Stage | Store | Format | Live volume | Live date span |
 |---|---|---|---|---|
-| Ingest → raw batch | `s3://…/raw/batch/` → Glue `openaq_raw.batch` | CSV.GZ | **1,376,278 rows, 18 stations** | 2023-01-01 → 2026-05-20 |
+| Ingest → raw batch | `s3://…/raw/batch/` → Glue `openaq_raw.batch` | CSV.GZ | **1,409,331 rows, 18 stations** | 2023-01-01 → 2026-05-28 |
 | Ingest → raw stream | `s3://…/raw/stream/` → `openaq_raw.stream` | GZIP NDJSON | **1,011 rows, 4 stations** | 2016-11-09 → 2025-04-09 + fresh `2026/05/30/02/` |
 | Ingest → raw weather | `s3://…/raw/weather/` → `openaq_raw.weather` | NDJSON | **3,024 rows, 21 stations** | 2026-05-24 → 2026-05-29 |
-| Staging | `openaq_mart.stg_measurements` (view) | — | **1,361,731 rows** | 2023-01-01 → 2026-05-20 |
-| Mart | `openaq_mart.mart_daily_aqi` | Parquet | **4,704 rows, 17 stations** | 2023-01-01 → 2026-05-20 |
+| Staging | `openaq_mart.stg_measurements` (view) | — | **1,394,784 rows, 18 stations** | 2023-01-01 → 2026-05-28 |
+| Mart | `openaq_mart.mart_daily_aqi` | Parquet | **4,743 rows, 17 stations** | 2023-01-01 → 2026-05-28 |
 
 (The earlier report's "309 rows / 2023-09-09" figure was a stale read mid-build; the completed build
 yields the figures above. `mart_daily_air_quality` = 18,303 rows, `mart_lagged_features` = 4,684 rows.)
@@ -61,19 +63,20 @@ yields the figures above. `mart_daily_air_quality` = 18,303 rows, `mart_lagged_f
 Build order (`buildspec_dbt.yml`): `dbt seed vn_stations vn_holidays` → `dbt run --exclude tag:bi_disabled` → `dbt test`. Last build: **PASS=12, ERROR=0**, 805 s.
 
 - **Staging (views):** `stg_measurements.sql` reads `openaq_raw.batch`; filters null/`-999`/`value<0`/`pm25 value>=500` (`:40-49`); `from_iso8601_timestamp(datetime)` handles `+07:00`; derives `measurement_date`. `stg_weather.sql` casts ERA5 hourly.
-- **Intermediate (tables):** `int_measurements_enriched.sql` INNER JOINs the **`vn_stations` seed** (`:69`) = the 21-station allowlist; adds city/province/coords/sensor_type/is_outlier_station. **Live: 1,361,731 rows.**
+- **Intermediate (tables):** `int_measurements_enriched.sql` INNER JOINs the **`vn_stations` seed** (`:69`) = the 21-station allowlist; adds city/province/coords/sensor_type/is_outlier_station. **Live (2026-05-31): 1,394,784 rows.**
 - **Marts (tables, Parquet/Snappy):**
   - `mart_daily_air_quality` — grain date×station×parameter; EPA-2024 AQI, WHO/QCVN exceedance, cigarette-equiv, low-cost humidity correction. **18,303 rows.**
-  - `mart_daily_aqi` — composite max-AQI per station-day, dominant pollutant, filters `is_outlier_station=0`. **4,704 rows / 17 stations** (consumed by `aqi_api` + `completeness_check`).
+  - `mart_daily_aqi` — composite max-AQI per station-day, dominant pollutant, filters `is_outlier_station=0`. **4,743 rows / 17 stations** (consumed by `aqi_api` + `completeness_check`).
   - `mart_lagged_features` — AR lags, rolling means, calendar/holiday, weather covariates, `pm25_next1` target. **4,684 rows** (forecast input).
-- **`bi_disabled` tag** excludes 8 QuickSight-only / forecast-dependent marts from the default build.
+- **`bi_disabled` tag** excludes 5 QuickSight-only / forecast-dependent marts from the default build
+  (see [CLAUDE.md](../CLAUDE.md) model inventory: 12 of 17 models built by default).
 
 ---
 
 ## 4. SERVE
 
 - **`aqi_api`** (`handler.py:59-83`): Athena query, latest-row-per-station within `measurement_date >= DATE_ADD('day',-7,CURRENT_DATE)`; GeoJSON FeatureCollection; `/tmp` cache 3600 s. Live = HTTP 200, valid contract.
-- **`completeness_check`** (`handler.py`): counts distinct stations on latest date → CloudWatch `MissingStations`; SNS alert only if `active<threshold AND data_age<7d` (stale-suppression). Live = `{active:1, missing:20, is_archive_stale:true, data_age_days:994}` — correct behavior (no recent data).
+- **`completeness_check`** (`handler.py`): counts distinct stations on latest date → CloudWatch `MissingStations` + the non-suppressed `DaysSinceLastNewMart`; SNS alert only if `active<threshold AND data_age<7d` (stale-suppression). Live (2026-05-31): **5 active stations, data to 2026-05-28, `DaysSinceLastNewMart`≈3**. *(An earlier `{active:1,…,data_age_days:994}` snapshot was a pre-batch-fix read, now superseded — see PIPELINE-REPORT §6 and the `BatchStationFailures` 5→0 fix.)*
 - **`forecast_generate`** (gated, not deployed): reads `mart_lagged_features`, SARIMA, writes `processed/openaq_mart/mart_daily_forecast/generated_at=…/model=sarima/`.
 
 ---
@@ -112,7 +115,7 @@ no-drift). With enforcement off, dbt-athena emits `external_location = s3_data_d
 honors it, so marts now write to `processed/`.
 
 - **Verified live after a full dbt build (2026-05-30):**
-  - `mart_daily_aqi` → `s3://…/processed/openaq_mart/mart_daily_aqi/4acf6dd7-…` (4,704 rows / 17 stations / max 2026-05-20 — unchanged)
+  - `mart_daily_aqi` → `s3://…/processed/openaq_mart/mart_daily_aqi/4acf6dd7-…` (4,743 rows / 17 stations / max 2026-05-28 as of 2026-05-31; grows daily as `batch_sync` advances)
   - `mart_daily_air_quality` → `s3://…/processed/openaq_mart/mart_daily_air_quality/d80bd725-…`
   - `mart_lagged_features` → `s3://…/processed/openaq_mart/mart_lagged_features/9418d819-…`
   - `processed/` carries Intelligent-Tiering (no expiry); the cost-tiering intent is now realized.

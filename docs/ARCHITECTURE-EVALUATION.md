@@ -5,6 +5,8 @@
 > agent prompted to refute it** against the real code. Only verdicts below are post-verification —
 > severities are the *adjusted* ones, not the initial claims. Generated 2026-05-30.
 > Companions: PIPELINE-REPORT.md, DATA-LIFECYCLE.md, DEPLOYED-SPECS-AND-AUDIT.md.
+> Next dev cycle: triage open items via `docs/RESEARCH-WORKFLOW.md` (live-state HARD GATE) and the
+> context router `process/context/all-context.md`; Resolution status (bottom) is live as of 2026-05-31.
 
 ## Scorecard (1–5)
 
@@ -58,8 +60,8 @@ Of 15 material findings put to a skeptic: **1 upheld high · 8 confirmed but dow
 2. **(HIGH) Add direct alarms** — Lambda `Errors`/`Throttles` (at least aqi_api + streaming), DLQ `ApproximateNumberOfMessagesVisible>0`, and a **mart-freshness alarm** (`DaysSinceLastNewMart`) that fires when `MAX(measurement_date)` stops advancing — the true silent-death signal the current monitor suppresses. (`completeness_check` already computes `data_age_days`; it's one `put_metric_data` call away.)
 3. **(MEDIUM) Fix the mart-expiry regression** — point the workgroup result location at `athena-results/query/` so dbt marts under `processed/` are not on the 7-day delete rule (the `enforce=true` change introduced this).
 4. **(MEDIUM) Close reproducibility gaps** — add `source_code_hash`; bring `codebuild-source.zip` into Terraform (`archive_file`+`aws_s3_object`) or a scripted step; add a root README linking the workshop and folding in the two missing zip-build steps; resolve the dual secret-bootstrap path.
-5. **(MEDIUM) API hardening** — `default_route_settings` throttle + `reserved_concurrent_executions` on aqi_api.
-6. **(LOW, scope-down) Tighten the CI dbt_runner role** to `database/openaq_mart*` + `table/openaq_mart*/*` (audit schema name is static); move state to an encrypted S3 backend.
+5. **(MEDIUM) API hardening** — `default_route_settings` throttle + `reserved_concurrent_executions` on aqi_api. **(✅ DONE & live — see Resolution status.)**
+6. **(LOW, scope-down) Tighten the CI dbt_runner role** to `database/openaq_mart*` + `table/openaq_mart*/*` (audit schema name is static) **(✅ DONE & live)**; move state to an encrypted S3 backend **(⏳ still open)**.
 
 ## Resolution status (updated 2026-05-30, verified live)
 
@@ -74,7 +76,14 @@ scorecard and verdict table are preserved as the point-in-time evaluation).
 - ✅ **No `source_code_hash`** → added to all 5 Lambda functions; rebuilt zips now redeploy (proven this round).
 - ✅ **codebuild-source.zip built/uploaded by hand** → now packaged + uploaded by Terraform (`archive_file` + `aws_s3_object`, pure-Go so no local `zip` needed); buildspec moved to the zip root. The dbt transform layer is now reproducible from `terraform apply` alone. Verified live: a fresh dbt build consumed the Terraform-built zip and succeeded.
 - ✅ **Dual secret-bootstrap path** → removed the unused `openaq_api_key` variable + its dead `terraform.tfvars` copy; Secrets Manager (post-deploy `postdeploy.sh` injection) is now the single path. `terraform plan` showed zero infra diff, confirming it was dead config.
-- ⏳ **Still open:** public API throttle/WAF/reserved-concurrency; local Terraform state → remote backend; CI dbt_runner Glue role scope-down.
+- ✅ **API hardening (rec #5)** → DONE & live (verified 2026-05-31): `$default` stage throttle
+  `burst=20 / rate=10` + `reserved_concurrent_executions=10` on `aqi_api`.
+- ✅ **CI dbt_runner Glue scope-down (rec #6)** → DONE & live: role `openaq_dbt_runner_role` scoped to
+  `database/openaq_mart*`, `table/openaq_mart*/*`, `openaq_raw`, `default` — no account-wide wildcard.
+- ⏳ **Still genuinely open (verified 2026-05-31):** (1) public API has **no WAF** (throttle +
+  reserved-concurrency already cap the availability/cost blast radius; WAF is the lower-value remainder,
+  arguably out-of-envelope for a single-operator ~$3/mo project); (2) local Terraform state → encrypted
+  remote backend (S3 + DynamoDB lock).
 
 ## Process note
 The verification step refuted/softened more than half the initial findings — including two I'd previously have reported with confidence (the "no runbook" and "tfstate held the secret" claims). Treat any single-pass review of this codebase with that prior: it presents worse than it is on first read, because the workshop docs and the secret-migration design aren't obvious without checking the artifacts.

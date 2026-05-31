@@ -16,13 +16,16 @@ CodeBuild build pipeline.
 ## Quick facts
 
 - **Layout:** `models/staging/` (stg_measurements, stg_weather + sources.yml, schema.yml) →
-  `models/intermediate/` (int_measurements_enriched, int_weather_enriched) → `models/marts/` (15 marts).
+  `models/intermediate/` (int_measurements_enriched, int_weather_enriched) → `models/marts/` (13 marts).
   `seeds/` = `vn_stations.csv` (21-station allowlist, source of truth) + `vn_holidays.csv` (61).
+  Canonical model count: 17 models = 2 staging + 2 intermediate + 13 marts (see `CLAUDE.md`).
 - **Materialization:** marts are Parquet/Snappy CTAS to `processed/openaq_mart/{table}/{uuid}/`.
   Date-grain marts `partitioned_by=['measurement_date']`; `mart_forecast_accuracy` on `forecast_date`;
   aggregate marts unpartitioned.
-- **`bi_disabled` tag** excludes 8 marts (QuickSight-only / forecast-dependent) from the default build:
-  `dbt build --exclude tag:bi_disabled` builds 12 of 20.
+- **`bi_disabled` tag** excludes 5 marts (QuickSight-only / forecast-dependent) from the default build
+  (`mart_diurnal_profile`, `mart_feature_stats`, `mart_forecast_accuracy`, `mart_monthly_profile`,
+  `mart_pollutant_ratio`): `dbt build --exclude tag:bi_disabled` builds **12 of 17** (8 marts + 2
+  intermediate + 2 staging).
 - **Station allowlist** = inner-join to `vn_stations` seed at the intermediate layer.
 - **DQ filter:** `-999.0` sentinel dropped; pm25-only `value >= 500` fill-code guard (station 7440 emits
   985.0), **not** applied to pm10 (legit coarse-dust spikes survive).

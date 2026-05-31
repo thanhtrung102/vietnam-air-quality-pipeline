@@ -23,6 +23,10 @@
 ## dbt
 - **Project name:** openaq_transform
 - **Adapter:** dbt-athena-community
+- **Model inventory (canonical count):** 17 models = 2 staging + 2 intermediate + 13 marts.
+  `dbt build --exclude tag:bi_disabled` builds **12 of 17** (8 marts materialized + 2 intermediate +
+  2 staging). The 5 `bi_disabled` marts skipped by default: `mart_diurnal_profile`,
+  `mart_feature_stats`, `mart_forecast_accuracy`, `mart_monthly_profile`, `mart_pollutant_ratio`.
 - **Mart table partitions on:** measurement_date (date-grain marts; `mart_forecast_accuracy` partitions on forecast_date). Analytical/aggregate marts use `partitioned_by = []` (unpartitioned).
 - **Mart table clustering:** none — no mart uses clustering or bucketing (no `bucketed_by`). Partition projection alone keeps Athena scans small.
 
@@ -36,7 +40,7 @@
 - **Archive schema columns (9):** location_id, sensors_id, location, datetime, lat, lon, parameter, units, value
 - **datetime format:** ISO-8601 string with `+07:00` offset — cast with `from_iso8601_timestamp(datetime)` in Athena
 - **Sentinel value:** `-999.0` means missing — always filter `WHERE value != -999.0` in staging
-- **Vietnamese station IDs (19 confirmed in archive):**
+- **Vietnamese station IDs (21 in roster, confirmed in archive — 17 Hanoi, 4 HCMC):**
 
 | ID | City | Name | Active |
 |----|------|------|--------|
@@ -73,7 +77,7 @@
 - **Lambda functions (6 defined in terraform/lambda.tf):**
   - `openaq_batch_sync` (512 MB, 900s timeout, daily at 01:00 UTC) — OpenAQ S3 archive historical sync
   - `openaq_streaming_producer` (256 MB, 120s timeout, every 30 minutes) — OpenAQ REST API v3 → Kinesis
-  - `openaq_weather_ingest` (256 MB, 300s timeout, daily at 02:00 UTC) — Open-Meteo ERA5 → S3
+  - `openaq_weather_ingest` (256 MB, 900s timeout, daily at 02:00 UTC) — Open-Meteo ERA5 → S3
   - `openaq_aqi_api` (behind API Gateway, GeoJSON/CORS) — serves the Leaflet dashboard
   - `openaq_completeness_check` (hourly) — emits MissingStations + DaysSinceLastNewMart CloudWatch metrics
   - `openaq_forecast_generate` (ECR container image, SARIMA 7-day PM2.5) — **gated/not deployed by default**: created only when `var.forecast_lambda_image_uri != ""` (`count`-gated in lambda.tf). Requires building and pushing the ECR image first.

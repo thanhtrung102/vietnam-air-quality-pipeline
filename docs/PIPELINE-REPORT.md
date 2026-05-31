@@ -3,7 +3,9 @@
 > Compiled 2026-05-30 after a full RIPER-5 development round (audit → cleanup → deploy → verify).
 > Every metric below is from a **live** AWS check against account `703668403514`, region
 > `ap-southeast-1`, after redeploying the compute layer and rebuilding all dbt marts.
-> Companion docs: `docs/DEPLOYED-SPECS-AND-AUDIT.md` (full audit), `process/general-plans/active/…_PLAN.md` (the plan).
+> Companion docs: `docs/DEPLOYED-SPECS-AND-AUDIT.md` (full audit), `process/general-plans/` (plans).
+> Next dev cycle: open via `docs/RESEARCH-WORKFLOW.md` (5-lane method + live-state HARD GATE) and the
+> context router `process/context/all-context.md`; re-probe every metric below before trusting it.
 
 ---
 
@@ -77,9 +79,9 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 | 1 | **Real-time ingest → Kinesis** | `aws lambda invoke openaq_streaming_producer` | `{"success": 66, "failed": 0}` — 66 readings auth'd via Secrets Manager and published to Kinesis ✅ |
 | 2 | **dbt transform (CodeBuild)** | `aws codebuild start-build openaq-dbt-runner` | `PASS=12 WARN=0 ERROR=0` — all 12 models built in 13 min ✅ |
 | 3 | **Seeds loaded** | dbt seed | `vn_holidays INSERT 61`, `vn_stations INSERT 21` ✅ |
-| 4 | **Marts materialized** | `aws glue get-tables openaq_mart` | 13 relations incl. `mart_daily_aqi`, `mart_daily_air_quality`, `mart_lagged_features` ✅ |
-| 5 | **AQI serving API** | `aws lambda invoke openaq_aqi_api` | HTTP 200, valid GeoJSON FeatureCollection (0 features — see §6 data-freshness) ✅ contract |
-| 6 | **Completeness monitor** | `aws lambda invoke openaq_completeness_check` | `{"active":1,"missing":20,"expected":21,"is_archive_stale":true,"data_age_days":994}` — correctly self-suppresses the alert because data is stale ✅ |
+| 4 | **Marts materialized** | `aws glue get-tables openaq_mart` | 8 marts materialized by default (+5 `bi_disabled` skipped); 14 relations in `openaq_mart` (8 marts + 2 intermediate + 2 staging + 2 seeds) — see [CLAUDE.md](../CLAUDE.md) model inventory ✅ |
+| 5 | **AQI serving API** | `aws lambda invoke openaq_aqi_api` | HTTP 200, valid GeoJSON FeatureCollection ✅ contract (feature count tracks mart freshness — see §6) |
+| 6 | **Completeness monitor** | `aws lambda invoke openaq_completeness_check` | live (2026-05-31): 5 active stations, data to 2026-05-28, `DaysSinceLastNewMart`≈3. *(An earlier draft showed `{"active":1,…,"data_age_days":994}` — a pre-batch-fix snapshot, now superseded.)* The monitor self-suppresses SNS only on genuinely stale data ✅ |
 | 7 | **Static dashboard** | `aws s3 cp dashboard/index.html` | Real API URL substituted (placeholder gone) ✅ |
 | 8 | **Secret-only auth** | `get-function-configuration` | Streaming env keys = `{KINESIS_STREAM_NAME, OPENAQ_SECRET_NAME, STATION_IDS}` — no plaintext key ✅ |
 
@@ -116,9 +118,9 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 ### Transform (dbt)
 - **dbt-on-Athena via CodeBuild, scheduled.** Keeps transformation declarative and version-controlled;
   CodeBuild gives an ephemeral, IAM-scoped runner with no server to manage.
-- **`bi_disabled` tag excludes 8 marts from the default build.** Those marts feed only the (disabled)
+- **`bi_disabled` tag excludes 5 marts from the default build.** Those marts feed only the (disabled)
   QuickSight layer or the (not-deployed) forecast table; excluding them avoids building tables nothing
-  reads — `dbt run --exclude tag:bi_disabled` builds 12 of 20.
+  reads — `dbt build --exclude tag:bi_disabled` builds 12 of 17 (see [CLAUDE.md](../CLAUDE.md) model inventory).
 - **Inner-join to the `vn_stations` seed = the station allowlist.** One CSV is the source of truth for
   which 21 stations are valid; bad/extra location_ids are dropped at the intermediate layer.
 - **`-999.0` sentinel + parameter-aware `value < 500` filter in staging.** `-999` is OpenAQ's "missing";
@@ -155,9 +157,9 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 | Athena guardrail | 10 GB scan cap + SSE_S3 (defaults; `EnforceWorkGroupConfiguration=false`) | `get-work-group` |
 | EventBridge schedules | **5 / 5 ENABLED** | `scheduler list-schedules` |
 | dbt build | **PASS=12, ERROR=0** (805 s) | CodeBuild log |
-| `int_measurements_enriched` | **1,361,731 rows** | dbt run log |
+| `int_measurements_enriched` | **1,394,784 rows** (live 2026-05-31) | Athena count |
 | `mart_daily_air_quality` | **18,303 rows** | Athena count |
-| `mart_daily_aqi` | **4,704 rows, 17 stations** (2023-01-01→2026-05-20) | Athena count |
+| `mart_daily_aqi` | **4,743 rows, 17 stations** (2023-01-01→2026-05-28, live 2026-05-31) | Athena count |
 | `mart_lagged_features` (forecast input) | **4,684 rows** | Athena count |
 | Seeds | 61 holidays, 21 stations | dbt seed log |
 | Streaming ingest | 66 records published, 0 failed | Lambda invoke |
@@ -168,17 +170,19 @@ through an HTTP API. It also has a (currently gated) SARIMA forecasting subsyste
 
 ## 6. Honest Caveats (what is NOT yet true)
 
-1. **Data freshness.** The marts span **2023-01-01 → 2026-05-20** (1.38 M raw batch rows; the
+1. **Data freshness.** The marts span **2023-01-01 → 2026-05-28** (≈1.39 M raw batch rows; the
    `mart_daily_aqi` figure of "309 rows / 2023-09-09" in an earlier draft was a stale read taken
-   *mid-build* — the completed build yields 4,704 AQI rows across 17 stations to 2026-05-20). The
-   **latest date (2026-05-20) is still ~10 days behind wall-clock**, so `aqi_api`'s 7-day window
-   returns a **valid but empty** GeoJSON and `completeness_check` reports `is_archive_stale: true`.
-   This is the OpenAQ archive's normal lag, not a pipeline fault — the scheduled `batch_sync`/`streaming`
+   *mid-build* — the completed build yields 4,743 AQI rows across 17 stations to 2026-05-28, live
+   2026-05-31). The **latest date trails wall-clock by ~3 days** (healthy: OpenAQ archive normally lags
+   up to ~10 days), so `aqi_api`'s 7-day window returns a populated GeoJSON for the ~5 actively-reporting
+   stations; only during a longer archive lag does it return a valid-but-empty FeatureCollection. This
+   lag is the archive's normal cadence, not a pipeline fault — the scheduled `batch_sync`/`streaming`
    Lambdas advance it on their next runs (or run `ingestion/historical/sync_historical.sh` to backfill
-   the most recent weeks). **The pipeline is proven correct end-to-end.**
+   the most recent weeks). **The pipeline is proven correct end-to-end** (the `batch_sync` per-station
+   fix was verified live: `BatchStationFailures` 5→0).
 2. **Forecast subsystem** is gated off (no ECR image) — by design.
-3. **QuickSight** is disabled (account is Standard edition, not Enterprise) — by design; 8 marts that fed
-   it are excluded from the default dbt build via `tag:bi_disabled`.
+3. **QuickSight** is disabled (account is Standard edition, not Enterprise) — by design; 5 marts that fed
+   it are excluded from the default dbt build via `tag:bi_disabled` (see [CLAUDE.md](../CLAUDE.md) model inventory).
 4. **Live IAM was applied via AWS CLI**, not `terraform apply`, because the AWS provider plugin crashed
    intermittently in the build environment. The Terraform source (`lambda.tf`) has been **reconciled to
    match the live policy**, so a `terraform plan` from a stable host should be a near-no-op.

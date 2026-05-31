@@ -100,19 +100,22 @@ terraform apply                      # provision the pipeline
 # then populate the OpenAQ API key into Secrets Manager (see workshop 5.2)
 ```
 
-## Verified state (2026-05-30, live)
+## Verified state (live-probed 2026-05-31)
 
-| Aspect | Value |
-|---|---|
-| Deployed Lambdas | 5 (python3.12 / arm64 / X-Ray); `forecast_generate` gated off |
-| Stations | 21 in roster (17 Hanoi, 4 HCMC); ~5 actively reporting |
-| `int_measurements_enriched` | 1,361,731 rows |
-| `mart_daily_aqi` | 4,704 rows / 17 stations (2023-01-01 → 2026-05-20) |
-| dbt marts location | `processed/openaq_mart/{table}/{uuid}` (Intelligent-Tiering) |
-| Athena workgroup | 10 GB scan cap + SSE_S3 as **defaults** (`enforce=false`) |
-| CloudWatch alarms | 14 (incl. per-function Errors, DLQ-depth, mart-staleness) |
-| Lambda unit tests | 85 passed / 0 failed |
-| Cost | ≈ $3.22 / month |
+A derived at-a-glance snapshot — **not a canonical owner**. Each fact's owner is linked; re-probe
+against live AWS (RESEARCH-WORKFLOW HARD GATE) rather than trusting this table after its date.
+
+| Aspect | Value | Owner |
+|---|---|---|
+| Deployed Lambdas | 5 (python3.12 / arm64 / X-Ray); `forecast_generate` gated off | [DEPLOYED-SPECS](docs/DEPLOYED-SPECS-AND-AUDIT.md) |
+| Stations | 21 in roster (17 Hanoi, 4 HCMC); 5 actively reporting | [CLAUDE.md](CLAUDE.md) |
+| `int_measurements_enriched` | 1,394,784 rows | [PIPELINE-REPORT](docs/PIPELINE-REPORT.md) |
+| `mart_daily_aqi` | 4,743 rows / 17 stations (2023-01-01 → 2026-05-28) | [PIPELINE-REPORT](docs/PIPELINE-REPORT.md) |
+| dbt marts location | `processed/openaq_mart/{table}/{uuid}` (Intelligent-Tiering) | [DATA-LIFECYCLE](docs/DATA-LIFECYCLE.md) |
+| Athena workgroup | 10 GB scan cap + SSE_S3 as **defaults** (`enforce=false`) | [DEPLOYED-SPECS](docs/DEPLOYED-SPECS-AND-AUDIT.md) |
+| CloudWatch alarms | 14 (incl. per-function Errors, DLQ-depth, mart-staleness) | [DEPLOYED-SPECS](docs/DEPLOYED-SPECS-AND-AUDIT.md) |
+| Lambda unit tests | 85 passed / 0 failed *(re-run live 2026-05-31)* | [tests context](process/context/tests/all-tests.md) |
+| Cost | ≈ $3.22 / month *(estimate)* | [PIPELINE-REPORT](docs/PIPELINE-REPORT.md) |
 
 ## RIPER-5 agent harness
 

@@ -19,8 +19,9 @@ verification, or debugging.
 | dbt generic tests | `transform/models/**/*.yml` schema tests | `not_null`, `unique`, `accepted_values`, relationships on staging/intermediate/marts | `dbt test` |
 | CI gate | `.github/workflows/validate.yml` | `terraform fmt -check` + `validate`, `pytest`, `dbt parse` on every push/PR | GitHub Actions |
 
-Headline state (last verified 2026-05-30): **85 Lambda unit tests pass / 0 fail.** Keep this number
-current when tests are added — it is also cited in `README.md` and `all-context.md`.
+Headline state (re-run live 2026-05-31): **85 Lambda unit tests pass / 0 fail** (`pytest lambda/tests`,
+2.95s). Keep this number current when tests are added — it is also cited in `README.md`. Note: `pytest`
++ `moto` are dev-only deps (not in `requirements.txt`); `pip install pytest moto` before running locally.
 
 ---
 

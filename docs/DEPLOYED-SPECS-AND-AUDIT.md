@@ -11,9 +11,18 @@
 
 ---
 
-## 0. ⚠️ LIVE vs. STATE Reality Check (verified against AWS 2026-05-29)
+## 0. ⚠️ LIVE vs. STATE Reality Check
 
-**The local `terraform.tfstate` is STALE. The pipeline is NOT currently running.**
+> 🟢 **SUPERSEDED (verified live 2026-05-31): the compute layer is LIVE.** The teardown snapshot below
+> reflects only the transient 2026-05-29 state. Current ground truth (re-probed 2026-05-31): **5 Lambdas
+> deployed** (`openaq_batch_sync`, `streaming_producer`, `weather_ingest`, `aqi_api`, `completeness_check`;
+> `forecast_generate` gated/absent), **5 EventBridge schedules ENABLED**, **14 CloudWatch alarms**,
+> API throttle (burst=20/rate=10) + reserved-concurrency=10, dbt_runner Glue role scoped to `openaq_mart*`,
+> mart data current to 2026-05-28. Secret handling is **secret-only** (Secrets Manager populated; no
+> plaintext env). Keep §0–§5 as the point-in-time 2026-05-29 audit record; for live state see
+> `process/context/all-context.md` (Current Live State) and `docs/ARCHITECTURE-EVALUATION.md` Resolution status.
+
+**(2026-05-29 snapshot) The local `terraform.tfstate` was STALE and the pipeline was NOT running then.**
 A live API sweep of account 703668403514 (ap-southeast-1) found that the **entire compute
 layer has been removed** while the data/infra layer survives:
 
@@ -69,16 +78,18 @@ Open-Meteo ERA5 ──(weather_ingest Lambda, daily 02:00 UTC)──────
   (S3 static website)
 ```
 
-**Health snapshot**
+**Health snapshot** *(2026-05-29 point-in-time; 🔴/⚠️ rows below were remediated — see §5b and
+`docs/ARCHITECTURE-EVALUATION.md` Resolution status. Live as of 2026-05-31: secret-only handling,
+85 lambda tests across 6 handlers, validate.yml CI, QuickSight coherently disabled.)*
 
-| Area | State |
+| Area | State (2026-05-29) → now |
 |---|---|
 | Core ingest → catalog → mart → API → dashboard | ✅ Live and coherent |
-| QuickSight BI layer | ⚠️ **Disabled locally, but docs/diagrams/git HEAD still say "deployed"** — biggest drift |
-| Forecast (SARIMA) subsystem | ⚠️ Coded but **not deployed** (image URI gate empty); only empty ECR repo is live |
-| Secret handling | 🔴 Real API key in plaintext Lambda env + tfstate; Secrets Manager holds `REPLACE_ME` |
-| Test coverage | ⚠️ 3 of 7 handlers tested; highest-risk 4 untested |
-| CI | ⚠️ Only regenerates the architecture PNG — no validate/lint/test |
+| QuickSight BI layer | ⚠️ was drift → ✅ coherently disabled (`_qs_disabled/` + re-enable runbook) |
+| Forecast (SARIMA) subsystem | ⚠️ Coded but **not deployed** (image URI gate empty); only empty ECR repo is live — *still gated by design* |
+| Secret handling | 🔴 was plaintext-env claim → ✅ **secret-only** (Secrets Manager populated; plaintext env removed). NB: tfstate only ever held `REPLACE_ME` (ARCH-EVAL refuted the "tfstate held real key" claim) |
+| Test coverage | ⚠️ was 3 of 7 → ✅ 85 tests across 6 handlers |
+| CI | ⚠️ was PNG-only → ✅ validate.yml (tf fmt/validate, pytest, dbt parse) |
 
 ---
 

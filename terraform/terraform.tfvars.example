@@ -9,11 +9,15 @@ s3_bucket_suffix = "yourname"
 aws_region   = "ap-southeast-1"
 alert_email  = "you@example.com"
 
-# Your OpenAQ v3 API key (free at openaq.org/developers)
-# Only used during terraform apply to seed Secrets Manager.
-# Lambdas read it from Secrets Manager at runtime.
-openaq_api_key = "your-openaq-api-key"
+# NOTE: there is NO openaq_api_key Terraform variable. The OpenAQ v3 API key
+# (free at openaq.org/developers) is injected into Secrets Manager AFTER apply by
+# terraform/postdeploy.sh (the secret is created with a REPLACE_ME placeholder, then
+# overwritten). See workshop 5.2. Lambdas read it from Secrets Manager at runtime.
 
 # Email address for the QuickSight Author account.
 # Must match an IAM user email or be a valid address for QuickSight managed users.
 quicksight_admin_email = "you@example.com"
+
+# OPTIONAL — set to deploy the gated SARIMA forecast Lambda (ECR image URI).
+# Leave unset/empty to keep the forecast subsystem off (default).
+# forecast_lambda_image_uri = "703668403514.dkr.ecr.ap-southeast-1.amazonaws.com/openaq-forecast-generate:latest"
