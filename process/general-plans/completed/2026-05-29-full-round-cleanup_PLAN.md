@@ -80,3 +80,42 @@ live pipeline behavior.
 ## Closeout
 After each phase: report what changed / verified / unverified; offer git-manager for logical commits.
 Final: update `docs/DEPLOYED-SPECS-AND-AUDIT.md` and `CLAUDE.md` to reflect the new state.
+
+---
+
+## Reconciliation — 2026-05-31 (archive)
+
+Item-by-item audit against git history + working tree + **live AWS** (acct 703668403514,
+ap-southeast-1). Verdict: **all actionable work complete**; three items closed with rationale
+(not silently dropped). Archiving.
+
+| # | Item | Verdict | Evidence |
+|---|---|---|---|
+| 1.1 | Harden `.gitignore` | ✅ DONE | `.gitignore` has `*.tfstate.*`, `*.backup` (commit b7efb38) |
+| 1.2 | Remove stray state backup | ✅ DONE | obsolete `…1776474110.backup` gone; `git log --all` confirms never committed |
+| 1.3 | Remove API key from Lambda env | ✅ DONE | `lambda.tf` streaming env = `OPENAQ_SECRET_NAME` only (commit 12d3d0d) |
+| 1.4 | Populate Secrets Manager | ✅ DONE (live) | secret `openaq/api_key` exists; `LastAccessed 2026-05-31 07:00` = streaming Lambda reading it successfully |
+| 1.5 | Commit QuickSight disable | ✅ DONE | `terraform/_qs_disabled/` with README + all `quicksight_*.tf` (commit 12d3d0d) |
+| 2.1 | Unit tests (3 Lambdas) | ✅ DONE | commit bd95138; 85 tests pass (PIPELINE-REPORT §5) |
+| 2.2 | batch_sync SNS behavior | ✅ DONE | OpenAQ SNS subscription dropped; only `alert_email` subs remain (PIPELINE-REPORT design note) |
+| 2.3 | DLQ for batch_sync | ✅ DONE | `aws_sqs_queue.batch_sync_dlq` + `dead_letter_config` in lambda.tf |
+| 2.4 | Kinesis SSE | ✅ DONE | `encryption_type = "KMS"` in kinesis.tf |
+| 2.5 | Enforce Athena workgroup | ⤺ REVERSED (rationale) | deliberately set `enforce=false` (commit e8f0c27): enforcement traps dbt CTAS marts under athena-results 7-day expiry. Cap+SSE remain as defaults. Documented in PIPELINE-REPORT §4 + DATA-LIFECYCLE §6 |
+| 2.6 | Forecast holdout RMSE | ✅ DONE | walk-forward RMSE (commit 9673e20) |
+| 2.7 | `mart_forecast_accuracy` windows | ✅ DONE | `actual_pm25 is not null` guards present in mart SQL |
+| 2.8 | Parameter-aware staging filter | ✅ DONE | pm25-only `value >= 500` guard; not applied to pm10 (stg_measurements.sql) |
+| 2.9 | Athena result-reuse declarative | ⛔ WON'T-DO (blocked) | AWS provider ~>5.0 doesn't expose query-result-reuse; `null_resource` retained with documented CLI-fallback (main.tf:258-282). Re-evaluate when provider adds support |
+| 2.10 | aqi_api hardening + SystemExit→ValueError | ✅ DONE | commit 9673e20 |
+| 3.1 | Single-source station roster | ✅ DONE | `csvdecode(file(vn_stations.csv))` → `local.station_ids_csv` (main.tf); Lambdas use injected env |
+| 3.2 | Fix CLAUDE.md | ✅ DONE | commit 7430c20 |
+| 3.3 | Reconcile QuickSight in docs | ✅ DONE | commit 7430c20 |
+| 3.4 | Validation CI workflow | ✅ DONE | `.github/workflows/validate.yml` |
+| 3.5 | Terraform-manage dashboard | ✅ DONE | `aws_s3_object.dashboard_index` + `templatefile/replace` (main.tf) |
+| 3.6 | dbt dedup + macros | ◐ PARTIAL (rationale) | circular wind mean DONE (mart_daily_weather); AQI macros + `int_city_daily_pm25` extracted (d6f0cea) then **removed as unused dead code** (4de9084) — inline AQI logic kept deliberately. `corrected_pm25` decided (kept, EPA/Jayaratne) |
+| 3.7 | Gate orphan marts | ✅ DONE | `tag:bi_disabled` on 8 marts (d6f0cea) |
+| 3.8 | Remove cruft | ✅ DONE (repo) | `aqi_api.zip`, `openaq_producer.zip` gone. `terraform/tfplan` + `dashboard/demo_data.json` remain **local-only** (gitignored + untracked) — not a repo-hygiene concern |
+
+**Tally:** 20 ✅ done · 1 reversed-with-rationale (2.5) · 1 won't-do/blocked (2.9) · 1 partial-by-design (3.6). **No outstanding actionable work** → archived 2026-05-31.
+
+**Not from this plan (later cycle, also done):** freshness gate recalibrated to 21d + weather
+freshness test added (commit 424e33b, 2026-05-31).
