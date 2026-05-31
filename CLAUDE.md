@@ -86,3 +86,27 @@
 
 ## Rules
 - **Never hardcode API keys** — always read from environment variables
+
+---
+
+## RIPER-5 Agent Harness
+
+This repo uses the RIPER-5 spec-driven workflow (orchestrator + specialist subagents). The harness was
+installed for this data-engineering project (data-eng subset: no UI/web/browser agents).
+
+- **Orchestrator role:** detect intent → route to a specialist subagent → pass context → monitor
+  compliance. Don't do research/planning/implementation directly for non-trivial work — delegate.
+- **Shared protocols (read as needed):** `process/development-protocols/all-development-protocols.md`
+  is the router. **`live-state-verification.md` is the HARD GATE** — any claim about deployed state or
+  real data must be settled by a read-only probe against ground truth before it enters a plan or a
+  "done" claim (this project's core discipline; see also `docs/RESEARCH-WORKFLOW.md`).
+- **Context:** `process/context/all-context.md` is the root router (6 groups + live-state + drift
+  caveats). Read it before substantial planning/research.
+- **Specialist agents:** `.claude/agents/` (research, innovate, plan, execute, fast-mode,
+  update-process, debugger, tester, git-manager, code-reviewer, code-simplifier).
+- **Skills:** `.claude/skills/` (generate-context, generate-plan, scout, security, sequential-thinking,
+  problem-solving, audit-context/plans/vc, debug, context-engineering, docs, docs-seeker, predict,
+  scenario).
+- **Plans:** `process/general-plans/{active,completed}/`; date-stamped `{date}-{slug}_PLAN.md`.
+- **Codex parity:** `.codex/agents/` mirrors `.claude/agents/`; `.agents/skills/` mirrors
+  `.claude/skills/`. See `AGENTS.md`.
