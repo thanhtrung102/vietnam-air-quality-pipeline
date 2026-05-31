@@ -137,12 +137,14 @@ models:
 
       - name: corrected_pm25
         description: >
-          Bias-corrected PM2.5 for low-cost optical sensors (PMS5003 family).
-          Uses the EPA/Jayaratne humidity-adjusted formula:
-            corrected = avg_value / (1 + 0.24 × RH_fraction)
-          Falls back to RH=70% when no humidity data exists for that station-day.
-          For reference stations, corrected_pm25 = avg_value (no correction applied).
-          NULL for non-PM2.5 parameters.
+          UNVALIDATED humidity heuristic for low-cost optical PM2.5 sensors (PMS5003
+          family) — not a cited/published method. Linear divisor
+          corrected = avg_value / (1 + 0.24 × RH_fraction); falls back to RH=70%
+          (~1.17 divisor) when no humidity data exists. The 0.24 constant has no
+          published provenance and the linear form does not model hygroscopic growth.
+          DO NOT USE FOR AQI OR HEALTH REPORTING — candidate feature only. Reference
+          stations pass through unchanged (corrected_pm25 = avg_value). NULL for
+          non-PM2.5 parameters.
 
   - name: mart_daily_aqi
     description: >
@@ -793,7 +795,7 @@ models:
         description: Daily maximum PM2.5 (µg/m³, 4 dp)
 
       - name: corrected_pm25
-        description: EPA/Jayaratne humidity-adjusted PM2.5 for low-cost sensors (÷(1+0.24×RH)); equals avg_pm25 for reference stations
+        description: Unvalidated humidity heuristic (÷(1+0.24×RH)) for low-cost PM2.5 sensors — not a cited method; do not use for AQI/health. Equals avg_pm25 for reference stations
 
       - name: aqi_value
         description: US EPA 2024 AQI for PM2.5 (integer)
@@ -869,7 +871,7 @@ models:
         description: Current day's daily mean PM2.5 (µg/m³, 4 dp)
 
       - name: corrected_pm25
-        description: EPA/Jayaratne humidity-adjusted PM2.5 for low-cost sensors (÷(1+0.24×RH))
+        description: Unvalidated humidity heuristic (÷(1+0.24×RH)) for low-cost PM2.5 sensors — not a cited method; do not use for AQI/health
 
       - name: pm25_lag1
         description: Previous day's avg_pm25 (µg/m³); NULL for first row of each station series

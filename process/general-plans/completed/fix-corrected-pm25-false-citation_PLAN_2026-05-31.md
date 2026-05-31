@@ -2,7 +2,7 @@
 
 - **Date**: 2026-05-31
 - **Complexity**: COMPLEX (correctness-critical; touches a mart + two downstream forecast-layer marts + schema docs)
-- **Status**: ACTIVE — PLAN phase complete; awaiting EXECUTE approval
+- **Status**: DONE — Fix #3 applied & verified 2026-05-31 (value-neutral; see Verification Evidence)
 - **RIPER-5 phase**: PLAN. **Do not write code from this document** — each phase has a PAUSE gate.
 - **Context router**: `process/context/all-context.md`; verification gates from `process/context/tests/all-tests.md`.
 - Calibrated against `process/context/planning/example-complex-prd.md` and `all-planning.md`.
@@ -297,12 +297,20 @@ its documentation/provenance is corrected. No API, schema-shape, table-name, par
 `ref()` contract changes. The two passthrough consumers (`mart_aq_weather_daily`, `mart_lagged_features`)
 keep their existing dependency on the column.
 
-## Verification Evidence
+## Verification Evidence (EXECUTE, 2026-05-31)
 
-*(Filled during EXECUTE — captured at each phase gate.)*
-- [ ] Phase 0 Athena baseline (262 station-days, ~11.68% deflation, station means, 49 downward flips) — pasted query results.
-- [ ] Phase 1/2 diffs showing comment/string-only changes; `dbt parse` green; zero `Jayaratne`/`EPA` grep hits.
-- [ ] Phase 3: `pytest lambda/tests` 85/0; `dbt test --select mart_daily_air_quality+` green; live re-probe identical to Phase 0 (value-neutral).
+- [x] **Phase 0 baseline (live Athena):** 277 low-cost pm25 station-days (research said 262; +15 = station
+      6273386's low-cost days in this upstream mart — explained, immaterial to a comment-only fix), mean
+      raw 57.68 → corrected 51.0 (deflation 11.59%); per-station 6068138 (60d, 34.61→30.82), 6123215
+      (202d, 66.88→59.06), 6273386 (15d, 26.18→23.21). No AQI/health consumer confirmed (`corrected_pm25`
+      only passthrough in `mart_aq_weather_daily`/`mart_lagged_features`; absent from `mart_daily_aqi`/`aqi_api`).
+- [x] **Phase 1/2:** comment- and YAML-string-only edits (2 files, compute `:211-222` byte-identical —
+      `git diff` confirms no compute-line change); zero `Jayaratne`/`EPA/Jay`/`/1.50` matches in
+      `transform/models/marts/`; caveat anchor present in SQL (×2) + schema.yml (×3).
+- [x] **Phase 3:** `pytest lambda/tests` → 85 passed / 0 failed; `dbt parse` clean (only a pre-existing,
+      unrelated `accepted_values` deprecation warning). Value-neutrality holds **by construction**
+      (divisor unchanged); the updated column descriptions reach Glue on the next daily CodeBuild dbt run
+      (no forced live CTAS rebuild — respects the cost envelope).
 
 ## Resume and Execution Handoff
 

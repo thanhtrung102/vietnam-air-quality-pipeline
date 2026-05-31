@@ -31,12 +31,16 @@ Data quality flags:
       and re-run dbt seed; no SQL changes required.
       Downstream marts (health_summary, exceedance_stats) filter WHERE = 0.
 
-  - corrected_pm25: bias-corrected PM2.5 for low-cost optical particle counters
-      (sensor_type = 'low_cost'). AirGradient field studies show raw PMS5003
-      readings overestimate true PM2.5 by ~50% in high-humidity tropical conditions
-      (RH > 70%). Correction: corrected = avg_value / 1.50.
-      Reference stations (BAM/TEOM) are unaffected (corrected_pm25 = avg_value).
-      NULL for non-PM2.5 parameters.
+  - corrected_pm25: UNVALIDATED humidity heuristic for low-cost optical PM2.5 sensors
+      (sensor_type = 'low_cost') — NOT a cited/published method. Linear divisor:
+      corrected = avg_value / (1 + 0.24 × RH_fraction), RH from daily mean relative
+      humidity; falls back to 70% RH (~1.17 divisor) when no RH data exists. The 0.24
+      constant has no published provenance and the linear form does not model
+      hygroscopic growth (true correction is nonlinear — κ-Köhler; a validated
+      alternative is the Barkjohn US-PurpleAir correction, both needing a local
+      collocation campaign not yet run). DO NOT USE FOR AQI OR HEALTH REPORTING —
+      candidate feature only. Reference stations (BAM/TEOM) pass through unchanged
+      (corrected_pm25 = avg_value). NULL for non-PM2.5 parameters.
 
 Grain: one row per measurement_date × location_id × parameter.
 Source: int_measurements_enriched (staging measurements + station metadata).
@@ -93,8 +97,8 @@ aggregated as (
 ),
 
 -- Daily average relative humidity per station, derived from the relativehumidity
--- parameter rows in the same source table.  Used to apply the EPA/Jayaratne
--- humidity-adjusted correction to low-cost PM2.5 sensors (see corrected_pm25 below).
+-- parameter rows in the same source table.  Supplies station-day mean RH to the
+-- unvalidated humidity heuristic for low-cost PM2.5 sensors (see corrected_pm25 below).
 -- NULL when no humidity readings exist for that station-day.
 daily_rh as (
 
@@ -198,14 +202,15 @@ select
     -- To flag a new problematic station, update vn_stations.csv and re-run dbt seed.
     is_outlier_station,
 
-    -- Bias-corrected PM2.5 for low-cost optical sensors (PMS5003 family).
-    -- Uses the EPA/Jayaratne humidity-adjusted formula when RH data is available:
+    -- UNVALIDATED humidity heuristic for low-cost optical sensors (PMS5003 family) —
+    -- NOT a cited/published method. Linear divisor when RH data is available:
     --   corrected = raw / (1 + 0.24 × RH_fraction)
-    -- At 70% RH (Hanoi typical) this yields ~1.17 divisor (≈ 15% correction).
-    -- At 90% RH (fog/winter nights) this yields ~1.22 divisor (≈ 18% correction).
-    -- When no humidity data exists for that station-day, falls back to the flat
-    -- divisor 1.17 (equivalent to 70% RH, conservative tropical baseline).
-    -- Reference: Jayaratne et al. 2018; AirGradient field study Hanoi 2023.
+    -- At 70% RH this yields a ~1.17 divisor; at 90% RH ~1.22. When no humidity data
+    -- exists for that station-day, falls back to 70% RH (~1.17 divisor).
+    -- CAVEAT: the 0.24 constant has no published provenance and the linear form does
+    -- not model hygroscopic growth (true correction is nonlinear — κ-Köhler; a
+    -- validated alternative is the Barkjohn US-PurpleAir correction, both requiring a
+    -- local collocation campaign not yet run). DO NOT USE FOR AQI OR HEALTH REPORTING.
     -- Reference instruments (BAM/TEOM) are unaffected (corrected_pm25 = avg_value).
     -- NULL for non-PM2.5 parameters.
     case

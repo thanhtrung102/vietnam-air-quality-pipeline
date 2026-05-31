@@ -24,7 +24,22 @@ authoritative standard AND a live data probe (RESEARCH-WORKFLOW Lane 2 + HARD GA
 | Vietnam QCVN 05:2023/BTNMT PM2.5 | 24-h **50**, annual **25** µg/m³ | CONFIRMED |
 | Cigarette-equivalent | 22 µg/m³ ≈ 1 cig/day (Berkeley Earth) — **long-term mortality-risk analogy**, not acute equivalence | CONFIRMED (relabel as risk analogy) |
 
-## ⚠️ OPEN DEFECT — `corrected_pm25` formula is mis-cited (P0)
+## ✅ RESOLVED (Fix #3, 2026-05-31) — `corrected_pm25` false citation stripped + relabeled
+
+> **Status:** Fix #3 (minimum) applied 2026-05-31 (plan
+> `process/general-plans/completed/fix-corrected-pm25-false-citation_PLAN_2026-05-31.md`). The false
+> "EPA/Jayaratne" citation was removed from `mart_daily_air_quality.sql` (header, RH-CTE comment, inline
+> block) and all three `schema.yml` `corrected_pm25` descriptions; the stale `/1.50` header comment was
+> reconciled to the deployed `/(1+0.24·RH)` formula; the column is now labeled an **unvalidated humidity
+> heuristic** with a **do-not-use-for-AQI/health** caveat. The compute logic was **unchanged**
+> (value-neutral; verified: live `corrected_pm25` byte-identical, `dbt parse` + 85 lambda tests green).
+> `corrected_pm25` has no live AQI/health consumer (passthrough feature in `mart_aq_weather_daily` /
+> `mart_lagged_features` only). **Fixes #1/#2 below remain open future work** (need a Vietnam collocation
+> campaign). The original defect analysis is preserved below for the record.
+
+---
+
+### Original defect analysis (point-in-time; P0, now resolved by Fix #3)
 
 The deployed low-cost-sensor correction is `corrected_pm25 = avg_value / (1 + 0.24 × RH_fraction)`,
 attributed in `models/marts/schema.yml` to **"EPA/Jayaratne"**. Web verification (2026-05-31):
@@ -38,13 +53,13 @@ attributed in `models/marts/schema.yml` to **"EPA/Jayaratne"**. Web verification
 - **Direction is defensible, magnitude is not validated.** It monotonically deflates inflated wet
   readings, but is an unvalidated heuristic, not a cited method.
 
-**Required action (pick one; tracked, not yet applied — needs approval):**
-1. *Preferred:* replace with the validated **Barkjohn US PurpleAir** eq (`0.524·PA_cf1 − 0.0862·RH +
+**Required action (three options ranked):**
+1. *Preferred (FUTURE):* replace with the validated **Barkjohn US PurpleAir** eq (`0.524·PA_cf1 − 0.0862·RH +
    5.75`) **only after local Vietnam collocation** (Barkjohn is US-aerosol/PurpleAir-specific — do not
-   ship US coefficients blind).
-2. Use a κ-Köhler form with a locally-fitted κ.
-3. *Minimum:* **strip the false "EPA/Jayaratne" citation** and relabel as an unvalidated humidity
-   heuristic with an explicit caveat.
+   ship US coefficients blind). Needs a reference+low-cost collocation campaign + `PA_cf1` raw channel — deferred.
+2. *(FUTURE):* Use a κ-Köhler form with a locally-fitted κ. Also needs collocation — deferred.
+3. *Minimum (✅ APPLIED 2026-05-31):* **stripped the false "EPA/Jayaratne" citation** and relabeled as an
+   unvalidated humidity heuristic with an explicit do-not-use-for-AQI/health caveat (value-neutral).
 
 ## Data-quality rules (canonical: `docs/DATA-LIFECYCLE.md` §7)
 
