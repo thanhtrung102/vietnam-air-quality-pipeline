@@ -69,9 +69,17 @@ Validate/challenge choices against authoritative AWS patterns:
   `loaded_at_field` override the dbt docs say forces query-based freshness is ignored by the adapter.
   *Verified live 2026-05-31:* a CodeBuild run errored on all 3 freshness-configured sources while the
   non-blocking gate masked it as a constant WARN. Instead enforce freshness with a **singular
-  query-based test** (`select max(from_iso8601_timestamp(ts)) … having … < current_timestamp - interval`)
-  in the non-blocking `dbt test` step, backed by the deployed `DaysSinceLastNewMart` CloudWatch alarm.
-  Still enforce `contract: {enforced: true}` on the consumer marts (`mart_daily_aqi`, `mart_daily_air_quality`).
+  query-based test** in the non-blocking `dbt test` step, backed by the deployed `DaysSinceLastNewMart`
+  CloudWatch alarm. **Query the consumer mart, not the raw source, and return a partition-key column:**
+  `select max(measurement_date) from {{ ref('mart_daily_aqi') }} having max(measurement_date) <
+  date_add('day', -N, current_date)`. Two live-verified traps, each caught only by running on real
+  data (a code-read would miss both): (1) scanning the raw partition-projected CSV source has no
+  pruning and is slow/costly — querying the date-partitioned Parquet mart prunes to metadata; (2) dbt
+  `--store-failures` CTAS-es the test result, and a `timestamp with time zone` column (e.g. from
+  `from_iso8601_timestamp`) throws `NOT_SUPPORTED: Unsupported Hive type: timestamp(3) with time zone`
+  — returning a `date` is storable. A stalled source still surfaces because the mart stops gaining
+  days even on a green rebuild. Still enforce `contract: {enforced: true}` on the consumer marts
+  (`mart_daily_aqi`, `mart_daily_air_quality`).
 - **Idempotent backfill** = partition overwrite: marts are `partitioned_by=['measurement_date']`, so
   `incremental` + `insert_overwrite` keyed on date is the cheapest idempotent path **when** full-refresh
   scan cost justifies it (not before). Iceberg `merge` + Write-Audit-Publish only if row-level
