@@ -19,8 +19,9 @@ Plans are durable artifacts on disk, not chat scrollback:
 | References | `process/general-plans/references/` | research that informs future plans |
 | Feature-scoped | `process/features/{feature}/{active,completed,backlog,reports,references}/` | when work is large enough to warrant its own lifecycle folder |
 
-**Naming:** date-stamped `YYYY-MM-DD-{slug}_PLAN.md` (the validator and `vc-audit-plans` expect a
-date stamp and `PLAN` in the name). See `process/general-plans/completed/` for a real worked example.
+**Naming:** `{slug}_PLAN_{YYYY-MM-DD}.md` — must contain the literal `_PLAN_` token **and** a date stamp
+(both `vc-generate-plan`'s `validate-plan-artifact.mjs` and `vc-audit-plans` enforce this). See
+`process/general-plans/active/fix-corrected-pm25-false-citation_PLAN_2026-05-31.md` for a worked example.
 
 ---
 
