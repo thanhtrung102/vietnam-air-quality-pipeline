@@ -34,7 +34,8 @@ Start here before loading deeper context files. Never load the whole `process/co
 - **14 CloudWatch alarms** deployed. Freshness SLA = `DaysSinceLastNewMart` alarm at **21 days**
   (the canonical freshness control; dbt freshness tests are calibrated to match it — see
   `all-transform-dbt.md`).
-- **Marts:** `mart_daily_aqi` ≈ 4,704 rows / 17 stations to ~2026-05-28; weather mart ~1 day behind.
+- **Marts:** `mart_daily_aqi` = 4,743 rows / 17 stations, `2023-01-01 → 2026-05-28` (live-probed
+  2026-05-31 via Athena, 46.6 KiB scanned); weather mart ~1 day behind.
   OpenAQ archive normally lags up to ~10 days — that is healthy, not a fault.
 
 > **KNOWN DRIFT — read docs with care.** (1) `docs/DEPLOYED-SPECS-AND-AUDIT.md` §0/§1 predate the
@@ -217,3 +218,6 @@ file (`process/context/all-context.md`) if routing/ownership/groups changed, (3)
 - Repo HEAD at generation: branch `main`, commit `092c037` (RIPER-5 harness install); refreshed during
   the kit-wiring completion pass. Re-run `git rev-parse HEAD` to confirm the current commit.
 - Method: read-only research/audit phase; findings synthesized before any file write.
+- Live-state verification (2026-05-31, HARD GATE): read-only AWS probes confirmed 5 Lambdas
+  (`forecast_generate` absent/gated), 5 EventBridge schedules all ENABLED, 14 openaq CloudWatch
+  alarms, and `mart_daily_aqi` = 4,743 rows / 17 stations via Athena. Specs match ground truth.
