@@ -15,7 +15,10 @@ sources:
       # here because dbt-athena computes it from Glue metadata `last_modified` and
       # returns a string (dbt-athena #631) — it errors on every source. Freshness is
       # instead enforced by the singular test tests/assert_batch_source_fresh.sql
-      # (query-based, works on Athena) plus the deployed DaysSinceLastNewMart alarm.
+      # (query-based, works on Athena; 21-day threshold matching the deployed
+      # DaysSinceLastNewMart alarm). The weather path has its own
+      # tests/assert_weather_source_fresh.sql; stream has no dbt consumer and is
+      # monitored in CloudWatch (see the `stream` table note below).
       - name: batch
         description: >
           Historical and daily-incremental CSV.GZ files synced from the
@@ -38,9 +41,14 @@ sources:
           Near-real-time NDJSON records written by Kinesis Firehose from the
           openaq_stream Kinesis Data Stream into raw/stream/. Partitioned by
           year / month / day / hour. Partition Projection enabled in Glue.
-          Not consumed by the dbt models (the marts read `batch`); stream
-          liveness is covered by Kinesis / Firehose CloudWatch metrics, not dbt
-          source freshness.
+          Not consumed by any dbt model (the marts read `batch`), so there is no
+          downstream consumer for a dbt freshness test to protect — and the dbt run
+          is daily (02:30 UTC), the wrong cadence to monitor a 30-min stream. Stream
+          health is therefore monitored in CloudWatch, not dbt: the deployed alarms
+          openaq-kinesis-iterator-age-high (consumer lag), openaq-streaming-dlq-depth,
+          and openaq-streaming_producer-errors. (Note: these catch errors/lag, not a
+          cleanly stopped producer; the openaq_streaming_30min schedule being ENABLED
+          is what keeps it live — verified live 2026-05-31, stream receiving data.)
         columns:
           - name: location_id
           - name: sensors_id
@@ -60,8 +68,11 @@ sources:
           to raw/weather/{location_id}/{yyyy}/{MM}/{dd}/weather.ndjson.
           Partitioned by location_id / year / month / day.
           Partition Projection enabled in Glue. One row per station per UTC hour.
-          No dbt source-freshness block: the Open-Meteo/ERA5 publication lag is
-          variable, and dbt-athena freshness is unreliable here (see `batch` note).
+          No dbt source-freshness block (dbt-athena source freshness is unreliable —
+          see `batch` note), but freshness IS enforced via the singular test
+          tests/assert_weather_source_fresh.sql, which queries the consumer mart
+          mart_daily_weather (7-day threshold; Open-Meteo/ERA5 lag is shorter than the
+          OpenAQ archive's — weather mart was only 1 day behind on 2026-05-31).
         columns:
           - name: location_id
             description: OpenAQ location ID (Glue partition key, int)

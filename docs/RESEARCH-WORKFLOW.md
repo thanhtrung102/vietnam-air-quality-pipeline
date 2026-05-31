@@ -2,7 +2,7 @@
 
 > The reusable research method for this pipeline. It extends the base kit (RIPER-5 RESEARCH +
 > deep-research fan-out + adversarial verify) with the lanes a **deployed, regulated-domain data
-> pipeline** needs. Use it to open every development cycle. Last updated 2026-05-30.
+> pipeline** needs. Use it to open every development cycle. Last updated 2026-05-31.
 
 ## Why the base kit isn't enough here
 
@@ -74,12 +74,33 @@ Validate/challenge choices against authoritative AWS patterns:
   `select max(measurement_date) from {{ ref('mart_daily_aqi') }} having max(measurement_date) <
   date_add('day', -N, current_date)`. Two live-verified traps, each caught only by running on real
   data (a code-read would miss both): (1) scanning the raw partition-projected CSV source has no
-  pruning and is slow/costly — querying the date-partitioned Parquet mart prunes to metadata; (2) dbt
+  pruning and is slow/costly — querying the date-partitioned Parquet mart prunes to metadata
+  (*correction, verified live 2026-05-31:* at the current ~1.4 M-row volume a raw `max(datetime)`
+  probe actually scanned only ~10 MB, so the raw scan is not yet prohibitive — but the mart-query
+  approach is still preferred because it returns a `date` for trap 2 and stays cheap as history
+  grows; don't repeat the earlier overstated "blows the 10 GB cap" claim); (2) dbt
   `--store-failures` CTAS-es the test result, and a `timestamp with time zone` column (e.g. from
   `from_iso8601_timestamp`) throws `NOT_SUPPORTED: Unsupported Hive type: timestamp(3) with time zone`
   — returning a `date` is storable. A stalled source still surfaces because the mart stops gaining
   days even on a green rebuild. Still enforce `contract: {enforced: true}` on the consumer marts
   (`mart_daily_aqi`, `mart_daily_air_quality`).
+  - **Calibrate the threshold to the deployed alarm, not to a guess (verified live 2026-05-31).** The
+    `N` above must equal the deployed `DaysSinceLastNewMart` alarm threshold so the test and the alarm
+    cannot disagree — that alarm is the canonical freshness SLA. The alarm is **21 days**; an earlier
+    test used **3 days**, which (a) contradicted the alarm 7×, and (b) false-fires on normal operation
+    — the OpenAQ archive lag runs up to ~10 days behind wall-clock when healthy (PIPELINE-REPORT §6),
+    and a live probe found `mart_daily_aqi` exactly 3 days behind, i.e. *on the 3-day boundary while
+    perfectly healthy*. A too-tight freshness threshold reintroduces the same constant-WARN masking
+    this lane exists to kill. Set N = alarm threshold; re-derive N if the alarm changes.
+  - **One freshness test per *consumed* source, threshold matched to that source's own lag.** Add the
+    test only where a default-built mart depends on the source (a dbt test protects a downstream
+    consumer; a source nothing `ref`s has nothing to protect). Worked example 2026-05-31: `batch` →
+    `mart_daily_aqi` (21 d, matches alarm); `weather` → `mart_daily_weather`→`mart_aq_weather_daily`→
+    `mart_lagged_features` (7 d — Open-Meteo ERA5T lag is shorter; weather mart was only 1 day behind
+    vs the AQI mart's 3); `stream` → **no mart consumes it**, and the daily 02:30 dbt run is the wrong
+    cadence to watch a 30-min stream, so it is monitored in CloudWatch (iterator-age / DLQ-depth /
+    producer-errors) and gets **no** dbt freshness test. Don't add a hollow test to a source with no
+    consumer just for symmetry — say so in `sources.yml` and name the real monitor.
 - **Idempotent backfill** = partition overwrite: marts are `partitioned_by=['measurement_date']`, so
   `incremental` + `insert_overwrite` keyed on date is the cheapest idempotent path **when** full-refresh
   scan cost justifies it (not before). Iceberg `merge` + Write-Audit-Publish only if row-level
