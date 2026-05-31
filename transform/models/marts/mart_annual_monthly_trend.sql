@@ -34,7 +34,7 @@ Validation expectation:
   HCMC January:  2023 ~22 µg/m³ → 2024 ~27 µg/m³ → 2025 ~36 µg/m³ (faster increase)
 */
 
-{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy', tags = ['bi_disabled']) }}
 
 with city_daily as (
 

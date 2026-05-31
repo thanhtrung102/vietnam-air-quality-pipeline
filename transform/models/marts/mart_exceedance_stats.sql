@@ -26,7 +26,7 @@ Note: grain is city × parameter; each city row is the average across all non-ou
 stations in that city on that date (same methodology as mart_health_summary city_daily CTE).
 */
 
-{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy') }}
+{{ config(materialized = 'table', partitioned_by = [], format = 'parquet', write_compression = 'snappy', tags = ['bi_disabled']) }}
 
 with city_daily as (
 

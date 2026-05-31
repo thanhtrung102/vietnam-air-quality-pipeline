@@ -60,7 +60,7 @@ yields the figures above. `mart_daily_air_quality` = 18,303 rows, `mart_lagged_f
 
 ## 3. TRANSFORM (dbt-on-Athena, CodeBuild `openaq-dbt-runner`)
 
-Build order (`buildspec_dbt.yml`): `dbt seed vn_stations vn_holidays` → `dbt run --exclude tag:bi_disabled` → `dbt test`. Last build: **PASS=12, ERROR=0**, 805 s.
+Build order (`buildspec_dbt.yml`): `dbt seed vn_stations vn_holidays` → `dbt run --exclude tag:bi_disabled` → `dbt test`. Last build (pre-2026-05-31): **PASS=12, ERROR=0**, 805 s; the next build is **9 of 17** after 3 QuickSight-only marts were tagged `bi_disabled` (2026-05-31).
 
 - **Staging (views):** `stg_measurements.sql` reads `openaq_raw.batch`; filters null/`-999`/`value<0`/`pm25 value>=500` (`:40-49`); `from_iso8601_timestamp(datetime)` handles `+07:00`; derives `measurement_date`. `stg_weather.sql` casts ERA5 hourly.
 - **Intermediate (tables):** `int_measurements_enriched.sql` INNER JOINs the **`vn_stations` seed** (`:69`) = the 21-station allowlist; adds city/province/coords/sensor_type/is_outlier_station. **Live (2026-05-31): 1,394,784 rows.**
@@ -68,8 +68,9 @@ Build order (`buildspec_dbt.yml`): `dbt seed vn_stations vn_holidays` → `dbt r
   - `mart_daily_air_quality` — grain date×station×parameter; EPA-2024 AQI, WHO/QCVN exceedance, cigarette-equiv, low-cost humidity correction. **18,303 rows.**
   - `mart_daily_aqi` — composite max-AQI per station-day, dominant pollutant, filters `is_outlier_station=0`. **4,743 rows / 17 stations** (consumed by `aqi_api` + `completeness_check`).
   - `mart_lagged_features` — AR lags, rolling means, calendar/holiday, weather covariates, `pm25_next1` target. **4,684 rows** (forecast input).
-- **`bi_disabled` tag** excludes 5 QuickSight-only / forecast-dependent marts from the default build
-  (see [CLAUDE.md](../CLAUDE.md) model inventory: 12 of 17 models built by default).
+- **`bi_disabled` tag** excludes **8** QuickSight-only / forecast-dependent marts from the default build
+  (see [CLAUDE.md](../CLAUDE.md) model inventory: **9 of 17** models built by default after
+  `mart_health_summary`/`mart_exceedance_stats`/`mart_annual_monthly_trend` were tagged 2026-05-31).
 
 ---
 
