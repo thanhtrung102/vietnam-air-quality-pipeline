@@ -3,6 +3,10 @@
 > Canonical source for project **facts**: AWS IDs, S3 prefixes, dbt facts, the station roster, and
 > rules. The deployed **resource inventory** lives in `docs/DEPLOYED-SPECS-AND-AUDIT.md`; the doc map
 > is in `README.md`.
+>
+> **Context router:** `process/context/all-context.md` is the root entrypoint for repo knowledge
+> (architecture, the 6 context groups, live-state, known-drift caveats, task routing). Read it first
+> for any substantial planning/research/implementation task, then load the relevant `all-{group}.md`.
 
 ## AWS Configuration
 - **Region:** ap-southeast-1

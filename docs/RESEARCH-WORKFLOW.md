@@ -27,9 +27,12 @@ count, mart location).
 
 ### Lane 2 — Domain-correctness check **[for any AQI / health / sensor computation]**
 Cite the authoritative standard, then diff the code against it. **Project domain checklist:**
-- **EPA AQI breakpoint table must be post-2024** (PM2.5): 50↔9.0, 100↔35.4, 150↔55.4, 200↔**125.4**,
-  300↔**225.4**, 500↔**325.4**. (Pre-2024 used 12.0/150.4/250.4/350.4/500.4 — wrong.)
-  *Status 2026-05-30: CORRECT in `mart_daily_air_quality.sql` + `mart_health_summary.sql`.*
+- **EPA AQI breakpoint table must be post-2024** (PM2.5, effective 2024-05-06): 50↔9.0, 100↔35.4,
+  150↔55.4, 200↔**125.4**, 300↔**225.4**, 500↔**325.4** µg/m³ (input truncated to 0.1 before lookup).
+  (Pre-2024 used 12.0/35.4/55.4/150.4/250.4/350.4/500.4 — wrong.)
+  *Status 2026-05-30: CORRECT in `mart_daily_air_quality.sql` + `mart_health_summary.sql`; values
+  re-confirmed against EPA fact sheet + Federal Register 2026-05-31. Re-verify bp200=125.4 (not legacy
+  150.4) on any change.*
 - **Daily AQI = local-midnight (UTC+7) 24-h mean, truncated to 0.1 µg/m³** before breakpoints.
   *Status 2026-05-30: day-window CORRECT — `cast(timestamp-with-tz AS date)` keeps the +07:00 local
   date (verified live: `01:00+07:00` → date `2023-01-01`). Note: `measured_at` is UTC-rebased while
@@ -37,9 +40,18 @@ Cite the authoritative standard, then diff the code against it. **Project domain
 - **NowCast** (12-h weighted, `w=max(c_min/c_max, 0.5)`) is required for any *"current conditions"*
   view; daily AQI is not a live number.
 - **Low-cost sensors (3× AirGradient/PMS5003):** RH over-read at high humidity is real, but **do not
-  blind-apply the Barkjohn US PurpleAir coefficients** (`0.524·PA − 0.0862·RH + 5.75`) — they're
-  PurpleAir- and US-aerosol-specific. Correct scope = *collocate + fit local coefficients*; until
-  then flag low-cost PM2.5 as indicative. (See 2024 high-RH calibration work, AMT 17, 6735.)
+  blind-apply the Barkjohn US PurpleAir coefficients** (`0.524·PA − 0.0862·RH + 5.75`, Barkjohn et al.
+  2021, AMT 14:4617) — they're PurpleAir- and US-aerosol-specific. Correct scope = *collocate + fit
+  local coefficients*; until then flag low-cost PM2.5 as indicative.
+  - **⚠️ OPEN DEFECT (web-verified 2026-05-31):** the deployed `corrected_pm25 = avg /
+    (1 + 0.24·RH_fraction)` is attributed to "EPA/Jayaratne" — **this citation is false**. No Jayaratne
+    correction of this form exists (Jayaratne 2018, AMT 11:4883, documents the RH over-read but
+    publishes no such formula), and the real hygroscopic correction is **nonlinear** (κ-Köhler:
+    `PM_dry = PM_wet / (1 + κ/(100/RH − 1))`, diverging as RH→100%) — a linear `(1+0.24·RH)` divisor
+    cannot capture it and the `0.24` traces to no source. Direction is defensible, magnitude is
+    unvalidated. **Fix:** strip the false citation and relabel as an unvalidated heuristic at minimum;
+    ideally replace with a locally-collocated Barkjohn or κ-Köhler fit. Tracked in
+    `process/context/domain-data-quality/all-domain-data-quality.md`.
 - **OpenAQ is unmodified upstream data** — the consumer cleans it: drop `-999` sentinels, negatives,
   suspicious exact-zeros, stuck/repeated values; assert µg/m³ units; dedupe `(station, parameter, ts)`;
   keep reference-grade vs low-cost distinguishable (don't average blindly).
