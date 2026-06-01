@@ -189,6 +189,13 @@
 <div id="view-analytics" class="view hidden">
   <div class="analytics-status" id="analytics-status">Loading analytics…</div>
 
+  <div id="analytics-note" style="margin:0 0 14px;padding:8px 12px;border-left:3px solid #38bdf8;background:#0f2233;color:#94a3b8;font-size:12px;line-height:1.5;border-radius:4px">
+    City figures aggregate <strong>all available history (2023–2026)</strong>, including
+    decommissioned stations — so a city may appear here (e.g. <strong>Ho Chi Minh City</strong>)
+    that has no live marker on the Station Map, where only stations reporting in the last 7 days
+    are shown. Calibration-outlier stations are excluded from both views.
+  </div>
+
   <div class="sheet" id="sheet-health" style="display:none">
     <h2>1 · Health Scorecard</h2>
     <div class="sub">Annual PM2.5 exposure & WHO compliance per city (source: mart_health_summary)</div>
@@ -286,7 +293,13 @@
            <div class="legend-dot" style="background:${t.colour};border-radius:2px"></div>
            <span>${t.label} (${t.value} µg/m³)</span>
          </div>`
-      ).join("");
+      ).join("") +
+      `<hr style="border-color:#334155;margin:8px 0"/>` +
+      `<div style="font-size:10px;color:#94a3b8;max-width:190px;line-height:1.45">
+         Markers = stations reporting in the last 7 days. <strong>HCMC has no live marker</strong>:
+         its only active station is excluded as a calibration outlier and the others are
+         decommissioned. HCMC history is in the <strong>Analytics</strong> tab.
+       </div>`;
     return div;
   };
   legend.addTo(map);
