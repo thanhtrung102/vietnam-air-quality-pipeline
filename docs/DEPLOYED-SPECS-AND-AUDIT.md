@@ -13,13 +13,16 @@
 
 ## 0. ⚠️ LIVE vs. STATE Reality Check
 
-> 🟢 **SUPERSEDED (verified live 2026-05-31): the compute layer is LIVE.** The teardown snapshot below
-> reflects only the transient 2026-05-29 state. Current ground truth (re-probed 2026-05-31): **5 Lambdas
-> deployed** (`openaq_batch_sync`, `streaming_producer`, `weather_ingest`, `aqi_api`, `completeness_check`;
-> `forecast_generate` gated/absent), **5 EventBridge schedules ENABLED**, **14 CloudWatch alarms**,
-> API throttle (burst=20/rate=10) + reserved-concurrency=10, dbt_runner Glue role scoped to `openaq_mart*`,
-> mart data current to 2026-05-28. Secret handling is **secret-only** (Secrets Manager populated; no
-> plaintext env). Keep §0–§5 as the point-in-time 2026-05-29 audit record; for live state see
+> 🟢 **SUPERSEDED (verified live 2026-05-31, updated 2026-06-01): the compute layer is LIVE.** The
+> teardown snapshot below reflects only the transient 2026-05-29 state. Current ground truth: **6 Lambdas
+> deployed** (`openaq_batch_sync`, `streaming_producer`, `weather_ingest`, `aqi_api`, `completeness_check`,
+> and — **since 2026-06-01** — `forecast_generate`, the SARIMA forecaster, now LIVE), **6 EventBridge
+> schedules ENABLED** (incl. forecast daily), **14 CloudWatch alarms + an AWS Budget**
+> (`openaq-pipeline-monthly`, $8 COST, added 2026-06-01), API throttle (burst=20/rate=10) +
+> reserved-concurrency=10, dbt_runner Glue role scoped to `openaq_mart*`. dbt: 17 models, 84-test suite
+> (generic + singular + unit + dbt-expectations) green via CodeBuild. Secret handling is **secret-only**.
+> A fresh clone still defaults to forecast gated-off (~82 resources) until `forecast_lambda_image_uri` is
+> set. Keep §0–§5 below as the point-in-time 2026-05-29 audit record; for live state see
 > `process/context/all-context.md` (Current Live State) and `docs/ARCHITECTURE-EVALUATION.md` Resolution status.
 
 **(2026-05-29 snapshot) The local `terraform.tfstate` was STALE and the pipeline was NOT running then.**

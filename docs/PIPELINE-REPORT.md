@@ -15,7 +15,7 @@ A **serverless, event-driven air-quality data platform** for 21 Vietnamese monit
 (17 Hanoi-area, 4 Ho Chi Minh City). It ingests historical + near-real-time PM/gas readings from the
 **OpenAQ** public archive and **Open-Meteo ERA5** weather, lands them in S3, catalogs them in Glue,
 transforms them into analytical **marts** with dbt-on-Athena, and serves a live **Leaflet AQI map**
-through an HTTP API. It also has a (currently gated) SARIMA forecasting subsystem.
+through an HTTP API. It also has a `count`-gated SARIMA forecasting subsystem — **deployed & live since 2026-06-01** in this account (gated off by default for a fresh clone until the forecast image URI is set).
 
 ---
 

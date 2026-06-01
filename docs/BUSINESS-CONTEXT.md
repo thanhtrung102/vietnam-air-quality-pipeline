@@ -41,7 +41,7 @@ designed to evidence each of these, and the repo proves them live:
 | Declarative transform with correct domain science | dbt-on-Athena; EPA-2024 AQI, WHO/QCVN (`domain-data-quality`) |
 | Least-privilege + secret hygiene | per-function IAM, Secrets Manager, no plaintext key (`PIPELINE-REPORT §4`) |
 | Observability | X-Ray, 14 CloudWatch alarms, completeness monitor (`ARCHITECTURE-EVALUATION`) |
-| Gated ML | SARIMA-in-Lambda 7-day forecast, deploy-gated (`DATA-LIFECYCLE §4`) |
+| ML forecast | SARIMA-in-Lambda 7-day forecast — `count`-gated but **deployed & live since 2026-06-01** (`DATA-LIFECYCLE §4`) |
 | Public serving | API Gateway + GeoJSON + Leaflet map (`serving-api-dashboard`) |
 
 These are the **demo-appropriate KPIs** — see §5.

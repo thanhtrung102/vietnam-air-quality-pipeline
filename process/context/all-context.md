@@ -35,9 +35,12 @@ Start here before loading deeper context files. Never load the whole `process/co
   set in tfvars; image in ECR). It writes `mart_daily_forecast` (35 rows / 5 active stations / 7-day
   horizon, avg holdout RMSE ≈18 µg/m³), surfaced via `GET /analytics/forecast` + the dashboard
   **Forecast Monitor** sheet.
-- **5 EventBridge schedules ENABLED** (batch daily, streaming 30-min, weather daily, dbt daily,
-  completeness hourly). Stream receiving data as of today.
-- **14 CloudWatch alarms** deployed. Freshness SLA = `DaysSinceLastNewMart` alarm at **21 days**
+- **6 EventBridge schedules ENABLED** (batch daily, streaming 30-min, weather daily, dbt daily,
+  completeness hourly, forecast daily — the forecast schedule activated with the forecaster on
+  2026-06-01). Stream receiving data as of today.
+- **14 CloudWatch alarms** deployed + an **AWS Budget** `openaq-pipeline-monthly` ($8 COST,
+  forecasted-80% / actual-100% email — added 2026-06-01, Well-Architected Cost control). Freshness
+  SLA = `DaysSinceLastNewMart` alarm at **21 days**
   (the canonical freshness control; dbt freshness tests are calibrated to match it — see
   `all-transform-dbt.md`).
 - **Marts:** `mart_daily_aqi` = 4,743 rows / 17 stations, `2023-01-01 → 2026-05-28` (live-probed

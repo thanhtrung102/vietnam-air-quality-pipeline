@@ -78,7 +78,7 @@ Build order (`buildspec_dbt.yml`): `dbt seed vn_stations vn_holidays` → `dbt r
 
 - **`aqi_api`** (`handler.py:59-83`): Athena query, latest-row-per-station within `measurement_date >= DATE_ADD('day',-7,CURRENT_DATE)`; GeoJSON FeatureCollection; `/tmp` cache 3600 s. Live = HTTP 200, valid contract.
 - **`completeness_check`** (`handler.py`): counts distinct stations on latest date → CloudWatch `MissingStations` + the non-suppressed `DaysSinceLastNewMart`; SNS alert only if `active<threshold AND data_age<7d` (stale-suppression). Live (2026-05-31): **5 active stations, data to 2026-05-28, `DaysSinceLastNewMart`≈3**. *(An earlier `{active:1,…,data_age_days:994}` snapshot was a pre-batch-fix read, now superseded — see PIPELINE-REPORT §6 and the `BatchStationFailures` 5→0 fix.)*
-- **`forecast_generate`** (gated, not deployed): reads `mart_lagged_features`, SARIMA, writes `processed/openaq_mart/mart_daily_forecast/generated_at=…/model=sarima/`.
+- **`forecast_generate`** (`count`-gated on the image URI; **deployed & live since 2026-06-01** — the gate is satisfied in this account): reads `mart_lagged_features`, SARIMA, writes `processed/openaq_mart/mart_daily_forecast/generated_at=…/model=sarima/` (35 rows / 5 active stations / 7-day). A fresh clone defaults to gated-off until `forecast_lambda_image_uri` is set.
 
 ---
 
