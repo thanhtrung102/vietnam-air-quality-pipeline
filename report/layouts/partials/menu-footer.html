@@ -1,0 +1,33 @@
+{{- /* Sidebar footer — adapted from the reference workshop site's Authors / More / Team
+       blocks (danielleit241/aws-workshops). Data-driven via site.Params.authors;
+       the reference's GA tracking + hit-counters are intentionally dropped. */ -}}
+<section id="authors">
+  <h5>Author</h5>
+  <ul>
+    {{- with site.Params.authors }}
+      {{- range . }}
+      <li><a class="padding" href="{{ .url }}" target="_blank" rel="noopener">{{ .name }}</a></li>
+      {{- end }}
+    {{- else }}
+      <li><a class="padding" href="https://github.com/{{ site.Params.author.name }}" target="_blank" rel="noopener">{{ site.Params.author.name }}</a></li>
+    {{- end }}
+  </ul>
+</section>
+
+<section id="more-footer">
+  <h5>More</h5>
+  <ul>
+    <li><a class="padding" href="https://cloudjourney.awsstudygroup.com/" target="_blank" rel="noopener">Cloud Journey</a></li>
+    <li><a class="padding" href="https://www.facebook.com/groups/awsstudygroupfcj" target="_blank" rel="noopener">AWS Study Group</a></li>
+    <li><a class="padding" href="https://github.com/thanhtrung102/vietnam-air-quality-pipeline" target="_blank" rel="noopener">Source Repository</a></li>
+  </ul>
+</section>
+
+<section id="team-footer">
+  <h5>Last Updated</h5>
+  <p><i><span id="lastUpdated" style="color:#f19e39;"></span></i></p>
+  <script>
+    document.getElementById('lastUpdated').textContent =
+      new Date().toLocaleDateString('en-GB');
+  </script>
+</section>

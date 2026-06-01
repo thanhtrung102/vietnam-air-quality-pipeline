@@ -14,6 +14,10 @@ theme = "hugo-theme-relearn"
 [params.author]
   name = "thanhtrung102"
 
+[[params.authors]]
+  name = "thanhtrung102"
+  url = "https://github.com/thanhtrung102"
+
 [languages.en]
   label = "English"
   weight = 1
