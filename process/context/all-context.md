@@ -20,6 +20,9 @@ Start here before loading deeper context files. Never load the whole `process/co
   stations. Ingests OpenAQ (PM/gas) + Open-Meteo ERA5 (weather) → S3 → Glue (partition projection) →
   Athena/dbt marts → GeoJSON HTTP API + Leaflet map. Gated SARIMA forecaster + gated QuickSight BI.
 - **AWS account:** 703668403514, region `ap-southeast-1`. Cost ≈ **$3.22/mo** (hard ~$8 budget alarm).
+- **Project type:** AWS **portfolio / demo** for the **First Cloud Journey (FCJ)** program — not a
+  funded service, no real users, no regulatory consumer. Business/proposal framing →
+  `docs/BUSINESS-CONTEXT.md`; the FCJ *workshop* half is `docs/workshop/5.1–5.6`.
 - **Source of truth:** the codebase + **live AWS**. Docs are reconciled snapshots, not authority.
 
 ---
@@ -63,6 +66,7 @@ Each fact has ONE canonical owner; others link to it so they cannot drift. (Defi
 
 | Concern | Canonical owner |
 |---|---|
+| Business / proposal framing (what & why, audience, non-goals, success) | `docs/BUSINESS-CONTEXT.md` |
 | Machine facts: AWS IDs, S3 prefixes, dbt facts, station roster, rules | `CLAUDE.md` |
 | As-deployed resource inventory + audit | `docs/DEPLOYED-SPECS-AND-AUDIT.md` (mind stale §0/§1) |
 | Design rationale + headline metrics | `docs/PIPELINE-REPORT.md` |
@@ -186,6 +190,7 @@ Current groups: 6 domain (`ingestion-lambdas`, `transform-dbt`, `infra-terraform
 
 The canonical knowledge sources behind this router:
 
+- Business / proposal framing (portfolio-demo intent, audience, non-goals) → `docs/BUSINESS-CONTEXT.md`
 - Machine facts, AWS IDs, station roster, rules → `CLAUDE.md`
 - Deployed inventory + audit → `docs/DEPLOYED-SPECS-AND-AUDIT.md`
 - Design rationale + metrics → `docs/PIPELINE-REPORT.md`; data flow → `docs/DATA-LIFECYCLE.md`
