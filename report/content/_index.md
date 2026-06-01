@@ -1,0 +1,36 @@
++++
+title = "AWS FCJ Internship Report"
+description = "AWS First Cloud Journey internship report — a fully serverless Vietnamese air-quality data pipeline (OpenAQ + ERA5 → S3 → Glue → Athena/dbt → API + ML forecast)."
++++
+
+# Vietnam Air Quality Pipeline — AWS First Cloud Journey Internship Report
+
+A fully **serverless data-engineering pipeline** on AWS that ingests, transforms, serves, and forecasts
+air-quality data for **21 Vietnamese monitoring stations** (Hanoi + Ho Chi Minh City), built and operated
+within a strict **~$3–8/month** single-operator cost envelope.
+
+> **Live artefacts**
+> - Station map + analytics dashboard (S3 static site): `http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html`
+> - Source repository: `https://github.com/thanhtrung102/vietnam-air-quality-pipeline`
+
+## Report contents
+
+This report follows the AWS FCJ internship-report structure. **Sections 2 (Proposal)** and **5 (Workshop)**
+are complete and verified end-to-end; the remaining sections are placeholders.
+
+| # | Section | Status |
+|---|---|---|
+| 1 | Worklog | _placeholder_ |
+| 2 | **Proposal** | ✅ complete |
+| 3 | Translated Blogs | _placeholder_ |
+| 4 | Events Participated | _placeholder_ |
+| 5 | **Workshop** | ✅ complete + reproducible |
+| 6 | Self-Assessment | _placeholder_ |
+| 7 | Sharing & Feedback | _placeholder_ |
+
+## At a glance (verified live, 2026-06-01)
+
+- **6 Lambdas** (python3.12 / arm64), Kinesis + Firehose streaming, Glue partition projection, Athena +
+  **dbt** (17 models, **84 tests**), **SARIMA** 7-day forecast, API Gateway + Leaflet/Chart.js dashboard.
+- **Reproducible**: every resource is Terraform; a fresh clone deploys in ~82 resources.
+- **Well-Architected**: 6 pillars reviewed; 14 CloudWatch alarms + an AWS Budget; no open high risks.

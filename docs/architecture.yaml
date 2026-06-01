@@ -106,7 +106,7 @@ Diagram:
     WeatherLambda:
       Type: AWS::Diagram::Resource
       Preset: "AWS Lambda"
-      Title: "weather_ingest\n256 MB · 300 s"
+      Title: "weather_ingest\n256 MB · 900 s"
 
     # ── Storage ───────────────────────────────────────────────────────────────────
     StorageRow:
@@ -152,7 +152,7 @@ Diagram:
     CodeBuild:
       Type: AWS::Diagram::Resource
       Preset: "AWS CodeBuild"
-      Title: "CodeBuild · dbt\n17 models · 85 tests"
+      Title: "CodeBuild · dbt\n17 models · 84 dbt tests"
 
     # ── Serving ───────────────────────────────────────────────────────────────────
     ServingRow:
@@ -200,7 +200,7 @@ Diagram:
     MonitoringStack:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch + SNS\n4 alarms · openaq_alerts"
+      Title: "CloudWatch + SNS\n14 alarms · openaq_alerts"
 
     # ── Billing us-east-1 ─────────────────────────────────────────────────────────
     BillingRow:
@@ -211,7 +211,7 @@ Diagram:
     BillingMonitor:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch + SNS\nBilling > $8/month"
+      Title: "CloudWatch alarm + AWS Budget\n> $8/month (EstimatedCharges)"
 
     # ── End User (right column) ───────────────────────────────────────────────────
     UserCol:

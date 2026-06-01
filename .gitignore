@@ -44,3 +44,8 @@ terraform/terraform.tfvars
 
 # Terraform-generated dbt CodeBuild source bundle (built by archive_file)
 terraform/codebuild-source.zip
+
+# Hugo report-site build artifacts
+report/public/
+report/.hugo_build.lock
+report/resources/_gen/

@@ -1,0 +1,41 @@
+baseURL = "https://thanhtrung102.github.io/vietnam-air-quality-pipeline/"
+defaultContentLanguage = "en"
+title = "Vietnam Air Quality Pipeline — AWS FCJ Internship Report"
+theme = "hugo-theme-relearn"
+
+[params]
+  themeVariant = ["auto", "relearn-light", "relearn-dark"]
+  themeVariantAuto = ["relearn-light", "relearn-dark"]
+  showVisitedLinks = true
+  disableBreadcrumb = false
+  ordersectionsby = "weight"
+  editURL = ""
+  mermaidEnable = true
+
+[params.author]
+  name = "thanhtrung102"
+
+[languages.en]
+  label = "English"
+  weight = 1
+
+[search]
+  disable = false
+
+[outputs]
+  home = ["HTML", "RSS"]
+
+[[menu.shortcuts]]
+  name = "<i class='fas fa-map'></i> Live dashboard"
+  url = "http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html"
+  weight = 10
+
+[[menu.shortcuts]]
+  name = "<i class='fab fa-github'></i> Source repository"
+  url = "https://github.com/thanhtrung102/vietnam-air-quality-pipeline"
+  weight = 11
+
+[[menu.shortcuts]]
+  name = "<i class='fas fa-sitemap'></i> Architecture diagram"
+  url = "images/architecture.png"
+  weight = 12

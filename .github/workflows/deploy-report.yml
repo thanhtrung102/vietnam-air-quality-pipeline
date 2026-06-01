@@ -1,0 +1,60 @@
+name: Deploy FCJ report site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "report/**"
+      - "docs/architecture.yaml"
+      - ".github/workflows/deploy-report.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HUGO_VERSION: 0.161.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Install Hugo (extended)
+        run: |
+          wget -q -O hugo.deb "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb"
+          sudo dpkg -i hugo.deb
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Regenerate AWS-icon architecture diagram from audited source
+        run: |
+          go install github.com/awslabs/diagram-as-code/cmd/awsdac@latest
+          mkdir -p report/static/images
+          "$(go env GOPATH)/bin/awsdac" docs/architecture.yaml -o report/static/images/architecture.png \
+            || echo "awsdac unavailable — keeping committed PNG"
+      - uses: actions/configure-pages@v5
+        id: pages
+      - name: Build site
+        run: hugo --gc --minify -s report --baseURL "${{ steps.pages.outputs.base_url }}/"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: report/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
