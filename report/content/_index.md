@@ -34,3 +34,7 @@ are complete and verified end-to-end; the remaining sections are placeholders.
   **dbt** (17 models, **84 tests**), **SARIMA** 7-day forecast, API Gateway + Leaflet/Chart.js dashboard.
 - **Reproducible**: every resource is Terraform; a fresh clone deploys in ~82 resources.
 - **Well-Architected**: 6 pillars reviewed; 14 CloudWatch alarms + an AWS Budget; no open high risks.
+
+## Contributors
+
+{{< ghcontributors "https://api.github.com/repos/thanhtrung102/vietnam-air-quality-pipeline/contributors" >}}

@@ -25,6 +25,12 @@ theme = "hugo-theme-relearn"
 [search]
   disable = false
 
+# Allow raw HTML in markdown content (parity with the reference FCJ site)
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
 [outputs]
   home = ["HTML", "RSS"]
 
