@@ -29,9 +29,12 @@ Start here before loading deeper context files. Never load the whole `process/co
 
 ## Current Live State (verified 2026-05-31, do not trust stale "torn down" notes)
 
-- **Compute layer is LIVE.** 5 Lambdas deployed: `openaq_batch_sync`, `openaq_streaming_producer`,
-  `openaq_weather_ingest`, `openaq_aqi_api`, `openaq_completeness_check`. `openaq_forecast_generate`
-  is **gated/absent** (deploys only when `var.forecast_lambda_image_uri != ""`).
+- **Compute layer is LIVE.** 6 Lambdas deployed: `openaq_batch_sync`, `openaq_streaming_producer`,
+  `openaq_weather_ingest`, `openaq_aqi_api`, `openaq_completeness_check`, and (since 2026-06-01)
+  `openaq_forecast_generate` — the SARIMA forecaster is now **ENABLED** (`var.forecast_lambda_image_uri`
+  set in tfvars; image in ECR). It writes `mart_daily_forecast` (35 rows / 5 active stations / 7-day
+  horizon, avg holdout RMSE ≈18 µg/m³), surfaced via `GET /analytics/forecast` + the dashboard
+  **Forecast Monitor** sheet.
 - **5 EventBridge schedules ENABLED** (batch daily, streaming 30-min, weather daily, dbt daily,
   completeness hourly). Stream receiving data as of today.
 - **14 CloudWatch alarms** deployed. Freshness SLA = `DaysSinceLastNewMart` alarm at **21 days**
@@ -206,7 +209,9 @@ The canonical knowledge sources behind this router:
   state backend DONE (2026-05-31); API WAF deliberately DECLINED (out-of-envelope). No in-envelope
   production-hardening items remain open.
 - NO₂/O₃/SO₂/CO AQI sub-indices not yet in the mart (see `planning/example-complex-prd.md` for the NO₂ shape).
-- SARIMA forecaster is built but deploy-gated (`var.forecast_lambda_image_uri`); not validated on live data.
+- SARIMA forecaster is **LIVE** (2026-06-01) — was deploy-gated; now produces `mart_daily_forecast` and
+  powers the Forecast Monitor sheet. Minor follow-up: the `openaq-forecast-image` CodeBuild project isn't
+  Terraform-managed (image rebuilds need a manual combined-zip step) — see the completed SARIMA plan.
 - QuickSight BI is parked in `terraform/_qs_disabled/` (out of envelope by default).
 
 ---

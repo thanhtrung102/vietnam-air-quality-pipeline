@@ -84,7 +84,7 @@
   - `openaq_weather_ingest` (256 MB, 900s timeout, daily at 02:00 UTC) — Open-Meteo ERA5 → S3
   - `openaq_aqi_api` (behind API Gateway, GeoJSON/CORS) — serves the Leaflet dashboard
   - `openaq_completeness_check` (hourly) — emits MissingStations + DaysSinceLastNewMart CloudWatch metrics
-  - `openaq_forecast_generate` (ECR container image, SARIMA 7-day PM2.5) — **gated/not deployed by default**: created only when `var.forecast_lambda_image_uri != ""` (`count`-gated in lambda.tf). Requires building and pushing the ECR image first.
+  - `openaq_forecast_generate` (ECR container image, SARIMA 7-day PM2.5) — **DEPLOYED & LIVE since 2026-06-01** (`var.forecast_lambda_image_uri` set in tfvars; `count`-gated in lambda.tf, so unsetting it removes the 6 forecast resources). Writes `mart_daily_forecast` (35 rows / 5 active stations / 7-day); image built via CodeBuild `openaq-forecast-image`.
 - **EventBridge schedules:** openaq_batch_daily, openaq_streaming_30min, openaq_weather_daily, openaq_dbt_daily (CodeBuild), openaq_completeness_hourly, openaq_forecast_daily (forecast schedule is also gated on the forecast image)
 
 ## Research method

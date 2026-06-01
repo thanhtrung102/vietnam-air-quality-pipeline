@@ -2,7 +2,23 @@
 
 **Date:** 2026-06-01
 **Complexity:** Complex (container build + ML model code + sparse-data handling)
-**Status:** Backlog — diagnosed during the QuickSight-alternative cycle; rolled back to a clean state.
+**Status:** ✅ RESOLVED 2026-06-01 — SARIMA forecast LIVE; Forecast Monitor (4th sheet) deployed.
+
+## Resolution (2026-06-01)
+- **Defect #4 (SARIMA model) FIXED:** modelled on a positional RangeIndex (not the gappy
+  DatetimeIndex); append a 1-D numpy array in the walk-forward; made the backtest exception-safe.
+  Live result: `stations_ok=17, errors=0, sarima_records=35` (5 active stations × 7 days), avg holdout
+  RMSE 17.7 µg/m³, forecast 2026-05-29→06-05. `mart_daily_forecast` populated; `GET /analytics/forecast`
+  serves 35 rows; the dashboard **Forecast Monitor** sheet renders.
+- **Defects #1–#3 FIXED** (container packaging + build wiring) as recorded below; the image is built via
+  CodeBuild `openaq-forecast-image` and the forecast Lambda/schedule/alarm are deployed (image URI
+  persisted in `terraform/terraform.tfvars`).
+- **Remaining minor (only matters when forecast *code* changes):** the `openaq-forecast-image` CodeBuild
+  project is NOT in Terraform and its source is `codebuild-source.zip` (dbt-only). Each image rebuild
+  currently needs the combined-zip step (append `lambda/forecast_generate/` + `lambda/shared/` into that
+  key). Permanent fix: bring the project into Terraform with its own source archive + role grant. The
+  daily forecast does NOT rebuild the image, so this does not affect ongoing operation.
+
 
 ## Why this is here
 
