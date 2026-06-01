@@ -1,9 +1,10 @@
 +++
-title = "4. Events Participated"
+title = "Events Participated"
 weight = 4
-chapter = true
+chapter = false
+pre = " <b> 4. </b> "
 +++
 
-# 4. Events Participated
+# Events Participated
 
 _Placeholder._ Events and sessions attended during the internship will go here.

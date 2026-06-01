@@ -1,9 +1,10 @@
 +++
-title = "1. Worklog"
+title = "Worklog"
 weight = 1
-chapter = true
+chapter = false
+pre = " <b> 1. </b> "
 +++
 
-# 1. Worklog
+# Worklog
 
 _Placeholder._ Weekly worklog entries (Week 1–12) will go here.

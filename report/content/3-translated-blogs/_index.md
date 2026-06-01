@@ -1,9 +1,10 @@
 +++
-title = "3. Translated Blogs"
+title = "Translated Blogs"
 weight = 3
-chapter = true
+chapter = false
+pre = " <b> 3. </b> "
 +++
 
-# 3. Translated Blogs
+# Translated Blogs
 
 _Placeholder._ Translated AWS blog summaries will go here.

@@ -1,9 +1,11 @@
 +++
-title = "2. Proposal"
+title = "Proposal"
 weight = 2
+chapter = false
+pre = " <b> 2. </b> "
 +++
 
-# 2. Proposal
+# Proposal
 
 ## 2.1 Business problem
 

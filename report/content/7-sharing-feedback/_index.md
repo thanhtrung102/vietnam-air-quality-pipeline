@@ -1,9 +1,10 @@
 +++
-title = "7. Sharing & Feedback"
+title = "Sharing and Feedback"
 weight = 7
-chapter = true
+chapter = false
+pre = " <b> 7. </b> "
 +++
 
-# 7. Sharing & Feedback
+# Sharing and Feedback
 
 _Placeholder._ Knowledge-sharing sessions and mentor/peer feedback will go here.

@@ -1,17 +1,25 @@
-<!-- AWS-palette accent overrides (Squid Ink #232F3E, Smile Orange #FF9900, link blue #146EB4) -->
+<!-- AWS FCJ workshop look: web fonts + Smile-Orange accents (#f19e39 / #fd9827)
+     that mirror the reference site's nav arrows, notices, and section dividers.
+     Core palette + typography live in assets/css/theme-aws-workshop.css. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap">
 <style>
-  :root {
-    --PRIMARY-color: #ff9900;
-    --SECONDARY-color: #146eb4;
-    --ACCENT-color: #ff9900;
-    --MENU-HEADER-BG-color: #232f3e;
-    --MENU-HEADER-BORDER-color: #ff9900;
-    --MENU-HOME-LINK-color: #ffffff;
-    --MENU-HOME-LINK-HOVERED-color: #ff9900;
-    --MENU-SECTIONS-BG-color: #232f3e;
-    --MENU-SECTIONS-ACTIVE-BG-color: #1b2531;
-    --MAIN-LINK-color: #146eb4;
-    --MAIN-LINK-HOVER-color: #ff9900;
-    --MAIN-TITLES-TEXT-color: #232f3e;
+  /* Smile-Orange accents (the reference's signature highlight) */
+  .topbar-button:hover,
+  .topbar-button:focus { color: #f19e39 !important; }
+
+  /* Active sidebar topic keeps a thin orange marker, like the reference */
+  #R-sidebar #topbars li.active > a,
+  #sidebar ul li.active > a { border-left: 3px solid #f19e39; }
+
+  /* Notices / admonitions: warm AWS info banner */
+  .box.info > .box-label,
+  div.notices.info > p:first-child { background-color: #fd9827 !important; }
+
+  /* H1 gets an orange underline rule, echoing the AWS workshop headings */
+  article h1 {
+    border-bottom: 2px solid #f19e39;
+    padding-bottom: .3rem;
   }
 </style>

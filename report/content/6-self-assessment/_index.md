@@ -1,9 +1,10 @@
 +++
-title = "6. Self-Assessment"
+title = "Self-Assessment"
 weight = 6
-chapter = true
+chapter = false
+pre = " <b> 6. </b> "
 +++
 
-# 6. Self-Assessment
+# Self-Assessment
 
 _Placeholder._ Skills gained, challenges, and growth reflection will go here.

@@ -4,8 +4,7 @@ title = "Vietnam Air Quality Pipeline — AWS FCJ Internship Report"
 theme = "hugo-theme-relearn"
 
 [params]
-  themeVariant = ["auto", "relearn-light", "relearn-dark"]
-  themeVariantAuto = ["relearn-light", "relearn-dark"]
+  themeVariant = ["aws-workshop"]
   showVisitedLinks = true
   disableBreadcrumb = false
   ordersectionsby = "weight"
