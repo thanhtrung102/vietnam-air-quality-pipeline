@@ -77,9 +77,9 @@ through an HTTP API. It also has a `count`-gated SARIMA forecasting subsystem �
 | # | Feature | How exercised | Result |
 |---|---|---|---|
 | 1 | **Real-time ingest → Kinesis** | `aws lambda invoke openaq_streaming_producer` | `{"success": 66, "failed": 0}` — 66 readings auth'd via Secrets Manager and published to Kinesis ✅ |
-| 2 | **dbt transform (CodeBuild)** | `aws codebuild start-build openaq-dbt-runner` | `PASS=12 WARN=0 ERROR=0` — all 12 models built in 13 min ✅ |
+| 2 | **dbt transform (CodeBuild)** | `aws codebuild start-build openaq-dbt-runner` | 13 models built (default `--exclude tag:bi_disabled`); `dbt test` **84/84 PASS** incl. 2 unit tests + dbt-expectations (2026-06-01) ✅ |
 | 3 | **Seeds loaded** | dbt seed | `vn_holidays INSERT 61`, `vn_stations INSERT 21` ✅ |
-| 4 | **Marts materialized** | `aws glue get-tables openaq_mart` | 5 marts refreshed by default (+8 `bi_disabled` skipped as of 2026-05-31); 14 relations persist in `openaq_mart` (incl. 3 frozen QuickSight-only marts + 2 intermediate + 2 staging + 2 seeds) — see [CLAUDE.md](../CLAUDE.md) model inventory ✅ |
+| 4 | **Marts materialized** | `aws glue get-tables openaq_mart` | 9 marts refreshed by default (+4 `bi_disabled` skipped, as of 2026-06-01 after 4 analytical marts were re-enabled for the dashboard); relations persist in `openaq_mart` (9 default marts + 4 `bi_disabled` + 2 intermediate + 2 staging + 2 seeds) — see [CLAUDE.md](../CLAUDE.md) model inventory ✅ |
 | 5 | **AQI serving API** | `aws lambda invoke openaq_aqi_api` | HTTP 200, valid GeoJSON FeatureCollection ✅ contract (feature count tracks mart freshness — see §6) |
 | 6 | **Completeness monitor** | `aws lambda invoke openaq_completeness_check` | live (2026-05-31): 5 active stations, data to 2026-05-28, `DaysSinceLastNewMart`≈3. *(An earlier draft showed `{"active":1,…,"data_age_days":994}` — a pre-batch-fix snapshot, now superseded.)* The monitor self-suppresses SNS only on genuinely stale data ✅ |
 | 7 | **Static dashboard** | `aws s3 cp dashboard/index.html` | Real API URL substituted (placeholder gone) ✅ |
@@ -118,9 +118,11 @@ through an HTTP API. It also has a `count`-gated SARIMA forecasting subsystem �
 ### Transform (dbt)
 - **dbt-on-Athena via CodeBuild, scheduled.** Keeps transformation declarative and version-controlled;
   CodeBuild gives an ephemeral, IAM-scoped runner with no server to manage.
-- **`bi_disabled` tag excludes 8 marts from the default build.** Those marts feed only the (disabled)
-  QuickSight layer or the (not-deployed) forecast table; excluding them avoids building tables nothing
-  reads — `dbt build --exclude tag:bi_disabled` builds 9 of 17 (see [CLAUDE.md](../CLAUDE.md) model inventory).
+- **`bi_disabled` tag excludes 4 marts from the default build.** Those 4 (`mart_feature_stats`,
+  `mart_forecast_accuracy`, `mart_pollutant_ratio`, `mart_annual_monthly_trend`) are diagnostic/redundant;
+  excluding them avoids building tables nothing reads — `dbt build --exclude tag:bi_disabled` builds
+  13 of 17 (see [CLAUDE.md](../CLAUDE.md) model inventory). *(4 analytical marts were un-`bi_disabled`
+  2026-06-01 to feed the Analytics dashboard.)*
 - **Inner-join to the `vn_stations` seed = the station allowlist.** One CSV is the source of truth for
   which 21 stations are valid; bad/extra location_ids are dropped at the intermediate layer.
 - **`-999.0` sentinel + parameter-aware `value < 500` filter in staging.** `-999` is OpenAQ's "missing";

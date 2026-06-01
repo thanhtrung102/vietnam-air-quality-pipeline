@@ -45,14 +45,16 @@ resource "aws_cloudwatch_metric_alarm" "billing" {
   provider = aws.us_east_1
 
   alarm_name          = "openaq-monthly-spend-high"
-  alarm_description   = "Estimated AWS charges exceed $8 for the month"
+  alarm_description   = "Estimated AWS charges exceed the monthly budget ($${var.monthly_budget_usd}) for the month"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "EstimatedCharges"
   namespace           = "AWS/Billing"
   period              = 86400 # 24 hours (billing metrics update daily)
   statistic           = "Maximum"
-  threshold           = 8
+  # Single-sourced with the AWS Budget (aws_budgets_budget.monthly_cost) so the
+  # reactive alarm and the proactive budget cannot silently desync.
+  threshold           = var.monthly_budget_usd
 
   dimensions = {
     Currency = "USD"

@@ -10,9 +10,10 @@ version: 2
 #   dbt build  --exclude tag:bi_disabled
 #   dbt run    --exclude tag:bi_disabled
 #
-# Currently tagged: mart_health_summary, mart_exceedance_stats,
-# mart_annual_monthly_trend, mart_monthly_profile, mart_diurnal_profile,
-# mart_pollutant_ratio, mart_forecast_accuracy, mart_feature_stats.
+# Currently tagged (4): mart_feature_stats, mart_forecast_accuracy,
+# mart_pollutant_ratio, mart_annual_monthly_trend.
+# (mart_health_summary, mart_exceedance_stats, mart_monthly_profile,
+#  mart_diurnal_profile were un-tagged 2026-06-01 to feed the Analytics dashboard.)
 #
 # Note: mart_forecast_accuracy also depends on the Lambda-written external table
 # openaq_mart.mart_daily_forecast, which only exists once the forecast compute
