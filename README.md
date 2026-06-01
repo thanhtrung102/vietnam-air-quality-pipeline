@@ -29,7 +29,8 @@ short-term forecast — cheaply and reproducibly.
 - **Data quality** — `-999` sentinels (~3.8%), implausible spikes, one biased outlier station
   (`6273386`), low-cost-sensor humidity overread, and parameters with differing averaging windows.
 - **Operational** — no full-time ops, so the pipeline must self-monitor and alert; QuickSight is
-  **Standard** (BI dashboard gated off); Terraform uses local state; AWS-Solutions-style reproducibility.
+  **Standard** (BI dashboard gated off); Terraform state is a **remote, versioned, encrypted S3
+  backend** with native locking (no DynamoDB); AWS-Solutions-style reproducibility.
 
 ## Proposed solution — serverless medallion pipeline
 
@@ -94,11 +95,19 @@ Deploy from scratch by following the workshop in order, starting at
 [5.2 Prerequisites](docs/workshop/5.2-prerequisites.md). In brief:
 
 ```bash
-bash lambda/build.sh                 # build the 5 Lambda deployment zips
+bash lambda/build.sh                 # 1. build the 5 Lambda deployment zips (required before apply)
+# 2. choose a state backend: comment out the backend "s3" block in terraform/main.tf for LOCAL
+#    state (simplest for a solo repro), or point it at your own bucket — see workshop 5.3.0.
+#    The committed backend bucket is the maintainer's and is not accessible to you.
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars   # 3. fill in your values
 cd terraform && terraform init
-terraform apply                      # provision the pipeline
-# then populate the OpenAQ API key into Secrets Manager (see workshop 5.2)
+terraform apply                      # 4. provision the pipeline (~88 resources)
+bash postdeploy.sh                   # 5. inject your OpenAQ API key into Secrets Manager
 ```
+
+> Full, ordered, bilingual walkthrough: [docs/workshop/5.2–5.6](docs/workshop/5.2-prerequisites.md).
+> The `bash lambda/build.sh` → state-backend choice → `postdeploy.sh` steps are mandatory on a fresh
+> machine; the workshop covers each in 5.3.
 
 ## Verified state (live-probed 2026-05-31)
 
