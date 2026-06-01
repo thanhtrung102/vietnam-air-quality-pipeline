@@ -80,6 +80,37 @@ resource "aws_sns_topic_subscription" "alert_email_billing" {
   endpoint  = var.alert_email
 }
 
+# ── Cost Optimization: AWS Budgets (Well-Architected Cost pillar) ──────────────
+# Canonical PROACTIVE cost control to complement the reactive EstimatedCharges
+# alarm above. A monthly COST budget at the ~$8/mo envelope ceiling, emailing at
+# 80% (FORECASTED — fires before the month-end overshoot the alarm only catches
+# after the fact) and 100% (ACTUAL). AWS Budgets is a global service (the provider
+# routes to the us-east-1 endpoint automatically); first two budgets are free.
+# See docs/WELL-ARCHITECTED.md §5.
+resource "aws_budgets_budget" "monthly_cost" {
+  name         = "${var.project_name}-monthly"
+  budget_type  = "COST"
+  limit_amount = tostring(var.monthly_budget_usd)
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 80
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "FORECASTED"
+    subscriber_email_addresses = [var.alert_email]
+  }
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 100
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "ACTUAL"
+    subscriber_email_addresses = [var.alert_email]
+  }
+}
+
 # ── CloudWatch Dashboard ──────────────────────────────────────────────────────
 
 resource "aws_cloudwatch_dashboard" "openaq_pipeline" {

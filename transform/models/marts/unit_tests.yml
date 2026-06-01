@@ -1,0 +1,71 @@
+version: 2
+
+# ----------------------------------------------------------------------------
+# dbt unit tests — transformation-logic tests with MOCKED inputs.
+#
+# Unlike data tests (which run against live Athena marts), unit tests mock each
+# `ref()` with literal rows and assert the model's SQL logic on known inputs.
+# They scan ~0 bytes (the mocks compile to inline VALUES), so they are the
+# cheapest possible test and run in the `dbt test` step of openaq-dbt-runner.
+#
+# These pin the two pieces of pure business logic in the transform layer:
+#   1. the US EPA 2024 AQI piecewise-linear breakpoint math (mart_daily_air_quality)
+#   2. the composite-AQI = worst-pollutant rule + PM2.5 tie-break (mart_daily_aqi)
+#
+# dbt compares only the columns named in `expect.rows`; unnamed input columns
+# are null-filled. Run: `dbt test --select mart_daily_air_quality,mart_daily_aqi`.
+# ----------------------------------------------------------------------------
+
+unit_tests:
+  - name: test_pm25_pm10_aqi_breakpoints
+    description: >
+      EPA 2024 AQI breakpoint interpolation for PM2.5 and PM10, and NULL AQI for
+      non-PM parameters. Covers category boundaries (where the interpolation must
+      land exactly on the index endpoint) and a mid-bucket interpolation.
+    model: mart_daily_air_quality
+    given:
+      - input: ref('int_measurements_enriched')
+        rows:
+          # location_id 1: PM2.5 = 9.0 -> Good boundary (AQI 50)
+          - {location_id: 1, parameter: 'pm25', measurement_value: 9.0,  measurement_date: '2025-01-01', sensor_id: 1, city: 'Hanoi', province: 'Hanoi', location_name: 'T1', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', is_outlier_station: 0}
+          # location_id 2: PM2.5 = 12.0 -> Moderate, mid-bucket interpolation (AQI 56)
+          - {location_id: 2, parameter: 'pm25', measurement_value: 12.0, measurement_date: '2025-01-01', sensor_id: 1, city: 'Hanoi', province: 'Hanoi', location_name: 'T2', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', is_outlier_station: 0}
+          # location_id 3: PM2.5 = 35.4 -> Moderate boundary (AQI 100)
+          - {location_id: 3, parameter: 'pm25', measurement_value: 35.4, measurement_date: '2025-01-01', sensor_id: 1, city: 'Hanoi', province: 'Hanoi', location_name: 'T3', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', is_outlier_station: 0}
+          # location_id 4: PM2.5 = 55.4 -> USG boundary (AQI 150)
+          - {location_id: 4, parameter: 'pm25', measurement_value: 55.4, measurement_date: '2025-01-01', sensor_id: 1, city: 'Hanoi', province: 'Hanoi', location_name: 'T4', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', is_outlier_station: 0}
+          # location_id 5: PM10 = 54.0 -> Good boundary (AQI 50)
+          - {location_id: 5, parameter: 'pm10', measurement_value: 54.0, measurement_date: '2025-01-01', sensor_id: 1, city: 'Hanoi', province: 'Hanoi', location_name: 'T5', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', is_outlier_station: 0}
+          # location_id 6: PM10 = 100.0 -> Moderate, mid-bucket (AQI 73)
+          - {location_id: 6, parameter: 'pm10', measurement_value: 100.0, measurement_date: '2025-01-01', sensor_id: 1, city: 'Hanoi', province: 'Hanoi', location_name: 'T6', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', is_outlier_station: 0}
+          # location_id 7: O3 -> non-PM parameter, AQI must be NULL
+          - {location_id: 7, parameter: 'o3', measurement_value: 80.0, measurement_date: '2025-01-01', sensor_id: 1, city: 'Hanoi', province: 'Hanoi', location_name: 'T7', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', is_outlier_station: 0}
+    expect:
+      rows:
+        - {location_id: 1, parameter: 'pm25', aqi_value: 50,  aqi_category: 'Good'}
+        - {location_id: 2, parameter: 'pm25', aqi_value: 56,  aqi_category: 'Moderate'}
+        - {location_id: 3, parameter: 'pm25', aqi_value: 100, aqi_category: 'Moderate'}
+        - {location_id: 4, parameter: 'pm25', aqi_value: 150, aqi_category: 'Unhealthy for Sensitive Groups'}
+        - {location_id: 5, parameter: 'pm10', aqi_value: 50,  aqi_category: 'Good'}
+        - {location_id: 6, parameter: 'pm10', aqi_value: 73,  aqi_category: 'Moderate'}
+        - {location_id: 7, parameter: 'o3',   aqi_value: ,    aqi_category: }
+
+  - name: test_composite_aqi_and_pm25_tiebreak
+    description: >
+      Composite AQI = max individual-pollutant AQI; when two pollutants tie, PM2.5
+      wins the dominant_pollutant/health_category tie-break; when they differ, the
+      higher AQI drives both. Mocks the upstream mart so no real data is scanned.
+    model: mart_daily_aqi
+    given:
+      - input: ref('mart_daily_air_quality')
+        rows:
+          # station 1, same day: PM2.5 and PM10 tie at AQI 100 -> PM2.5 wins tie-break
+          - {measurement_date: '2025-01-01', location_id: 1, location_name: 'S1', city: 'Hanoi', province: 'Hanoi', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', parameter: 'pm25', avg_value: 35.4, aqi_value: 100, aqi_category: 'Moderate', cigarette_equivalent: 1.6, is_outlier_station: 0}
+          - {measurement_date: '2025-01-01', location_id: 1, location_name: 'S1', city: 'Hanoi', province: 'Hanoi', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', parameter: 'pm10', avg_value: 100.0, aqi_value: 100, aqi_category: 'Moderate', cigarette_equivalent: , is_outlier_station: 0}
+          # station 2, same day: PM10 (120) clearly worse than PM2.5 (80) -> PM10 dominant
+          - {measurement_date: '2025-01-01', location_id: 2, location_name: 'S2', city: 'Hanoi', province: 'Hanoi', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', parameter: 'pm25', avg_value: 30.0, aqi_value: 80,  aqi_category: 'Moderate', cigarette_equivalent: 1.4, is_outlier_station: 0}
+          - {measurement_date: '2025-01-01', location_id: 2, location_name: 'S2', city: 'Hanoi', province: 'Hanoi', station_lat: 21.0, station_lon: 105.0, sensor_type: 'reference', parameter: 'pm10', avg_value: 200.0, aqi_value: 120, aqi_category: 'Unhealthy for Sensitive Groups', cigarette_equivalent: , is_outlier_station: 0}
+    expect:
+      rows:
+        - {location_id: 1, composite_aqi: 100, dominant_pollutant: 'pm25', health_category: 'Moderate'}
+        - {location_id: 2, composite_aqi: 120, dominant_pollutant: 'pm10', health_category: 'Unhealthy for Sensitive Groups'}

@@ -74,6 +74,8 @@ Each document owns one concern — read the one that matches your question.
 | **[docs/DEPLOYED-SPECS-AND-AUDIT.md](docs/DEPLOYED-SPECS-AND-AUDIT.md)** | the exact as-deployed resource inventory + audit findings | deployed state of record |
 | **[docs/DATA-LIFECYCLE.md](docs/DATA-LIFECYCLE.md)** | how a reading flows ingest→mart, retention rules, DQ gates | data flow + governance |
 | **[docs/ARCHITECTURE-EVALUATION.md](docs/ARCHITECTURE-EVALUATION.md)** | the scored multi-lens evaluation + what's still open | quality assessment |
+| **[docs/WELL-ARCHITECTED.md](docs/WELL-ARCHITECTED.md)** | the AWS Well-Architected review (6 pillars + Data Analytics Lens) mapped to live evidence + the accepted-risk register | framework grounding |
+| **[docs/DATA-QUALITY.md](docs/DATA-QUALITY.md)** | the dbt test strategy (generic / singular / unit / dbt-expectations / freshness) + how to run it | data-quality assurance |
 | **[docs/RESEARCH-WORKFLOW.md](docs/RESEARCH-WORKFLOW.md)** | to open a development cycle — the reusable research method (live-state, domain-correctness, reference-arch, data-rigor, constraint lanes) | how we research |
 | **[docs/OPERATIONS-RUNBOOK.md](docs/OPERATIONS-RUNBOOK.md)** | runbook procedures (OpenAQ key rotation, dbt redeploy) + deliberate out-of-envelope non-changes (e.g. remote TF state) | how we operate |
 | **[docs/workshop/5.1–5.6](docs/workshop/5.1-introduction.md)** | to build/deploy it from scratch (bilingual EN/VI) | step-by-step runbook |

@@ -33,6 +33,13 @@
   `aqi_api` Lambda at `GET /analytics/{health,seasonal,compliance}`.
 - **Mart table partitions on:** measurement_date (date-grain marts; `mart_forecast_accuracy` partitions on forecast_date). Analytical/aggregate marts use `partitioned_by = []` (unpartitioned).
 - **Mart table clustering:** none — no mart uses clustering or bucketing (no `bucketed_by`). Partition projection alone keeps Athena scans small.
+- **dbt packages (`packages.yml`):** `dbt-labs/dbt_utils` + `calogica/dbt_expectations` (pulls
+  `dbt_date` transitively). **Test strategy (5 layers):** generic schema tests · 4 singular tests
+  (`transform/tests/`) · 2 unit tests on mocked inputs (`models/marts/unit_tests.yml` — EPA AQI
+  breakpoint math + composite/tie-break) · dbt-expectations distributional/cross-column tests ·
+  CloudWatch `DaysSinceLastNewMart` freshness alarm. Full reference: `docs/DATA-QUALITY.md`. All run
+  in the `openaq-dbt-runner` CodeBuild `dbt test` step. Contracts + Elementary deliberately deferred
+  (rationale in DATA-QUALITY.md).
 
 ## Naming Conventions
 - All identifiers: snake_case

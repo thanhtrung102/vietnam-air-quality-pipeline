@@ -20,6 +20,16 @@ variable "alert_email" {
   type        = string
 }
 
+variable "monthly_budget_usd" {
+  description = <<-EOT
+    Monthly AWS cost-budget ceiling (USD) for the AWS Budgets control. Defaults to
+    the project's ~$8/mo constraint-envelope ceiling, matching the reactive
+    EstimatedCharges billing alarm; the budget adds a proactive FORECASTED alert.
+  EOT
+  type        = number
+  default     = 8
+}
+
 variable "lambda_runtime" {
   description = "Runtime identifier for all zip-packaged Lambda functions"
   type        = string

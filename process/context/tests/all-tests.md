@@ -15,9 +15,13 @@ verification, or debugging.
 | Surface | Location | What it covers | Runner |
 |---|---|---|---|
 | Lambda unit tests | `lambda/tests/` | the 5+1 Lambda handlers: batch_sync, streaming, weather_ingest, aqi_api, completeness_check, forecast_generate; plus `lambda/shared/` helpers | `pytest` |
-| dbt singular tests | `transform/tests/` | 4 hand-written SQL assertions (e.g. freshness gate, value sanity) | `dbt test` |
-| dbt generic tests | `transform/models/**/*.yml` schema tests | `not_null`, `unique`, `accepted_values`, relationships on staging/intermediate/marts | `dbt test` |
+| dbt singular tests | `transform/tests/` | 4 hand-written SQL assertions (freshness ×2, composite-AQI invariant, health-category invariant) | `dbt test` |
+| dbt generic tests | `transform/models/**/*.yml` schema tests | `not_null`, `unique`, `accepted_values`, relationships, `dbt_utils.accepted_range`/`unique_combination_of_columns` on staging/intermediate/marts | `dbt test` |
+| dbt **unit tests** | `transform/models/marts/unit_tests.yml` | transformation *logic* on mocked inputs (~0 scan): EPA AQI breakpoint math; composite-AQI + PM2.5 tie-break | `dbt test` |
+| dbt **expectations** | `transform/models/marts/schema.yml` (dbt-expectations) | empty-build guard (row-count ≥ 1); `max ≥ avg ≥ min`; `pm25_avg` non-negativity | `dbt test` |
 | CI gate | `.github/workflows/validate.yml` | `terraform fmt -check` + `validate`, `pytest`, `dbt parse` on every push/PR | GitHub Actions |
+
+Full dbt test strategy (the five layers + deferred items): `docs/DATA-QUALITY.md`.
 
 Headline state (re-run live 2026-05-31): **85 Lambda unit tests pass / 0 fail** (`pytest lambda/tests`,
 2.95s). Keep this number current when tests are added — it is also cited in `README.md`. Note: `pytest`

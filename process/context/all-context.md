@@ -75,6 +75,8 @@ Each fact has ONE canonical owner; others link to it so they cannot drift. (Defi
 | Design rationale + headline metrics | `docs/PIPELINE-REPORT.md` |
 | Data flow + governance (ingest→mart, retention, DQ gates) | `docs/DATA-LIFECYCLE.md` |
 | Quality assessment + open items | `docs/ARCHITECTURE-EVALUATION.md` |
+| Well-Architected grounding (6 pillars + Data Analytics Lens) + accepted-risk register | `docs/WELL-ARCHITECTED.md` |
+| Data-quality test strategy (generic/singular/unit/expectations/freshness) | `docs/DATA-QUALITY.md` |
 | How we research (the 5-lane method + HARD GATE) | `docs/RESEARCH-WORKFLOW.md` |
 | How we operate (runbooks, deliberate non-changes) | `docs/OPERATIONS-RUNBOOK.md` |
 | Build from scratch (bilingual EN/VI) | `docs/workshop/5.1–5.6` (legacy numbers) |
@@ -140,7 +142,7 @@ vietnam-air-quality-pipeline/
                         models/{staging,intermediate,marts}, seeds/, tests/ (4 singular), buildspec_dbt.yml
   ingestion/         -- historical/sync_historical.sh + station_ids.txt (roster copy — drift surface)
   dashboard/         -- index.html (Leaflet), serve.py, demo_data.json
-  docs/              -- 7 analysis docs + workshop/ (bilingual) + architecture.{yaml,png,drawio}
+  docs/              -- 9 analysis docs + workshop/ (bilingual) + architecture.{yaml,png,drawio}
   .github/workflows/ -- validate.yml (tf fmt/validate, pytest, dbt parse), diagram.yml
   process/           -- RIPER-5 harness: context (this), general-plans, (features when needed)
 ```
@@ -198,6 +200,8 @@ The canonical knowledge sources behind this router:
 - Deployed inventory + audit → `docs/DEPLOYED-SPECS-AND-AUDIT.md`
 - Design rationale + metrics → `docs/PIPELINE-REPORT.md`; data flow → `docs/DATA-LIFECYCLE.md`
 - Research method (5 lanes + HARD GATE) → `docs/RESEARCH-WORKFLOW.md`; ops → `docs/OPERATIONS-RUNBOOK.md`
+- Well-Architected review (6 pillars + Data Analytics Lens, accepted-risk register) → `docs/WELL-ARCHITECTED.md`
+- dbt test strategy (generic/singular/unit/dbt-expectations/freshness) → `docs/DATA-QUALITY.md`
 - Harness rules → `process/development-protocols/all-development-protocols.md`
 - Group routers → `process/context/{group}/all-{group}.md` (this file is the root: `process/context/all-context.md`)
 

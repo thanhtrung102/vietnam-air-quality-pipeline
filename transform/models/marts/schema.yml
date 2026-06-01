@@ -33,6 +33,24 @@ models:
               - measurement_date
               - location_id
               - parameter
+      # Guards against an empty build (silent upstream/freshness failure that the
+      # column-level tests would not catch — they pass vacuously on zero rows).
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      # Daily aggregate invariant: max >= avg >= min for every station-day-pollutant.
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          arguments:
+            column_A: max_value
+            column_B: avg_value
+            or_equal: true
+            row_condition: "avg_value is not null"
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          arguments:
+            column_A: avg_value
+            column_B: min_value
+            or_equal: true
+            row_condition: "avg_value is not null"
 
     columns:
       - name: measurement_date
@@ -159,6 +177,9 @@ models:
             combination_of_columns:
               - measurement_date
               - location_id
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
 
     columns:
       - name: measurement_date
@@ -233,6 +254,14 @@ models:
         description: >
           PM2.5 daily average (µg/m³) for context. NULL if the station reported
           no PM2.5 measurements on that date.
+        tests:
+          # Physical non-negativity (concentrations can't be negative); 500 µg/m³
+          # ceiling matches the pm25 cap applied in staging.
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 500
+                row_condition: "pm25_avg is not null"
 
       - name: cigarette_equivalent
         description: >
@@ -377,7 +406,13 @@ models:
           peaks are significantly attenuated on weekends.
         tests:
           - not_null
+          # Explicit lowercase test name: with --store-failures dbt names the audit
+          # table after the test, and the default name embeds the mixed-case values
+          # (…__Weekday__Weekend). Athena/Glue lowercases table names, so dbt's
+          # case-sensitive lookup then finds an ambiguous relation → Compilation
+          # Error. A custom lowercase name keeps the audit table unambiguous.
           - accepted_values:
+              name: accepted_values_diurnal_day_type
               arguments:
                 values: ['Weekday', 'Weekend']
 
