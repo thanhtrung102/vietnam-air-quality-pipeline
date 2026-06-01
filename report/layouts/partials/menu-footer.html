@@ -1,30 +1,20 @@
-{{- /* Sidebar footer — adapted from the reference workshop site's Authors / More / Team
-       blocks (danielleit241/aws-workshops). Data-driven via site.Params.authors;
-       the reference's GA tracking + hit-counters are intentionally dropped. */ -}}
+{{- /* Sidebar footer (learn theme renders this inside #sidebar #footer).
+       Author / More links / Last Updated — adapted from the reference FCJ site,
+       with its Google-Analytics tag and hit-counters intentionally dropped. */ -}}
 <section id="authors">
-  <h5>Author</h5>
-  <ul>
-    {{- with site.Params.authors }}
-      {{- range . }}
-      <li><a class="padding" href="{{ .url }}" target="_blank" rel="noopener">{{ .name }}</a></li>
-      {{- end }}
-    {{- else }}
-      <li><a class="padding" href="https://github.com/{{ site.Params.author.name }}" target="_blank" rel="noopener">{{ site.Params.author.name }}</a></li>
-    {{- end }}
-  </ul>
+  <h3 class="github-title">Author</h3>
+  <p><a class="padding" href="https://github.com/{{ .Site.Params.author }}" target="_blank" rel="noopener">{{ .Site.Params.author }}</a></p>
 </section>
 
 <section id="more-footer">
-  <h5>More</h5>
-  <ul>
-    <li><a class="padding" href="https://cloudjourney.awsstudygroup.com/" target="_blank" rel="noopener">Cloud Journey</a></li>
-    <li><a class="padding" href="https://www.facebook.com/groups/awsstudygroupfcj" target="_blank" rel="noopener">AWS Study Group</a></li>
-    <li><a class="padding" href="https://github.com/thanhtrung102/vietnam-air-quality-pipeline" target="_blank" rel="noopener">Source Repository</a></li>
-  </ul>
+  <h3 class="github-title">More</h3>
+  <p><a class="padding" href="https://cloudjourney.awsstudygroup.com/" target="_blank" rel="noopener">Cloud Journey</a></p>
+  <p><a class="padding" href="https://www.facebook.com/groups/awsstudygroupfcj" target="_blank" rel="noopener">AWS Study Group</a></p>
+  <p><a class="padding" href="https://github.com/thanhtrung102/vietnam-air-quality-pipeline" target="_blank" rel="noopener">Source Repository</a></p>
 </section>
 
 <section id="team-footer">
-  <h5>Last Updated</h5>
+  <h3 class="github-title">Last Updated</h3>
   <p><i><span id="lastUpdated" style="color:#f19e39;"></span></i></p>
   <script>
     document.getElementById('lastUpdated').textContent =

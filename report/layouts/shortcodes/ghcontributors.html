@@ -1,12 +1,10 @@
-{{- /* GitHub contributors grid — adapted verbatim from the reference FCJ site
-       (danielleit241/aws-fcj-report layouts/shortcodes/ghcontributors.html).
-       Usage: {{< ghcontributors "https://api.github.com/repos/<owner>/<repo>/contributors" >}} */ -}}
 <style type="text/css">
   .ghContributors {
     display: flex;
     flex-flow: wrap;
     align-content: flex-start;
   }
+
   .ghContributors > div {
     width: 50%;
     display: inline-flex;
@@ -21,19 +19,22 @@
   }
 </style>
 <div class="ghContributors">
-  {{ $url := .Get 0 }}
-  {{ with try (resources.GetRemote $url) }}
-    {{ with .Err }}
-      {{ warnf "ghcontributors: %s" . }}
-    {{ else with .Value }}
-      {{ range .Content | transform.Unmarshal }}
-      <div>
-        <img src="{{ .avatar_url }}" class="inline" width="32" height="32"
-          style="height:32px;margin-bottom:0.25em;vertical-align:middle;" alt="@{{ .login }}" />
-        <label><a href="{{ .html_url }}">@{{ .login }}</a></label>
-        <span class="contributions">{{ .contributions }} commits</span>
-      </div>
-      {{ end }}
-    {{ end }}
+  {{ $url := .Get 0 }} {{ range getJSON $url }}
+  <div>
+    <img
+      src="{{.avatar_url}}"
+      class="inline"
+      width="32"
+      height="32"
+      style="
+        height: 32px;
+        height: 32px;
+        margin-bottom: 0.25em;
+        vertical-align: middle;
+      "
+    />
+    <label><a href="{{.html_url}}">@{{.login}}</a></label>
+    <span class="contributions">{{.contributions}} commits</span>
+  </div>
   {{ end }}
 </div>

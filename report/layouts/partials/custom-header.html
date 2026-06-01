@@ -1,48 +1,26 @@
-<!-- AWS FCJ workshop look: web fonts + Smile-Orange accents (#f19e39 / #fd9827)
-     that mirror the reference site's nav arrows, notices, and section dividers.
-     Core palette + typography live in assets/css/theme-aws-workshop.css. -->
+<!-- AWS workshop web fonts + footer/logo polish layered on the learn theme.
+     Core palette lives in static/css/theme-workshop.css (themeVariant="workshop"). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap">
 <style>
-  /* Smile-Orange accents (the reference's signature highlight) */
-  .topbar-button:hover,
-  .topbar-button:focus { color: #f19e39 !important; }
-
-  /* Active sidebar topic keeps a thin orange marker, like the reference */
-  #R-sidebar #topbars li.active > a,
-  #sidebar ul li.active > a { border-left: 3px solid #f19e39; }
-
-  /* Notices / admonitions: warm AWS info banner */
-  .box.info > .box-label,
-  div.notices.info > p:first-child { background-color: #fd9827 !important; }
-
-  /* H1 gets an orange underline rule, echoing the AWS workshop headings */
-  article h1 {
-    border-bottom: 2px solid #f19e39;
-    padding-bottom: .3rem;
-  }
-
   /* AWS logo wordmark caption under the smile logo */
-  #R-logo { display: flex; flex-direction: column; align-items: center; padding: .6rem 0; }
-  #R-logo .logo-title {
+  #logo { display: inline-flex; flex-direction: column; align-items: center; }
+  #logo .logo-title {
     margin-top: .35rem;
     font-family: "Amazon Ember", "Montserrat", sans-serif;
     font-size: .72rem; letter-spacing: .12em; text-transform: uppercase;
-    color: #ffffff; opacity: .9;
+    color: #fff; opacity: .9;
   }
 
-  /* Sidebar footer: Author / More / Last Updated (adapted from the reference) */
-  #R-footer #authors h5,
-  #R-footer #more-footer h5,
-  #R-footer #team-footer h5,
-  #authors h5, #more-footer h5, #team-footer h5 {
-    color: #f19e39; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
-    margin: 1rem 0 .35rem; font-weight: 600;
+  /* Sidebar footer sections (Author / More / Last Updated) */
+  #sidebar #footer section { padding: 0 1rem; }
+  #sidebar #footer .github-title {
+    color: #f19e39 !important; font-size: .7rem; letter-spacing: .12em;
+    text-transform: uppercase; margin: .9rem 0 .25rem; padding-top: .6rem;
+    border-top: 1px dotted #384657;
   }
-  #authors ul, #more-footer ul { list-style: none; margin: 0; padding: 0; }
-  #authors li, #more-footer li { margin: .15rem 0; }
-  #authors a.padding, #more-footer a.padding { color: #ccc; font-size: .82rem; }
-  #authors a.padding:hover, #more-footer a.padding:hover { color: #fff; }
-  #team-footer p { color: #ccc; font-size: .82rem; margin: .1rem 0; }
+  #sidebar #footer p { margin: .12rem 0; }
+  #sidebar #footer a.padding { color: #ccc; font-size: .82rem; }
+  #sidebar #footer a.padding:hover { color: #fff; }
 </style>

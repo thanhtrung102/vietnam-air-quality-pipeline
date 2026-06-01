@@ -5,7 +5,6 @@ chapter = false
 pre = " <b> 2. </b> "
 +++
 
-# Proposal
 
 ## 2.1 Business problem
 
@@ -38,7 +37,7 @@ transformed by **dbt-on-Athena** (run by CodeBuild), and served through an API +
 container-Lambda SARIMA forecaster. *(Diagram facts audited against live state 2026-06-01; the AWS-icon
 version is generated from `docs/architecture.yaml` via awslabs diagram-as-code.)*
 
-```mermaid
+{{< mermaid >}}
 flowchart LR
   subgraph EXT[External sources]
     A1[OpenAQ S3 Archive]:::ext
@@ -94,7 +93,7 @@ flowchart LR
   classDef api fill:#E7157B,stroke:#b51060,color:#fff;
   classDef sched fill:#FF4F8B,stroke:#cc3f6f,color:#fff;
   classDef mon fill:#E7157B,stroke:#b51060,color:#fff;
-```
+{{< /mermaid >}}
 
 ## 2.4 AWS services used
 
@@ -136,7 +135,7 @@ All five are met and verified live (see [Workshop]({{% relref "/5-workshop" %}})
 
 ## 2.8 Reproducibility & project record
 
-The build is reproducible end-to-end (Terraform + a bilingual workshop runbook) and the engineering
+The build is reproducible end-to-end (Terraform + a step-by-step workshop runbook) and the engineering
 process is captured in the repository:
 
 - **Architecture & design:** `docs/PIPELINE-REPORT.md`, `docs/architecture.yaml` (AWS-icon diagram source).

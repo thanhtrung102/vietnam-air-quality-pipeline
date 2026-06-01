@@ -22,7 +22,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      HUGO_VERSION: 0.161.1
+      # Pinned to match the reference FCJ site; hugo-theme-learn requires pre-0.158
+      # (it calls .Site.IsMultiLingual, removed in 0.158).
+      HUGO_VERSION: 0.134.3
     steps:
       - uses: actions/checkout@v4
         with:

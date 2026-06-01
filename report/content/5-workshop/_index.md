@@ -5,7 +5,6 @@ chapter = false
 pre = " <b> 5. </b> "
 +++
 
-# Workshop — Build the Pipeline from Scratch
 
 This workshop builds the entire Vietnam Air Quality pipeline on AWS from a clean clone, using
 **Terraform** for every resource. It is reproducible end-to-end and was verified live on 2026-06-01.

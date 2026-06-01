@@ -1,50 +1,46 @@
 baseURL = "https://thanhtrung102.github.io/vietnam-air-quality-pipeline/"
+relativeURLs = true
+canonifyURLs = true
 defaultContentLanguage = "en"
-title = "Vietnam Air Quality Pipeline — AWS FCJ Internship Report"
-theme = "hugo-theme-relearn"
+theme = "hugo-theme-learn"
+
+[outputs]
+home = ["HTML", "RSS", "JSON"]
 
 [params]
-  themeVariant = ["aws-workshop"]
+  # AWS workshop colour variant (static/css/theme-workshop.css)
+  themeVariant = "workshop"
+  editURL = ""
+  description = "AWS First Cloud Journey internship report — a fully serverless Vietnamese air-quality data pipeline (OpenAQ + ERA5 → S3 → Glue → Athena/dbt → API + ML forecast)."
+  author = "thanhtrung102"
   showVisitedLinks = true
   disableBreadcrumb = false
+  disableNextPrev = false
   ordersectionsby = "weight"
-  editURL = ""
-  mermaidEnable = true
 
-[params.author]
-  name = "thanhtrung102"
+[Languages]
+[Languages.en]
+title = "Vietnam Air Quality Pipeline — AWS FCJ Internship Report"
+weight = 1
+languageName = "English"
 
-[[params.authors]]
-  name = "thanhtrung102"
-  url = "https://github.com/thanhtrung102"
+[[Languages.en.menu.shortcuts]]
+name = "<i class='fas fa-map'></i> Live dashboard"
+url = "http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html"
+weight = 10
 
-[languages.en]
-  label = "English"
-  weight = 1
+[[Languages.en.menu.shortcuts]]
+name = "<i class='fab fa-github'></i> Source repository"
+identifier = "ds"
+url = "https://github.com/thanhtrung102/vietnam-air-quality-pipeline"
+weight = 11
 
-[search]
-  disable = false
+[[Languages.en.menu.shortcuts]]
+name = "<i class='fas fa-sitemap'></i> Architecture diagram"
+url = "images/architecture.png"
+weight = 12
 
-# Allow raw HTML in markdown content (parity with the reference FCJ site)
 [markup]
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
-
-[outputs]
-  home = ["HTML", "RSS"]
-
-[[menu.shortcuts]]
-  name = "<i class='fas fa-map'></i> Live dashboard"
-  url = "http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html"
-  weight = 10
-
-[[menu.shortcuts]]
-  name = "<i class='fab fa-github'></i> Source repository"
-  url = "https://github.com/thanhtrung102/vietnam-air-quality-pipeline"
-  weight = 11
-
-[[menu.shortcuts]]
-  name = "<i class='fas fa-sitemap'></i> Architecture diagram"
-  url = "images/architecture.png"
-  weight = 12

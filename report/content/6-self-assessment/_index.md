@@ -5,6 +5,5 @@ chapter = false
 pre = " <b> 6. </b> "
 +++
 
-# Self-Assessment
 
 _Placeholder._ Skills gained, challenges, and growth reflection will go here.
