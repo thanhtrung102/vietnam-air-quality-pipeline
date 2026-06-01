@@ -48,9 +48,11 @@ import time
 import boto3
 
 # local dev: lambda/shared/ is not on sys.path; Lambda runtime: athena_utils.py
-# is copied to the package root by build.sh so the import resolves there.
+# and analytics.py are copied to the package root by build.sh so the imports resolve there.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
+sys.path.insert(0, os.path.dirname(__file__))
 from athena_utils import AthenaConfig, run_query  # noqa: E402
+import analytics  # noqa: E402
 
 # Partition-pruned query: the inner subquery is bounded to the last 7 days so
 # Athena only scans recent partitions instead of the full historical table.
@@ -117,9 +119,70 @@ def _save_cache(payload: dict) -> None:
         pass  # non-fatal — next invocation will re-query Athena
 
 
+def _json_response(payload: dict, cache: str = "HIT", status: int = 200) -> dict:
+    return {
+        "statusCode": status,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "max-age=3600",
+            "X-Cache": cache,
+        },
+        "body": json.dumps(payload),
+    }
+
+
+def _analytics_response(dataset: str, database: str, workgroup: str) -> dict:
+    """Serve an analytics dataset as JSON, with a per-dataset /tmp day cache."""
+    cache_file = f"/tmp/analytics_{dataset}_cache.json"
+    try:
+        with open(cache_file) as f:
+            cached = json.load(f)
+        if time.time() - cached.get("_cached_at", 0) < CACHE_TTL_SECONDS:
+            return _json_response(cached["payload"], cache="HIT")
+    except (FileNotFoundError, KeyError, json.JSONDecodeError):
+        pass
+
+    try:
+        client = boto3.client("athena", region_name=os.environ.get("AWS_REGION"))
+        cfg = AthenaConfig(database=database, workgroup=workgroup)
+        payload = analytics.get_dataset(client, cfg, dataset)
+    except Exception as exc:
+        return _json_response({"error": str(exc)}, cache="MISS", status=500)
+
+    if payload is None:
+        return _json_response({"error": f"unknown dataset: {dataset}"}, cache="MISS", status=404)
+
+    try:
+        with open(cache_file, "w") as f:
+            json.dump({"_cached_at": time.time(), "payload": payload}, f)
+    except OSError:
+        pass
+    return _json_response(payload, cache="MISS")
+
+
+def _route(event) -> str | None:
+    """Return the analytics dataset name if this request targets /analytics/{dataset}."""
+    event = event or {}
+    params = event.get("pathParameters") or {}
+    if params.get("dataset"):
+        return params["dataset"]
+    path = event.get("rawPath") or (
+        event.get("requestContext", {}).get("http", {}).get("path", "/")
+    )
+    if path.startswith("/analytics/"):
+        return path.rstrip("/").rsplit("/", 1)[-1]
+    return None
+
+
 def handler(event, context):
     database  = os.environ.get("ATHENA_DATABASE",  "openaq_mart")
     workgroup = os.environ.get("ATHENA_WORKGROUP", "openaq_workgroup")
+
+    # Route: /analytics/{dataset} → analytical JSON; everything else → the map GeoJSON.
+    dataset = _route(event)
+    if dataset is not None:
+        return _analytics_response(dataset, database, workgroup)
 
     # Serve from /tmp cache when available (warm invocation, data < 1 h old)
     cached = _load_cache()

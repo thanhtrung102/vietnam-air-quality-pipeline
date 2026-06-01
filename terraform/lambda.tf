@@ -542,6 +542,14 @@ resource "aws_apigatewayv2_route" "aqi_api" {
   target    = "integrations/${aws_apigatewayv2_integration.aqi_api.id}"
 }
 
+# Analytics datasets for the dashboard "Analytics" tab (QuickSight alternative).
+# Reuses the same Lambda integration; lambda permission source_arn ".../*" already covers it.
+resource "aws_apigatewayv2_route" "aqi_api_analytics" {
+  api_id    = aws_apigatewayv2_api.aqi_api.id
+  route_key = "GET /analytics/{dataset}"
+  target    = "integrations/${aws_apigatewayv2_integration.aqi_api.id}"
+}
+
 resource "aws_apigatewayv2_stage" "aqi_api" {
   api_id      = aws_apigatewayv2_api.aqi_api.id
   name        = "$default"

@@ -77,6 +77,7 @@ zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/streaming.zip"
 echo "==> aqi_api.zip"
 rm -rf "$PACKAGE_DIR" && mkdir -p "$PACKAGE_DIR"
 cp "$LAMBDA_DIR/aqi_api/handler.py"        "$PACKAGE_DIR/"
+cp "$LAMBDA_DIR/aqi_api/analytics.py"      "$PACKAGE_DIR/"
 cp "$LAMBDA_DIR/shared/athena_utils.py"    "$PACKAGE_DIR/"
 zip_dir "$PACKAGE_DIR" "$LAMBDA_DIR/aqi_api.zip"
 

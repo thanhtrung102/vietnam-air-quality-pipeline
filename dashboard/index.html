@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- Chart.js for the Analytics tab -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -34,7 +37,23 @@
     header h1 { font-size: 1.1rem; font-weight: 600; color: #f1f5f9; }
     header .updated { font-size: 0.75rem; color: #94a3b8; margin-left: auto; }
 
-    #map { flex: 1; }
+    /* Tab bar */
+    .tabs { display: flex; gap: 4px; }
+    .tab {
+      background: #0f172a;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+
+    .view { flex: 1; min-height: 0; }
+    .view.hidden { display: none; }
+    #map { height: 100%; }
 
     /* AQI Legend */
     .legend {
@@ -122,6 +141,32 @@
       color: #94a3b8;
       margin-top: 4px;
     }
+
+    /* Analytics view */
+    #view-analytics { overflow-y: auto; padding: 18px 20px 40px; }
+    .sheet { margin-bottom: 28px; }
+    .sheet h2 {
+      font-size: 0.95rem; font-weight: 700; color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+    .sheet .sub { font-size: 0.72rem; color: #94a3b8; margin-bottom: 12px; }
+    .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .kpi {
+      background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+      padding: 12px 16px; min-width: 150px; flex: 1;
+    }
+    .kpi .city { font-size: 0.72rem; color: #94a3b8; }
+    .kpi .val  { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; line-height: 1.2; }
+    .kpi .lab  { font-size: 0.68rem; color: #cbd5e1; }
+    .kpi .risk { font-size: 0.66rem; padding: 1px 7px; border-radius: 4px; display: inline-block; margin-top: 4px; color: #0f172a; font-weight: 600; }
+    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; }
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .card h3 { font-size: 0.8rem; font-weight: 600; color: #e2e8f0; margin-bottom: 10px; }
+    .card canvas { max-height: 280px; }
+    .analytics-status { font-size: 0.8rem; color: #94a3b8; padding: 8px 0; }
   </style>
 </head>
 <body>
@@ -131,19 +176,55 @@
     <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/>
     <circle cx="12" cy="9" r="2.5"/>
   </svg>
-  <h1>Vietnam Air Quality — Station Map</h1>
+  <h1>Vietnam Air Quality</h1>
+  <div class="tabs">
+    <button class="tab active" id="tab-map" onclick="showView('map')">Station Map</button>
+    <button class="tab" id="tab-analytics" onclick="showView('analytics')">Analytics</button>
+  </div>
   <span class="updated" id="updated-label">Loading…</span>
 </header>
 
-<div id="map"></div>
+<div id="view-map" class="view"><div id="map"></div></div>
+
+<div id="view-analytics" class="view hidden">
+  <div class="analytics-status" id="analytics-status">Loading analytics…</div>
+
+  <div class="sheet" id="sheet-health" style="display:none">
+    <h2>1 · Health Scorecard</h2>
+    <div class="sub">Annual PM2.5 exposure & WHO compliance per city (source: mart_health_summary)</div>
+    <div class="kpis" id="health-kpis"></div>
+    <div class="charts">
+      <div class="card"><h3>Days by AQI category (latest year)</h3><canvas id="chart-health-days"></canvas></div>
+      <div class="card"><h3>WHO compliance % by year</h3><canvas id="chart-health-compliance"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet-seasonal" style="display:none">
+    <h2>2 · Seasonal & Weather Drivers</h2>
+    <div class="sub">Monthly and diurnal PM2.5 patterns (source: mart_monthly_profile, mart_diurnal_profile)</div>
+    <div class="charts">
+      <div class="card"><h3>Monthly PM2.5 by city (µg/m³)</h3><canvas id="chart-seasonal-monthly"></canvas></div>
+      <div class="card"><h3>Diurnal PM2.5 — weekday (µg/m³ by hour)</h3><canvas id="chart-seasonal-diurnal"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet-compliance" style="display:none">
+    <h2>3 · Compliance & Trajectory</h2>
+    <div class="sub">WHO (15) & QCVN 05:2023 (50) 24h PM2.5 exceedance rates (source: mart_exceedance_stats)</div>
+    <div class="charts">
+      <div class="card"><h3>WHO exceedance rate by month — latest year</h3><canvas id="chart-compliance-who"></canvas></div>
+      <div class="card"><h3>QCVN exceedance rate by month — latest year</h3><canvas id="chart-compliance-qcvn"></canvas></div>
+    </div>
+  </div>
+</div>
 
 <script>
   // ── Configuration ────────────────────────────────────────────────────────────
   // Replace with your API Gateway URL after deploying lambda/aqi_api.
   // For local dev, set to the path of a static geojson file.
   const API_URL = window.AQI_API_URL || "YOUR_API_GATEWAY_URL";
-  // Replace YOUR_API_GATEWAY_URL with the value of terraform output aqi_api_url,
-  // or set window.AQI_API_URL before this script loads.
+  // Analytics endpoints live under the same API base: GET /analytics/{dataset}.
+  const API_BASE = API_URL.replace(/\/$/, "");
 
   const AQI_COLOURS = {
     "Good":                           "#00e400",
@@ -161,6 +242,9 @@
     { label: "QCVN 05:2023",    value: 25, colour: "#fb923c" },
     { label: "WHO IT-1",        value: 35, colour: "#f87171" },
   ];
+
+  const CITY_COLOURS = { "Hanoi": "#f87171", "Ho Chi Minh City": "#60a5fa", "HCMC": "#60a5fa" };
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
   // ── Map init ─────────────────────────────────────────────────────────────────
   const map = L.map("map", {
@@ -281,6 +365,162 @@
       console.error("Failed to load AQI data:", err);
       document.getElementById("updated-label").textContent = "Failed to load data";
     });
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  let analyticsLoaded = false;
+  function showView(name) {
+    const isMap = name === "map";
+    document.getElementById("view-map").classList.toggle("hidden", !isMap);
+    document.getElementById("view-analytics").classList.toggle("hidden", isMap);
+    document.getElementById("tab-map").classList.toggle("active", isMap);
+    document.getElementById("tab-analytics").classList.toggle("active", !isMap);
+    if (isMap) {
+      setTimeout(() => map.invalidateSize(), 50);
+    } else if (!analyticsLoaded) {
+      analyticsLoaded = true;
+      loadAnalytics();
+    }
+  }
+
+  // ── Analytics (QuickSight alternative) ───────────────────────────────────────
+  const CHART_DEFAULTS = {
+    responsive: true,
+    plugins: { legend: { labels: { color: "#cbd5e1", font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: "#94a3b8", font: { size: 10 } }, grid: { color: "#1e293b" } },
+      y: { ticks: { color: "#94a3b8", font: { size: 10 } }, grid: { color: "#1e293b" }, beginAtZero: true },
+    },
+  };
+
+  const groupBy = (rows, key) => rows.reduce((m, r) => ((m[r[key]] ||= []).push(r), m), {});
+  const latestYear = rows => Math.max(...rows.map(r => r.year));
+
+  async function loadAnalytics() {
+    const status = document.getElementById("analytics-status");
+    try {
+      const [health, seasonal, compliance] = await Promise.all([
+        fetch(`${API_BASE}/analytics/health`).then(r => r.json()),
+        fetch(`${API_BASE}/analytics/seasonal`).then(r => r.json()),
+        fetch(`${API_BASE}/analytics/compliance`).then(r => r.json()),
+      ]);
+      status.style.display = "none";
+      renderHealth(unwrap(health));
+      renderSeasonal(unwrap(seasonal));
+      renderCompliance(unwrap(compliance));
+    } catch (err) {
+      console.error("Analytics load failed:", err);
+      status.textContent = "Failed to load analytics — check the API.";
+    }
+  }
+  const unwrap = d => (d && d.body ? JSON.parse(d.body) : d);
+
+  function renderHealth(data) {
+    const rows = (data && data.rows) || [];
+    if (!rows.length) return;
+    document.getElementById("sheet-health").style.display = "block";
+    const yr = latestYear(rows);
+    const latest = rows.filter(r => r.year === yr);
+    const riskCol = { "Low": "#4ade80", "Moderate": "#facc15", "High": "#fb923c", "Extreme": "#f87171" };
+
+    document.getElementById("health-kpis").innerHTML = latest.map(r => `
+      <div class="kpi">
+        <div class="city">${escHtml(r.city)} · ${escHtml(r.year)}</div>
+        <div class="val">${r.who_compliance_pct != null ? r.who_compliance_pct + "%" : "—"}</div>
+        <div class="lab">WHO-compliant days · avg PM2.5 ${escHtml(r.avg_pm25)} µg/m³</div>
+        <div class="lab">🚬 ${escHtml(r.avg_cigarette_equivalent)} cig/day equiv.</div>
+        <div class="risk" style="background:${riskCol[r.risk_label] || "#94a3b8"}">${escHtml(r.risk_label)} risk</div>
+      </div>`).join("");
+
+    const cats = [
+      ["good_days","Good","#00e400"],["moderate_days","Moderate","#ffff00"],
+      ["usg_days","USG","#ff7e00"],["unhealthy_days","Unhealthy","#ff0000"],
+      ["very_unhealthy_days","Very Unhealthy","#8f3f97"],["hazardous_days","Hazardous","#7e0023"],
+    ];
+    new Chart(document.getElementById("chart-health-days"), {
+      type: "bar",
+      data: {
+        labels: latest.map(r => r.city),
+        datasets: cats.map(([k, lab, col]) => ({ label: lab, data: latest.map(r => r[k] || 0), backgroundColor: col })),
+      },
+      options: { ...CHART_DEFAULTS, scales: { ...CHART_DEFAULTS.scales, x: { ...CHART_DEFAULTS.scales.x, stacked: true }, y: { ...CHART_DEFAULTS.scales.y, stacked: true } } },
+    });
+
+    const byCity = groupBy(rows, "city");
+    const years = [...new Set(rows.map(r => r.year))].sort();
+    new Chart(document.getElementById("chart-health-compliance"), {
+      type: "line",
+      data: {
+        labels: years,
+        datasets: Object.entries(byCity).map(([city, rs]) => ({
+          label: city, borderColor: CITY_COLOURS[city] || "#cbd5e1", backgroundColor: "transparent",
+          data: years.map(y => { const m = rs.find(r => r.year === y); return m ? m.who_compliance_pct : null; }),
+          tension: 0.3, spanGaps: true,
+        })),
+      },
+      options: CHART_DEFAULTS,
+    });
+  }
+
+  function renderSeasonal(data) {
+    const monthly = (data && data.monthly) || [];
+    const diurnal = (data && data.diurnal) || [];
+    if (!monthly.length && !diurnal.length) return;
+    document.getElementById("sheet-seasonal").style.display = "block";
+
+    const mByCity = groupBy(monthly, "city");
+    new Chart(document.getElementById("chart-seasonal-monthly"), {
+      type: "line",
+      data: {
+        labels: MONTHS,
+        datasets: Object.entries(mByCity).map(([city, rs]) => ({
+          label: city, borderColor: CITY_COLOURS[city] || "#cbd5e1", backgroundColor: "transparent",
+          data: MONTHS.map((_, i) => { const m = rs.find(r => r.month_of_year === i + 1); return m ? m.avg_pm25 : null; }),
+          tension: 0.3, spanGaps: true,
+        })),
+      },
+      options: CHART_DEFAULTS,
+    });
+
+    const wk = diurnal.filter(r => r.day_type === "weekday");
+    const dByCity = groupBy(wk, "city");
+    const hours = [...Array(24).keys()];
+    new Chart(document.getElementById("chart-seasonal-diurnal"), {
+      type: "line",
+      data: {
+        labels: hours.map(h => h + "h"),
+        datasets: Object.entries(dByCity).map(([city, rs]) => ({
+          label: city, borderColor: CITY_COLOURS[city] || "#cbd5e1", backgroundColor: "transparent",
+          data: hours.map(h => { const m = rs.find(r => r.hour_of_day === h); return m ? m.avg_pm25 : null; }),
+          tension: 0.3, spanGaps: true,
+        })),
+      },
+      options: CHART_DEFAULTS,
+    });
+  }
+
+  function renderCompliance(data) {
+    const rows = (data && data.monthly) || [];
+    if (!rows.length) return;
+    document.getElementById("sheet-compliance").style.display = "block";
+    const yr = latestYear(rows);
+    const latest = rows.filter(r => r.year === yr);
+    const byCity = groupBy(latest, "city");
+
+    const mkLine = (canvasId, field) => new Chart(document.getElementById(canvasId), {
+      type: "line",
+      data: {
+        labels: MONTHS,
+        datasets: Object.entries(byCity).map(([city, rs]) => ({
+          label: `${city} (${yr})`, borderColor: CITY_COLOURS[city] || "#cbd5e1", backgroundColor: "transparent",
+          data: MONTHS.map((_, i) => { const m = rs.find(r => r.month_of_year === i + 1); return m ? m[field] : null; }),
+          tension: 0.3, spanGaps: true,
+        })),
+      },
+      options: { ...CHART_DEFAULTS, scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, max: 100, title: { display: true, text: "% of days", color: "#94a3b8" } } } },
+    });
+    mkLine("chart-compliance-who", "who_exceedance_rate");
+    mkLine("chart-compliance-qcvn", "qcvn_exceedance_rate");
+  }
 </script>
 </body>
 </html>
