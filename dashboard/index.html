@@ -216,6 +216,15 @@
       <div class="card"><h3>QCVN exceedance rate by month — latest year</h3><canvas id="chart-compliance-qcvn"></canvas></div>
     </div>
   </div>
+
+  <div class="sheet" id="sheet-forecast" style="display:none">
+    <h2>4 · Forecast Monitor</h2>
+    <div class="sub">7-day SARIMA PM2.5 forecast for actively-reporting stations (source: mart_daily_forecast)</div>
+    <div class="kpis" id="forecast-kpis"></div>
+    <div class="charts">
+      <div class="card" style="grid-column:1/-1"><h3>7-day PM2.5 forecast by station (µg/m³)</h3><canvas id="chart-forecast" style="max-height:340px"></canvas></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -398,15 +407,17 @@
   async function loadAnalytics() {
     const status = document.getElementById("analytics-status");
     try {
-      const [health, seasonal, compliance] = await Promise.all([
+      const [health, seasonal, compliance, forecast] = await Promise.all([
         fetch(`${API_BASE}/analytics/health`).then(r => r.json()),
         fetch(`${API_BASE}/analytics/seasonal`).then(r => r.json()),
         fetch(`${API_BASE}/analytics/compliance`).then(r => r.json()),
+        fetch(`${API_BASE}/analytics/forecast`).then(r => r.json()).catch(() => ({ rows: [] })),
       ]);
       status.style.display = "none";
       renderHealth(unwrap(health));
       renderSeasonal(unwrap(seasonal));
       renderCompliance(unwrap(compliance));
+      renderForecast(unwrap(forecast));
     } catch (err) {
       console.error("Analytics load failed:", err);
       status.textContent = "Failed to load analytics — check the API.";
@@ -520,6 +531,39 @@
     });
     mkLine("chart-compliance-who", "who_exceedance_rate");
     mkLine("chart-compliance-qcvn", "qcvn_exceedance_rate");
+  }
+
+  const STATION_PALETTE = ["#f87171","#60a5fa","#4ade80","#fbbf24","#c084fc","#22d3ee","#fb923c"];
+  function renderForecast(data) {
+    const rows = (data && data.rows) || [];
+    if (!rows.length) return;
+    document.getElementById("sheet-forecast").style.display = "block";
+    const dates = [...new Set(rows.map(r => r.forecast_date))].sort();
+    const byStn = groupBy(rows, "location_name");
+    const stations = Object.keys(byStn);
+    const rmses = stations.map(s => byStn[s][0].holdout_rmse).filter(v => v != null);
+    const avgRmse = rmses.length ? rmses.reduce((a, b) => a + b, 0) / rmses.length : null;
+    const highDays = rows.filter(r => (r.forecast_aqi || 0) > 150).length;
+
+    document.getElementById("forecast-kpis").innerHTML = `
+      <div class="kpi"><div class="city">SARIMA holdout RMSE</div><div class="val">${avgRmse != null ? avgRmse.toFixed(1) : "—"}</div><div class="lab">µg/m³ · avg across ${stations.length} stations</div></div>
+      <div class="kpi"><div class="city">Stations forecast</div><div class="val">${stations.length}</div><div class="lab">actively reporting · 7-day horizon</div></div>
+      <div class="kpi"><div class="city">High-AQI days (&gt;150)</div><div class="val">${highDays}</div><div class="lab">forecast station-days Unhealthy+</div></div>`;
+
+    new Chart(document.getElementById("chart-forecast"), {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: stations.map((s, i) => ({
+          label: s,
+          borderColor: STATION_PALETTE[i % STATION_PALETTE.length],
+          backgroundColor: "transparent",
+          data: dates.map(d => { const m = byStn[s].find(r => r.forecast_date === d); return m ? m.forecast_pm25 : null; }),
+          tension: 0.3, spanGaps: true,
+        })),
+      },
+      options: CHART_DEFAULTS,
+    });
   }
 </script>
 </body>

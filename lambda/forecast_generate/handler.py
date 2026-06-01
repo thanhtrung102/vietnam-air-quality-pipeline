@@ -206,24 +206,32 @@ def _walk_forward_rmse(pm25_ser: "pd.Series", holdout_days: int) -> float:
         return 0.0
 
     split = n - steps
-    train = pm25_ser.iloc[:split]
-    actuals = pm25_ser.iloc[split:].values
+    # Use plain RangeIndex + numpy arrays throughout: statsmodels .append() rejects
+    # a 1-row pandas Series (dimension mismatch) and a gappy DatetimeIndex (no freq).
+    train = pm25_ser.iloc[:split].reset_index(drop=True)
+    actuals = pm25_ser.iloc[split:].to_numpy(dtype=float)
 
-    result = _fit_sarima(train)
-
-    sq_errors = []
-    for i in range(steps):
-        one_step = result.get_forecast(steps=1)
-        pred = float(np.maximum(0, one_step.predicted_mean.values)[0])
-        actual = float(actuals[i])
-        sq_errors.append((pred - actual) ** 2)
-
-        # Extend the fitted state with the now-observed value (no re-optimisation)
-        # so the next 1-step forecast uses all data up to and including step i.
-        observed = pm25_ser.iloc[split + i : split + i + 1]
-        result = result.append(observed, refit=False)
-
-    return float(np.sqrt(np.mean(sq_errors)))
+    try:
+        result = _fit_sarima(train)
+        sq_errors = []
+        for i in range(steps):
+            one_step = result.get_forecast(steps=1)
+            pred = float(np.maximum(0, one_step.predicted_mean.to_numpy())[0])
+            sq_errors.append((pred - float(actuals[i])) ** 2)
+            # Extend the fitted state with the observed value as a 1-D float array
+            # (no re-optimisation) so the next 1-step forecast uses all data so far.
+            result = result.append(np.asarray([actuals[i]], dtype=float), refit=False)
+        return float(np.sqrt(np.mean(sq_errors)))
+    except Exception as exc:
+        # A backtest hiccup must never block the actual forecast. Fall back to a
+        # single multi-step holdout RMSE (less ideal but robust), else 0.0.
+        logger.warning("walk-forward backtest failed (%s); using multi-step holdout RMSE", exc)
+        try:
+            result = _fit_sarima(train)
+            fc = np.maximum(0, result.get_forecast(steps=steps).predicted_mean.to_numpy())
+            return float(np.sqrt(np.mean((fc - actuals) ** 2)))
+        except Exception:
+            return 0.0
 
 
 # ── CloudWatch metric emission ────────────────────────────────────────────────
@@ -317,7 +325,14 @@ def handler(event, context):
             )
             continue
 
-        pm25_ser = sdf.set_index("measurement_date")["avg_pm25"]
+        # Model on a positional (RangeIndex) series, NOT the measurement_date index.
+        # Station data is daily but gappy/irregular, so a DatetimeIndex has no
+        # inferable frequency — statsmodels warns and, critically, the walk-forward
+        # `.append()` rejects non-contiguous timestamps ("endog does not have an index
+        # that extends the index of the model"), producing zero forecasts. Treating the
+        # ordered observations as an evenly-spaced sequence makes append() contiguous;
+        # forecast calendar dates are still assigned from last_date + h below.
+        pm25_ser = sdf["avg_pm25"].reset_index(drop=True).astype(float)
 
         sarima_full = None
         try:
