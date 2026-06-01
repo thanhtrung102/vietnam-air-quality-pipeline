@@ -101,7 +101,7 @@ bash lambda/build.sh                 # 1. build the 5 Lambda deployment zips (re
 #    The committed backend bucket is the maintainer's and is not accessible to you.
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars   # 3. fill in your values
 cd terraform && terraform init
-terraform apply                      # 4. provision the pipeline (~88 resources)
+terraform apply                      # 4. provision the pipeline (~82 resources, forecast gated off)
 bash postdeploy.sh                   # 5. inject your OpenAQ API key into Secrets Manager
 ```
 
