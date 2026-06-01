@@ -481,7 +481,7 @@
       options: CHART_DEFAULTS,
     });
 
-    const wk = diurnal.filter(r => r.day_type === "weekday");
+    const wk = diurnal.filter(r => (r.day_type || "").toLowerCase() === "weekday");
     const dByCity = groupBy(wk, "city");
     const hours = [...Array(24).keys()];
     new Chart(document.getElementById("chart-seasonal-diurnal"), {
