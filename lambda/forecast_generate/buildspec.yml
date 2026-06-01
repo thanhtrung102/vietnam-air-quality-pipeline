@@ -33,6 +33,8 @@ phases:
     commands:
       - echo Building image...
       - cd lambda/forecast_generate
+      # handler.py imports athena_utils (shared); stage it into the build context.
+      - cp ../shared/athena_utils.py .
       - docker build -t $IMAGE_REPO:$IMAGE_TAG .
       - docker tag $IMAGE_REPO:$IMAGE_TAG $IMAGE_URI
 

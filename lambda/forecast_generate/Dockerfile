@@ -28,5 +28,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY handler.py .
+# athena_utils.py is staged into this build context from lambda/shared/ by buildspec.yml
+# (or copy it manually before a local `docker build`). handler.py imports it.
+COPY athena_utils.py .
 
 CMD ["handler.handler"]

@@ -51,9 +51,21 @@ WHERE parameter = 'pm25'
 ORDER BY city, year, month_of_year
 """
 
+# latest SARIMA run — 7-day forecast per active station (gated forecast subsystem)
+_FORECAST = """
+SELECT location_name, city, CAST(forecast_date AS VARCHAR) AS forecast_date,
+       forecast_pm25, forecast_aqi, forecast_aqi_category,
+       ci_lower_95, ci_upper_95, holdout_rmse
+FROM openaq_mart.mart_daily_forecast
+WHERE model = 'sarima'
+  AND generated_at = (SELECT MAX(generated_at) FROM openaq_mart.mart_daily_forecast WHERE model = 'sarima')
+ORDER BY location_name, forecast_date
+"""
+
 # numeric coercion per column so the JSON is typed, not all-strings
 _INT = {"year", "month_of_year", "hour_of_day", "good_days", "moderate_days",
-        "usg_days", "unhealthy_days", "very_unhealthy_days", "hazardous_days"}
+        "usg_days", "unhealthy_days", "very_unhealthy_days", "hazardous_days",
+        "location_id", "forecast_aqi"}
 
 
 def _typed(rows):
@@ -88,4 +100,6 @@ def get_dataset(client, cfg, dataset, max_wait=60):
         }
     if dataset == "compliance":
         return {"monthly": _typed(run_query(client, _COMPLIANCE, cfg, max_wait=max_wait))}
+    if dataset == "forecast":
+        return {"rows": _typed(run_query(client, _FORECAST, cfg, max_wait=max_wait))}
     return None
