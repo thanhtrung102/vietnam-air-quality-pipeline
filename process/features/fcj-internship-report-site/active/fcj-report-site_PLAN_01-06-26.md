@@ -21,12 +21,25 @@ sidebar nav, GitHub Pages. Workshop template (`aws-workshops`) = same stack, hie
 ## Phases
 | # | Phase | Status |
 |---|---|---|
-| 01 | Scaffold Hugo + theme submodule + AWS-variant config | 🔨 |
-| 02 | Proposal section (problem/objectives/architecture/services/cost/success/reproducibility) | ⏳ |
-| 03 | Workshop section (landing + 5.1–5.6 reproducible runbook, English) | ⏳ |
-| 04 | Placeholders for sections 1,3,4,6,7 | ⏳ |
-| 05 | AWS diagram asset + deploy workflow (GitHub Pages) | ⏳ |
-| 06 | Verify: `hugo` builds clean; content reproducibility matches verified live state | ⏳ |
+| 01 | Scaffold Hugo + theme submodule + AWS-variant config | ✅ |
+| 02 | Proposal section (problem/objectives/architecture/services/cost/success/reproducibility) | ✅ |
+| 03 | Workshop section (landing + 5.1–5.6 reproducible runbook, English) | ✅ |
+| 04 | Placeholders for sections 1,3,4,6,7 | ✅ |
+| 05 | AWS diagram asset + deploy workflow (GitHub Pages) | ✅ |
+| 06 | Verify: `hugo` builds clean; content reproducibility matches verified live state | ✅ |
+
+## Outcome (commit `d1803ee`, 01-06-26)
+- **Theme swap:** `matcornic/hugo-theme-learn` calls `.Site.IsMultiLingual` (removed in Hugo 0.158+) →
+  swapped to its maintained successor **`McShelby/hugo-theme-relearn`** (same Learn-theme family/look).
+  Full-history submodule clone OOM'd on this box; **`--depth 1` shallow add** succeeded.
+- **Build green:** `hugo --gc --minify -s report` → 29 pages, exit 0. Only 4 residual warnings, all from
+  relearn's own templates (`.Language.LanguageCode`, `.Site.Sites`) — upstream, harmless. Verified output:
+  all 7 section dirs, 6 workshop subpages, Mermaid block in proposal, `images/architecture.png` (355 KB).
+- **AWS palette** via `report/layouts/partials/custom-header.html` (Squid Ink / Smile Orange / link blue).
+- **Architecture audit:** fixed 4 label drifts in `docs/architecture.yaml` (weather 300→900 s, CodeBuild
+  85→84 dbt tests, monitoring 4→14 alarms, billing node → AWS Budget). CI regenerates the AWS-icon PNG
+  from this audited source; proposal also carries an audited inline Mermaid diagram.
+- **Deploy:** `.github/workflows/deploy-report.yml` (submodules recursive, awsdac regen, Hugo build → Pages).
 
 ## Verify (HARD GATE)
 - `hugo --gc --minify -s report` builds with 0 errors; all 7 sections render in the sidebar.
