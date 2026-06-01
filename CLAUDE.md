@@ -24,12 +24,13 @@
 - **Project name:** openaq_transform
 - **Adapter:** dbt-athena-community
 - **Model inventory (canonical count):** 17 models = 2 staging + 2 intermediate + 13 marts.
-  `dbt build --exclude tag:bi_disabled` builds **9 of 17** (5 marts refreshed + 2 intermediate +
-  2 staging). The **8** `bi_disabled` marts skipped by default: `mart_diurnal_profile`,
-  `mart_feature_stats`, `mart_forecast_accuracy`, `mart_monthly_profile`, `mart_pollutant_ratio`, and
-  (tagged 2026-05-31, QuickSight-only, no live consumer) `mart_health_summary`, `mart_exceedance_stats`,
-  `mart_annual_monthly_trend`. The latter 3 persist in Glue from their last build but no longer refresh
-  while QuickSight is off; remove the tag to re-enable.
+  `dbt build --exclude tag:bi_disabled` builds **13 of 17** (9 marts refreshed + 2 intermediate +
+  2 staging). The **4** `bi_disabled` marts skipped by default: `mart_feature_stats`,
+  `mart_forecast_accuracy`, `mart_pollutant_ratio`, `mart_annual_monthly_trend` (redundant with
+  `mart_exceedance_stats`). Remove the tag to re-enable. **2026-06-01:** `mart_health_summary`,
+  `mart_exceedance_stats`, `mart_monthly_profile`, `mart_diurnal_profile` were re-enabled — they now
+  feed the **static Analytics dashboard** (the in-envelope QuickSight alternative), served by the
+  `aqi_api` Lambda at `GET /analytics/{health,seasonal,compliance}`.
 - **Mart table partitions on:** measurement_date (date-grain marts; `mart_forecast_accuracy` partitions on forecast_date). Analytical/aggregate marts use `partitioned_by = []` (unpartitioned).
 - **Mart table clustering:** none — no mart uses clustering or bucketing (no `bucketed_by`). Partition projection alone keeps Athena scans small.
 

@@ -15,6 +15,13 @@ Touching the API handler, the GeoJSON contract, API Gateway config, throttling, 
 - **`openaq_aqi_api`** behind API Gateway `GET /` → GeoJSON FeatureCollection from `mart_daily_aqi`.
   Filters to **last 7 days, latest row per station** (partition-pruned → small scan; tolerates ~6 days
   archive lag). Returns valid-but-empty GeoJSON when the archive lag exceeds the window (normal).
+- **Analytics endpoints (QuickSight alternative, 2026-06-01):** same Lambda also serves
+  `GET /analytics/{dataset}` → JSON. `handler.py` routes on `requestContext.http.path`; queries live in
+  `lambda/aqi_api/analytics.py` (packaged by `build.sh`). Datasets: `health` (mart_health_summary),
+  `seasonal` (mart_monthly_profile + mart_diurnal_profile), `compliance` (mart_exceedance_stats). Each
+  /tmp-cached per dataset+day. Consumed by the dashboard **Analytics tab** (Chart.js, 3 sheets). The 4
+  backing marts were un-`bi_disabled` for this. Forecast Monitor (4th QuickSight sheet) still deferred
+  (SARIMA gated).
 - **API Gateway throttling:** burst 20 / rate 10, reserved Lambda concurrency 10 (cost/abuse guard).
 - **Dashboard** = `dashboard/index.html` (Leaflet) on S3 static website. The real API URL is injected
   by Terraform (`aws_s3_object.dashboard_index` + `templatefile`/`replace`) — `index.html` reads

@@ -22,12 +22,12 @@ CodeBuild build pipeline.
 - **Materialization:** marts are Parquet/Snappy CTAS to `processed/openaq_mart/{table}/{uuid}/`.
   Date-grain marts `partitioned_by=['measurement_date']`; `mart_forecast_accuracy` on `forecast_date`;
   aggregate marts unpartitioned.
-- **`bi_disabled` tag** excludes **8** marts (QuickSight-only / forecast-dependent) from the default
-  build (`mart_diurnal_profile`, `mart_feature_stats`, `mart_forecast_accuracy`, `mart_monthly_profile`,
-  `mart_pollutant_ratio`, plus `mart_health_summary`, `mart_exceedance_stats`,
-  `mart_annual_monthly_trend` — tagged 2026-05-31, no live consumer while QuickSight is off):
-  `dbt build --exclude tag:bi_disabled` builds **9 of 17** (5 marts + 2 intermediate + 2 staging). The
-  3 newly-tagged marts persist in Glue from their last build but no longer refresh; remove the tag to re-enable.
+- **`bi_disabled` tag** excludes **4** marts from the default build: `mart_feature_stats`,
+  `mart_forecast_accuracy`, `mart_pollutant_ratio`, `mart_annual_monthly_trend` (redundant with
+  `mart_exceedance_stats`). `dbt build --exclude tag:bi_disabled` builds **13 of 17** (9 marts +
+  2 intermediate + 2 staging). **2026-06-01:** `mart_health_summary`, `mart_exceedance_stats`,
+  `mart_monthly_profile`, `mart_diurnal_profile` were re-enabled to feed the static Analytics dashboard
+  (the QuickSight alternative — see `serving-api-dashboard`). Remove a tag to re-enable the rest.
 - **Station allowlist** = inner-join to `vn_stations` seed at the intermediate layer.
 - **DQ filter:** `-999.0` sentinel dropped; pm25-only `value >= 500` fill-code guard (station 7440 emits
   985.0), **not** applied to pm10 (legit coarse-dust spikes survive).

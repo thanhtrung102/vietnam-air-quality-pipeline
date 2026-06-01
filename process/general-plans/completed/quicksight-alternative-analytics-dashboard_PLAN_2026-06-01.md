@@ -2,7 +2,19 @@
 
 **Date:** 2026-06-01
 **Complexity:** Complex (touches marts + serving Lambda + API Gateway + frontend; correctness-relevant)
-**Status:** Active — EXECUTE in progress
+**Status:** ✅ COMPLETE — deployed + live-verified 2026-06-01
+
+## Verification Evidence (actual, 2026-06-01)
+- dbt: re-enabled 4 marts; `dbt ls --exclude tag:bi_disabled` = **13 models**; CodeBuild
+  `openaq-dbt-runner` (build `a2427c6c`) **SUCCEEDED** (seed+run+test, 13 models incl. the 4 marts).
+- serving: targeted `terraform apply` → route `aws_apigatewayv2_route.aqi_api_analytics` created,
+  `aqi_api` Lambda redeployed, dashboard + codebuild-source uploaded (1 add, 3 change, 0 destroy).
+- live API (HTTP 200): `/analytics/health` 6 rows, `/analytics/seasonal` monthly 22 + diurnal 96,
+  `/analytics/compliance` 50 rows; `GET /` map still valid (5 stations) — **no regression**.
+- frontend: Analytics tab headless-screenshot — all 6 charts render with live data (diurnal fixed:
+  day_type case bug `'weekday'`→`'Weekday'`, committed + redeployed).
+- tests: 39 aqi/api Lambda tests pass.
+- `annual_monthly_trend` left `bi_disabled` (redundant with `exceedance_stats`) — shipped 4 marts, not 5.
 **Owner decision (INNOVATE gate, 2026-06-01):** Approach **A** (extend the static S3 dashboard), scope
 **3-sheet MVP on live data** (Health Scorecard · Seasonal & Weather Drivers · Compliance & Trajectory).
 Forecast Monitor deferred (SARIMA ML still gated off).
