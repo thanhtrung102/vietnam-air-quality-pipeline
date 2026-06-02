@@ -7,32 +7,62 @@ pre = " <b> 3.3. </b> "
 
 # How BMW Group built a serverless terabyte-scale data transformation architecture with dbt and Amazon Athena
 
-_By Philipp Karg, Cizer Pereira, and Selman Ay — 29 April 2025, AWS Big Data Blog
+_Summarised in English from the AWS Big Data Blog post by Philipp Karg, Cizer Pereira, and Selman Ay —
+29 April 2025
 ([Amazon Athena](https://aws.amazon.com/blogs/big-data/category/analytics/amazon-athena/),
-Amazon QuickSight, Analytics, Customer Solutions)._
+Amazon QuickSight, Analytics, Customer Solutions). Original article linked at the bottom; the write-up
+below is in my own words._
 
-## Summary
+## The setup
 
-BMW Group runs a large analytics platform on a fully **serverless** transformation stack: **dbt** for
-the modelling and testing logic, and **Amazon Athena** as the query engine. Because Athena scales
-automatically and bills only for data scanned, the team manages no clusters and pays for compute only
-when transformations actually run.
+BMW Group runs a large analytics platform on a fully **serverless** transformation stack: **dbt**
+provides the modelling and testing logic, and **Amazon Athena** is the query engine that executes the
+SQL. Because Athena scales on demand and bills only for the data each query scans, the team operates no
+clusters and pays for transformation compute only while it actually runs.
 
-Key points from the post:
+## Why dbt on Athena
 
-- **Layered models:** roughly **400 dbt models** are organised into three stages — **Source** (raw),
-  **Prepared** (cleansed/standardised), and **Semantic** (business-ready aggregates) — making the
-  pipeline modular and easy to reason about.
-- **Incremental processing:** models process only new or changed data instead of rebuilding entire
-  datasets, which sharply reduces both processing volume and Athena scan cost.
-- **Workgroup isolation:** separate **Athena workgroups** isolate transformation, testing, BI, and
-  ad-hoc query patterns, giving per-workgroup cost allocation and governance.
-- **CI/CD:** **GitHub Actions** deploy changes from pull requests; schema evolution is handled through
-  dbt configuration rather than hand-written DDL.
-- **Built-in data quality:** dbt **tests** validate schema constraints, referential integrity, and
-  custom business rules automatically on every pull request and on nightly builds.
-- **Cost trade-off:** materialising semantic **tables** (instead of recomputing complex views) removed
-  redundant computation and produced a net cost reduction despite more dbt work overall.
+Pairing dbt with Athena lets engineers express transformations as version-controlled SQL models while
+the platform handles execution and scaling. Athena's efficiency on large Parquet datasets, combined
+with its serverless billing, means the team can focus on writing good transformations rather than
+sizing and babysitting infrastructure.
+
+## A layered model architecture
+
+The post describes roughly **400 dbt models** organised into three stages:
+
+- **Source** — raw data as ingested.
+- **Prepared** — cleansed and standardised tables.
+- **Semantic** — business-ready aggregates consumed by analytics and BI.
+
+This layering keeps each transformation small and composable, and makes lineage easy to follow from raw
+input to business output.
+
+## Incremental processing
+
+Rather than rebuilding entire datasets on every run, the dbt models process **only new or changed
+data** incrementally. That sharply reduces both the volume of data processed and the Athena scan cost,
+which is what makes the approach affordable at terabyte scale.
+
+## Workgroup isolation
+
+Different query patterns — transformations, testing, BI/visualization, and ad-hoc analysis — are run in
+**separate Athena workgroups**. Isolating them gives per-workgroup cost allocation and governance, so
+each workload's spend and configuration can be managed independently.
+
+## CI/CD and data quality
+
+Deployments are automated through **GitHub Actions**, triggered from pull requests, with schema changes
+managed through dbt configuration rather than hand-written DDL. dbt's built-in **tests** validate schema
+constraints, referential integrity, and custom business rules automatically on every pull request and
+on nightly builds — so data-quality regressions are caught before they reach consumers.
+
+## The cost trade-off
+
+A notable lesson: moving from complex, repeatedly-recomputed **views** to **materialised** semantic
+tables removed redundant computation and produced a net cost reduction, even though it increased the
+total amount of dbt work. Materialising the semantic layer trades a little extra build cost for much
+cheaper, faster reads downstream.
 
 ## Applied in this project
 
