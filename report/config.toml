@@ -40,6 +40,27 @@ name = "<i class='fas fa-sitemap'></i> Architecture diagram"
 url = "images/architecture.png"
 weight = 12
 
+[Languages.vi]
+title = "Pipeline Chất lượng Không khí Việt Nam — Báo cáo Thực tập AWS FCJ"
+weight = 2
+languageName = "Tiếng Việt"
+
+[[Languages.vi.menu.shortcuts]]
+name = "<i class='fas fa-map'></i> Bảng điều khiển trực tiếp"
+url = "http://openaq-pipeline-thanhtrung102.s3-website-ap-southeast-1.amazonaws.com/dashboard/index.html"
+weight = 10
+
+[[Languages.vi.menu.shortcuts]]
+name = "<i class='fab fa-github'></i> Kho mã nguồn"
+identifier = "ds"
+url = "https://github.com/thanhtrung102/vietnam-air-quality-pipeline"
+weight = 11
+
+[[Languages.vi.menu.shortcuts]]
+name = "<i class='fas fa-sitemap'></i> Sơ đồ kiến trúc"
+url = "images/architecture.png"
+weight = 12
+
 [markup]
   [markup.goldmark]
     [markup.goldmark.renderer]
