@@ -50,7 +50,7 @@ Ba luồng thu nạp song song hội tụ tại một data lake S3, được Glu
 báo SARIMA dạng container-Lambda. *(Các dữ kiện được kiểm chứng trực tiếp với AWS; sơ đồ biểu tượng AWS được
 sinh ra từ `docs/architecture_diagram.py` qua mingrammer **diagrams** + Graphviz và được tạo lại trong CI khi deploy.)*
 
-![AWS architecture](/vietnam-air-quality-pipeline/images/architecture.png)
+![AWS architecture](/images/architecture.png)
 
 {{< mermaid >}}
 flowchart LR

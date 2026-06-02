@@ -50,7 +50,7 @@ transformed by **dbt-on-Athena** (run by CodeBuild), and served through an API +
 container-Lambda SARIMA forecaster. *(Facts audited against live AWS; the AWS-icon diagram is generated
 from `docs/architecture_diagram.py` via mingrammer **diagrams** + Graphviz, regenerated in CI on deploy.)*
 
-![AWS architecture](/vietnam-air-quality-pipeline/images/architecture.png)
+![AWS architecture](/images/architecture.png)
 
 {{< mermaid >}}
 flowchart LR
