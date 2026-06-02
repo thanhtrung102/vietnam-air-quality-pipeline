@@ -15,9 +15,8 @@ within a strict **~$3–8/month** single-operator cost envelope.
 
 ## Report contents
 
-This report follows the AWS FCJ internship-report structure. **Sections 1 (Worklog)**, **2 (Proposal)**,
-**3 (Translated Blogs)**, **5 (Workshop)**, and **6 (Self-Assessment)** are complete; the Proposal and
-Workshop are verified end-to-end. The remaining sections are placeholders.
+This report follows the AWS FCJ internship-report structure. All sections are written except **Section 4
+(Events Participated)**, which remains a placeholder; the Proposal and Workshop are verified end-to-end.
 
 | # | Section | Status |
 |---|---|---|
@@ -27,7 +26,7 @@ Workshop are verified end-to-end. The remaining sections are placeholders.
 | 4 | Events Participated | _placeholder_ |
 | 5 | **Workshop** | ✅ complete + reproducible |
 | 6 | **Self-Assessment** | ✅ complete |
-| 7 | Sharing & Feedback | _placeholder_ |
+| 7 | **Sharing & Feedback** | ✅ complete |
 
 ## At a glance (verified live, 2026-06-01)
 
