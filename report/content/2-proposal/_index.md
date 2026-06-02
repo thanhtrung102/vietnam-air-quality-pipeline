@@ -48,7 +48,7 @@ scales to zero between runs.
 Three parallel ingestion paths converge on an S3 data lake, are cataloged by Glue (partition projection),
 transformed by **dbt-on-Athena** (run by CodeBuild), and served through an API + static dashboard, with a
 container-Lambda SARIMA forecaster. *(Facts audited against live AWS; the AWS-icon diagram is generated
-from `docs/architecture.yaml` via awslabs diagram-as-code and regenerated in CI on deploy.)*
+from `docs/architecture_diagram.py` via mingrammer **diagrams** + Graphviz, regenerated in CI on deploy.)*
 
 ![AWS architecture](/vietnam-air-quality-pipeline/images/architecture.png)
 

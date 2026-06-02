@@ -48,7 +48,7 @@ Scheduler** điều khiển mọi tác vụ và toàn bộ stack co lại bằng
 Ba luồng thu nạp song song hội tụ tại một data lake S3, được Glue lập danh mục (partition projection), được
 **dbt-on-Athena** biến đổi (chạy bởi CodeBuild), và được phục vụ qua một API + dashboard tĩnh, cùng một bộ dự
 báo SARIMA dạng container-Lambda. *(Các dữ kiện được kiểm chứng trực tiếp với AWS; sơ đồ biểu tượng AWS được
-sinh ra từ `docs/architecture.yaml` qua awslabs diagram-as-code và được tạo lại trong CI khi deploy.)*
+sinh ra từ `docs/architecture_diagram.py` qua mingrammer **diagrams** + Graphviz và được tạo lại trong CI khi deploy.)*
 
 ![AWS architecture](/vietnam-air-quality-pipeline/images/architecture.png)
 
