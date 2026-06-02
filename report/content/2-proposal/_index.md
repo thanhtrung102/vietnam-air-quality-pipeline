@@ -50,65 +50,16 @@ transformed by **dbt-on-Athena** (run by CodeBuild), and served through an API +
 container-Lambda SARIMA forecaster. *(Facts audited against live AWS; the AWS-icon diagram is generated
 from `docs/architecture_diagram.py` via mingrammer **diagrams** + Graphviz, regenerated in CI on deploy.)*
 
-![AWS architecture](/images/architecture.png)
+**Figure 1 — Cloud architecture (infrastructure & runtime).** Numbered steps trace the happy path:
+① ingest → ② land in S3 → ③ catalog → ④ query (Athena) → ⑤ transform (dbt) → ⑥ serve → ⑦–⑧ dashboard → user.
+Dashed edges are control/observability (scheduler, secrets, DLQ, alarms).
 
-{{< mermaid >}}
-flowchart LR
-  subgraph EXT[External sources]
-    A1[OpenAQ S3 Archive]:::ext
-    A2[OpenAQ REST API v3]:::ext
-    A3[Open-Meteo ERA5]:::ext
-  end
+![AWS cloud architecture](/images/architecture.png)
 
-  subgraph AWS[AWS Cloud · ap-southeast-1 · no VPC]
-    EB[EventBridge Scheduler<br/>6 schedules]:::sched
-    SM[Secrets Manager<br/>openaq/api_key]:::sched
+**Figure 2 — Data lifecycle (dbt medallion).** How the data is shaped from raw to product: raw S3 zones →
+Glue catalog → staging → intermediate (EPA-2024 AQI) → marts (Parquet) → API + SARIMA forecast → dashboard.
 
-    L1[batch_sync<br/>Lambda]:::lam
-    L2[streaming_producer<br/>Lambda]:::lam
-    L3[weather_ingest<br/>Lambda]:::lam
-
-    KIN[Kinesis + Firehose]:::strm
-    S3[(S3 data lake<br/>batch · stream · weather)]:::stor
-    GL[Glue Data Catalog<br/>partition projection]:::glue
-    ATH[Athena<br/>openaq_workgroup]:::ath
-    CB[CodeBuild · dbt<br/>17 models · 84 tests]:::cb
-
-    API[aqi_api + API Gateway<br/>GeoJSON]:::api
-    FC[forecast_generate<br/>SARIMA 7-day]:::lam
-    DASH[(S3 static site<br/>map + analytics)]:::stor
-    CK[completeness_check]:::lam
-    CW[CloudWatch · 15 alarms<br/>+ AWS Budget]:::mon
-  end
-  USER([End user · browser]):::ext
-
-  A1 --> L1
-  A2 --> L2
-  A3 --> L3
-  EB -.-> L1 & L2 & L3 & CB & FC & CK
-  SM -.-> L2
-  L1 --> S3
-  L3 --> S3
-  L2 --> KIN --> S3
-  S3 --> GL --> ATH
-  ATH <--> CB
-  ATH --> API
-  ATH --> FC
-  API --> DASH --> USER
-  FC --> CW
-  CK --> CW
-
-  classDef ext fill:#e8edf3,stroke:#566,stroke-width:1px,color:#16191f;
-  classDef lam fill:#FF9900,stroke:#cc7a00,color:#16191f;
-  classDef stor fill:#3F8624,stroke:#2d6019,color:#fff;
-  classDef strm fill:#8C4FFF,stroke:#6b3fcc,color:#fff;
-  classDef glue fill:#8C4FFF,stroke:#6b3fcc,color:#fff;
-  classDef ath fill:#146EB4,stroke:#0f5288,color:#fff;
-  classDef cb fill:#146EB4,stroke:#0f5288,color:#fff;
-  classDef api fill:#E7157B,stroke:#b51060,color:#fff;
-  classDef sched fill:#FF4F8B,stroke:#cc3f6f,color:#fff;
-  classDef mon fill:#E7157B,stroke:#b51060,color:#fff;
-{{< /mermaid >}}
+![Data lifecycle (dbt medallion)](/images/architecture_lifecycle.png)
 
 **AWS services used**
 

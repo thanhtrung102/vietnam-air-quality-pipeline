@@ -40,7 +40,7 @@ jobs:
           pip install --quiet diagrams
           python docs/architecture_diagram.py
           mkdir -p report/static/images
-          cp docs/architecture.png report/static/images/architecture.png
+          cp docs/architecture.png docs/architecture_lifecycle.png report/static/images/
       - uses: actions/configure-pages@v5
         id: pages
       - name: Build site

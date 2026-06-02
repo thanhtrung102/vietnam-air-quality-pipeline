@@ -50,65 +50,16 @@ Ba luồng thu nạp song song hội tụ tại một data lake S3, được Glu
 báo SARIMA dạng container-Lambda. *(Các dữ kiện được kiểm chứng trực tiếp với AWS; sơ đồ biểu tượng AWS được
 sinh ra từ `docs/architecture_diagram.py` qua mingrammer **diagrams** + Graphviz và được tạo lại trong CI khi deploy.)*
 
-![AWS architecture](/images/architecture.png)
+**Hình 1 — Kiến trúc đám mây (hạ tầng & luồng chạy).** Các bước đánh số đi theo luồng chính:
+① thu nạp → ② lưu vào S3 → ③ lập danh mục → ④ truy vấn (Athena) → ⑤ biến đổi (dbt) → ⑥ phục vụ → ⑦–⑧ dashboard → người dùng.
+Các mũi tên nét đứt là điều khiển/giám sát (scheduler, secrets, DLQ, alarm).
 
-{{< mermaid >}}
-flowchart LR
-  subgraph EXT[External sources]
-    A1[OpenAQ S3 Archive]:::ext
-    A2[OpenAQ REST API v3]:::ext
-    A3[Open-Meteo ERA5]:::ext
-  end
+![Kiến trúc đám mây AWS](/images/architecture.png)
 
-  subgraph AWS[AWS Cloud · ap-southeast-1 · no VPC]
-    EB[EventBridge Scheduler<br/>6 schedules]:::sched
-    SM[Secrets Manager<br/>openaq/api_key]:::sched
+**Hình 2 — Vòng đời dữ liệu (dbt medallion).** Cách dữ liệu được định hình từ thô đến sản phẩm: các vùng S3 raw →
+Glue catalog → staging → intermediate (AQI EPA-2024) → marts (Parquet) → API + dự báo SARIMA → dashboard.
 
-    L1[batch_sync<br/>Lambda]:::lam
-    L2[streaming_producer<br/>Lambda]:::lam
-    L3[weather_ingest<br/>Lambda]:::lam
-
-    KIN[Kinesis + Firehose]:::strm
-    S3[(S3 data lake<br/>batch · stream · weather)]:::stor
-    GL[Glue Data Catalog<br/>partition projection]:::glue
-    ATH[Athena<br/>openaq_workgroup]:::ath
-    CB[CodeBuild · dbt<br/>17 models · 84 tests]:::cb
-
-    API[aqi_api + API Gateway<br/>GeoJSON]:::api
-    FC[forecast_generate<br/>SARIMA 7-day]:::lam
-    DASH[(S3 static site<br/>map + analytics)]:::stor
-    CK[completeness_check]:::lam
-    CW[CloudWatch · 15 alarms<br/>+ AWS Budget]:::mon
-  end
-  USER([End user · browser]):::ext
-
-  A1 --> L1
-  A2 --> L2
-  A3 --> L3
-  EB -.-> L1 & L2 & L3 & CB & FC & CK
-  SM -.-> L2
-  L1 --> S3
-  L3 --> S3
-  L2 --> KIN --> S3
-  S3 --> GL --> ATH
-  ATH <--> CB
-  ATH --> API
-  ATH --> FC
-  API --> DASH --> USER
-  FC --> CW
-  CK --> CW
-
-  classDef ext fill:#e8edf3,stroke:#566,stroke-width:1px,color:#16191f;
-  classDef lam fill:#FF9900,stroke:#cc7a00,color:#16191f;
-  classDef stor fill:#3F8624,stroke:#2d6019,color:#fff;
-  classDef strm fill:#8C4FFF,stroke:#6b3fcc,color:#fff;
-  classDef glue fill:#8C4FFF,stroke:#6b3fcc,color:#fff;
-  classDef ath fill:#146EB4,stroke:#0f5288,color:#fff;
-  classDef cb fill:#146EB4,stroke:#0f5288,color:#fff;
-  classDef api fill:#E7157B,stroke:#b51060,color:#fff;
-  classDef sched fill:#FF4F8B,stroke:#cc3f6f,color:#fff;
-  classDef mon fill:#E7157B,stroke:#b51060,color:#fff;
-{{< /mermaid >}}
+![Vòng đời dữ liệu (dbt medallion)](/images/architecture_lifecycle.png)
 
 **Các dịch vụ AWS sử dụng**
 
