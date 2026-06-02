@@ -5,32 +5,35 @@ chapter = false
 pre = " <b> 1.5. </b> "
 +++
 
-### Week 5 Objectives (1–2 Jun 2026)
+**Project:** OTT SDLF data-lake pipeline ·
+[ott-sdlf](https://github.com/thanhtrung102/ott-sdlf)
 
-- Frame the project's **business context** for the FCJ proposal.
-- Make the **workshop reproducible end-to-end** on a fresh machine and verify it live.
-- Finish the **forecast subsystem** and the **L4 data-quality** hardening.
-- Build and deploy the **FCJ internship report site** and verify the whole system live.
+### Week 5 Objectives (13–19 May 2026)
+
+- Build an OTT analytics data lake on the AWS **Serverless Data Lake Framework (SDLF)**.
+- Deliver **analytics Lambdas** (content-gap and trending-keywords) over the curated layer.
+- Stand up **AWS-native CI/CD** (CodePipeline + CodeConnections) for the whole stack.
+- Add **fine-grained security** (Lake Formation column-level permissions) and a serving **API**.
 
 ### Tasks carried out this week
 
 | Day | Task | Start | Completion | Reference |
 | :-- | :--- | :--- | :--- | :--- |
-| 1 | **Business framing & reproducibility** — authored `BUSINESS-CONTEXT.md` (FCJ proposal/business framing); made workshop **5.1–5.6 reproducible end-to-end** on a fresh machine; fixed the **SARIMA forecast subsystem**; completed **L4 data-quality** hardening; shipped the QuickSight-alternative analytics dashboard; reconciled `bi_disabled` drift and the billing threshold. | 01/06/2026 | 01/06/2026 | [Workshop](../../5-workshop/) · [Proposal](../../2-proposal/) |
-| 2 | **FCJ report site & live verification** — built the **Hugo internship-report site** (learn theme, AWS workshop palette) with the Proposal and Workshop sections; audited the architecture diagram; verified the deployed pipeline **live end-to-end** (5 active stations, 35-row forecast, dbt 84/84 tests, $8 AWS Budget). | 02/06/2026 | 02/06/2026 | [Home](../../) · [Proposal §2.8](../../2-proposal/) |
+| 1 | **Analytics layer + CI/CD** — Content Gap and Trending Keywords analytics Lambdas (hour heatmap, guest/auth demand, network abandonment); an HTML dashboard in the Content Gap Lambda; an AWS-native **CodePipeline** CI/CD stack (via CodeConnections); a gold CTAS + gold data-quality stage; closed reliability gaps (gold crawler, DQ alarm, analytics DLQs, scoped Glue IAM); an Athena workgroup `sdlf-ott` and a Glue job bookmark. | 13/05/2026 | 13/05/2026 | [Repository](https://github.com/thanhtrung102/ott-sdlf) |
+| 2 | **Fine-grained security + API** — **Lake Formation column-level permissions** on `user_id_hashed`; an **HTTP API Gateway** (`GET /trending`, `GET /content-gaps`); unified the DQ stacks into a single parameterized template (SDLF pattern); registered all uncatalogued data in the Glue catalog; fixed trending CTAS partitioning and tightened IAM/KMS. | 14/05/2026 | 14/05/2026 | — |
+| 3 | **Database design & correctness** — applied 9 database-design fixes across schema, catalog, and API; fixed critical Glue-job bugs and established a curated-catalog schema contract; addressed all 11 remaining evaluation findings; wrote comprehensive pipeline documentation (10 sections). | 15/05/2026 | 15/05/2026 | — |
 
 ### Week 5 Achievements
 
-- **Business-grounded proposal**: a clear problem statement, objectives, and success criteria tied to
-  the engineering.
-- **Reproducible from scratch**: the workshop deploys the whole stack with Terraform and was confirmed
-  to build from a clean clone.
-- **Forecast & data-quality finalised**: a corrected SARIMA subsystem and a hardened test suite
-  (84 tests, all passing).
-- **A live internship report**: this site, published to GitHub Pages, with every headline metric
-  verified against the running AWS account.
+- **A full SDLF data lake** for OTT analytics: raw → curated → gold, driven by the Serverless Data Lake
+  Framework's stage pattern.
+- **Two analytics Lambdas** (content gap, trending keywords) with their own data-quality stage and DLQs.
+- **AWS-native CI/CD**: a CodePipeline stack wired through CodeConnections, with the IAM hardened
+  iteratively until deploys were clean.
+- **Column-level security**: Lake Formation permissions restricting `user_id_hashed`, plus an HTTP API
+  for the analytics outputs.
 
 ---
 
-👉 **Outcome:** By the end of Week 5 the project was complete, reproducible, and documented as a live FCJ
-internship report — with all success criteria met and verified against the deployed system.
+👉 **Outcome:** By mid-week 5 the OTT SDLF pipeline was a deployable, secured, CI/CD-driven data lake
+with analytics serving over an API.

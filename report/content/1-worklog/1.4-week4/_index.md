@@ -5,36 +5,36 @@ chapter = false
 pre = " <b> 1.4. </b> "
 +++
 
-### Week 4 Objectives (29–31 May 2026)
+**Project:** OTT Search Analytics pipeline ·
+[ott-search-pipeline](https://github.com/thanhtrung102/ott-search-pipeline)
 
-- **Harden** the deployment for portfolio quality: security, observability, and testing.
-- Replace the QuickSight dependency with an **in-envelope static dashboard**.
-- Reconcile all documentation to **live-verified** ground truth.
-- Install a **governance harness** (RIPER-5) and adopt a durable **remote Terraform state** backend.
+### Week 4 Objectives (7–12 May 2026)
 
-> _The intensive build phase paused after 18 April; work resumed on 29 May for a dedicated hardening,
-> verification, and reporting phase. The dates below reflect that real timeline._
+- Build a **Vietnamese OTT search analytics** pipeline (what users search for on a streaming service,
+  and where they abandon).
+- Classify free-text search queries into **genres** with a hybrid rule + LLM approach.
+- Package it as an FCJ workshop with verified, reproducible results.
 
 ### Tasks carried out this week
 
 | Day | Task | Start | Completion | Reference |
 | :-- | :--- | :--- | :--- | :--- |
-| 1 | **Security & resilience hardening** — secret-only OpenAQ key, SQS **DLQs**, SSE, single-source station roster; QuickSight disabled and parked in favour of the static dashboard; Lambda row-parsing hardened with raise-not-exit and **walk-forward forecast RMSE**; unit tests for `batch_sync`/`kinesis_producer`/`weather_ingest`; dbt AQI macros extracted and 4 diagnostic marts tagged `bi_disabled`. | 29/05/2026 | 30/05/2026 | [docs/DATA-LIFECYCLE.md](https://github.com/thanhtrung102/vietnam-air-quality-pipeline/blob/main/docs/DATA-LIFECYCLE.md) |
-| 2 | **Observability & live-verified docs** — silent-failure metrics + CloudWatch alarms and Lambda `source_code_hash`; completed the CodeBuild dbt image so the marts build; authored live-verified reports (PIPELINE-REPORT, DATA-LIFECYCLE, an 8-lens architecture evaluation) and a root README doc-map; reconciled context against live AWS. | 30/05/2026 | 30/05/2026 | [docs/PIPELINE-REPORT.md](https://github.com/thanhtrung102/vietnam-air-quality-pipeline/blob/main/docs/PIPELINE-REPORT.md) |
-| 3 | **Data-quality gates & governance** — query-based dbt source-freshness gate (storable, scan-cheap) recalibrated to 21 days + a weather test; installed the **RIPER-5 agent harness** with a live-state HARD GATE and made the audit suite green; live-verified deployed specs before push. | 31/05/2026 | 31/05/2026 | [docs/DATA-QUALITY.md](https://github.com/thanhtrung102/vietnam-air-quality-pipeline/blob/main/docs/DATA-QUALITY.md) |
-| 4 | **Integrity & durability fixes** — stripped a fabricated `corrected_pm25` citation and relabelled it as an unvalidated heuristic; tagged 3 QuickSight-only leaf marts `bi_disabled`; adopted a **remote S3 Terraform state** backend with the native S3 lockfile (no DynamoDB). | 31/05/2026 | 31/05/2026 | [docs/WELL-ARCHITECTED.md](https://github.com/thanhtrung102/vietnam-air-quality-pipeline/blob/main/docs/WELL-ARCHITECTED.md) |
+| 1 | **Pipeline scaffold** — initial Vietnamese OTT search analytics pipeline; fixed critical workshop reproducibility gaps found via a codebase audit. | 07/05/2026 | 07/05/2026 | [Repository](https://github.com/thanhtrung102/ott-search-pipeline) |
+| 2 | **Workshop & metrics** — added a workshop Hugo site and fixed governance-stack IAM permissions; corrected abandonment-rate discrepancies; added the FCJ proposal page; rewrote the workshop content with verified proof-of-results. | 08/05/2026 | 08/05/2026 | — |
+| 3 | **Genre classifier** — diacritics normalization, LUT (lookup-table) expansion, and a regex fix; a Glue timeout fix (skip the fuzzy stage in fast mode); precision/recall improvements; added an **Amazon Bedrock (Nova) fallback** in the Lambda; built `evaluate_classifier.py` for full-dataset quality evaluation; applied eval-driven LUT corrections; expanded the curated LUT with **409 adjudicated entries** plus a ground-truth test set. | 11/05/2026 | 11/05/2026 | — |
+| 4 | **End-to-end enrichment** — fixed the ingestion pipeline and enriched the production dataset end-to-end. | 12/05/2026 | 12/05/2026 | — |
 
 ### Week 4 Achievements
 
-- **Production-hardened**: secrets-only credentials, DLQs, SSE, reserved concurrency, and silent-failure
-  alarms — no open high risks in the Well-Architected review.
-- **Self-sufficient BI**: QuickSight (Enterprise-only) replaced by a static Leaflet + Chart.js dashboard
-  reading the same marts, keeping the cost envelope.
-- **Documentation = ground truth**: every report reconciled against live AWS via a verify-as-source pass.
-- **Durable state + governance**: remote S3 backend with native locking, and a RIPER-5 harness enforcing
-  live-state verification before changes ship.
+- **A working OTT search analytics pipeline** that turns raw search logs into genre-classified,
+  abandonment-aware analytics.
+- **A hybrid genre classifier**: a diacritics-aware curated lookup table for precision, with an
+  Amazon Bedrock (Nova) fallback for unknown queries — evaluated against a ground-truth set rather than
+  guessed.
+- **Reproducible workshop**: the FCJ workshop content was rewritten around verified, proof-of-results
+  numbers after a reproducibility audit.
 
 ---
 
-👉 **Outcome:** By the end of Week 4 the pipeline was secured, observable, tested, and reproducible from
-a clean state, with documentation that matches the running system exactly.
+👉 **Outcome:** A second AWS data project delivered — search-behaviour analytics with a measurable,
+evaluated NLP classification step and an FCJ workshop.
