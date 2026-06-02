@@ -31,12 +31,12 @@ Diagram:
 
     OpenAQAPI:
       Type: AWS::Diagram::Resource
-      Preset: User
+      Preset: Internet
       Title: "OpenAQ REST API v3"
 
     OpenMeteo:
       Type: AWS::Diagram::Resource
-      Preset: User
+      Preset: Internet
       Title: "Open-Meteo ERA5"
 
     # ── AWS Cloud (center) ────────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ Diagram:
     MonitoringStack:
       Type: AWS::Diagram::Resource
       Preset: "Amazon CloudWatch"
-      Title: "CloudWatch + SNS\n14 alarms · openaq_alerts"
+      Title: "CloudWatch + SNS\n15 alarms · openaq_alerts"
 
     # ── Billing us-east-1 ─────────────────────────────────────────────────────────
     BillingRow:

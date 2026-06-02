@@ -7,7 +7,15 @@ pre = " <b> 5. </b> "
 
 
 Workshop này xây dựng toàn bộ pipeline Vietnam Air Quality trên AWS từ một bản clone sạch, sử dụng
-**Terraform** cho mọi tài nguyên. Quy trình có thể tái lập end-to-end và đã được kiểm chứng trực tiếp vào ngày 2026-06-01.
+**Terraform** cho mọi tài nguyên. Quy trình có thể tái lập end-to-end và đã được kiểm chứng trực tiếp vào ngày 2026-06-02.
+
+|  |  |
+|---|---|
+| ⏱ **Thời lượng** | ~60–90 phút |
+| 📊 **Cấp độ** | 300 — trung cấp (kỹ thuật dữ liệu trên AWS) |
+| 💰 **Chi phí** | ≈ $0.10 để chạy một lượt; ≈ $3.22/tháng nếu để chạy liên tục (trần cứng: AWS Budget $8) |
+| 🛠 **Dịch vụ** | S3 · Glue · Athena · Lambda · Kinesis/Firehose · EventBridge Scheduler · CodeBuild · API Gateway · Secrets Manager · CloudWatch · SNS · SQS |
+| 🌏 **Vùng** | `ap-southeast-1` (Singapore) |
 
 ## Những gì bạn sẽ xây dựng
 

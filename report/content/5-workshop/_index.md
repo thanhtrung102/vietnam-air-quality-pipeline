@@ -7,7 +7,15 @@ pre = " <b> 5. </b> "
 
 
 This workshop builds the entire Vietnam Air Quality pipeline on AWS from a clean clone, using
-**Terraform** for every resource. It is reproducible end-to-end and was verified live on 2026-06-01.
+**Terraform** for every resource. It is reproducible end-to-end and was verified live on 2026-06-02.
+
+|  |  |
+|---|---|
+| ⏱ **Time** | ~60–90 minutes |
+| 📊 **Level** | 300 — intermediate (data engineering on AWS) |
+| 💰 **Cost** | ≈ $0.10 to run through once; ≈ $3.22/month if left running (hard ceiling: AWS Budget $8) |
+| 🛠 **Services** | S3 · Glue · Athena · Lambda · Kinesis/Firehose · EventBridge Scheduler · CodeBuild · API Gateway · Secrets Manager · CloudWatch · SNS · SQS |
+| 🌏 **Region** | `ap-southeast-1` (Singapore) |
 
 ## What you will build
 
