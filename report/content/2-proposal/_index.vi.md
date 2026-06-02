@@ -151,6 +151,14 @@ Glue catalog → staging → intermediate (AQI EPA-2024) → marts (Parquet) →
 | Dịch vụ bên thứ ba | API OpenAQ + Open-Meteo (gói miễn phí) | 0.00 |
 | **Tổng dự án** | | **≈ 3.22** (trần cứng: AWS Budget $8) |
 
+> **Phạm vi chi phí & kiểm chứng ban đầu.** Các con số này là chi phí **gia tăng của riêng pipeline**.
+> Dự án chạy trong một **tài khoản AWS dùng chung** vốn còn lưu trữ các workload không liên quan, nên hóa
+> đơn ở *cấp tài khoản* không phải là thước đo trực tiếp cho pipeline này. Trong những ngày đầu vận hành
+> (tháng 6/2026), các dịch vụ **riêng của pipeline** là không đáng kể — CodeBuild ≈ $0.06 và Athena ≈ $0.02
+> cho một lần build dbt đầy đủ, với Lambda / Glue / API Gateway ≈ $0 — nhất quán với ước tính ở trên;
+> bucket `openaq-pipeline` chứa ~207 MB và stream Kinesis on-demand có lưu lượng thấp. (Các khoản
+> S3/Kinesis/OpenSearch ở cấp tài khoản thuộc về các dự án khác, không phải dự án này.)
+
 ## 7. Đánh giá rủi ro
 
 | Rủi ro | Khả năng | Tác động | Biện pháp giảm thiểu |

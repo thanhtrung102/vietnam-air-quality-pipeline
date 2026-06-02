@@ -150,6 +150,14 @@ data projects; see the worklog landing.)*
 | Third-party services | OpenAQ + Open-Meteo APIs (free tier) | 0.00 |
 | **Project total** | | **≈ 3.22** (hard ceiling: AWS Budget $8) |
 
+> **Cost scope & early validation.** These figures are the **pipeline's own incremental** cost. The
+> project runs in a **shared AWS account** that also hosts unrelated workloads, so the *account-level*
+> bill is not a direct measure of this pipeline. In the first days of operation (June 2026), the services
+> **exclusive to this pipeline** were negligible — CodeBuild ≈ $0.06 and Athena ≈ $0.02 for a full dbt
+> build, with Lambda / Glue / API Gateway ≈ $0 — consistent with the estimate above; the `openaq-pipeline`
+> bucket holds ~207 MB and the on-demand Kinesis stream is low-volume. (Account-wide S3/Kinesis/OpenSearch
+> charges in the same account belong to other projects, not this one.)
+
 ## 7. Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
