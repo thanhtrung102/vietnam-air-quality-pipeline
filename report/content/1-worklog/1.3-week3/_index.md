@@ -5,6 +5,9 @@ chapter = false
 pre = " <b> 1.3. </b> "
 +++
 
+**Project:** Vietnam Air Quality pipeline ·
+[vietnam-air-quality-pipeline](https://github.com/thanhtrung102/vietnam-air-quality-pipeline)
+
 ### Week 3 Objectives (9–18 Apr 2026)
 
 - Deploy a **business-intelligence** layer (Amazon QuickSight) over the marts.
@@ -14,13 +17,13 @@ pre = " <b> 1.3. </b> "
 
 ### Tasks carried out this week
 
-| Day | Task | Start | Completion | Reference |
+| Day | Task | Start | Completion | Commits |
 | :-- | :--- | :--- | :--- | :--- |
-| 1 | **QuickSight BI** — deployed QuickSight Phase 1+2 (IAM, Athena data source, 9 SPICE datasets), then Phase 3+4 (analysis, dashboard, DIRECT_QUERY); wired the **daily dbt build** and fixed the EventBridge → CodeBuild target. | 10/04/2026 | 14/04/2026 | [Workshop 5.5](../../5-workshop/5.5-transform-serving/) |
-| 2 | **Dashboard expansion & code health** — expanded dashboards using previously unused raw fields; code-health pass (dead imports, boolean naming, mart de-duplication); fixed broken tests; FCJ doc sections and navigation. | 15/04/2026 | 15/04/2026 | — |
-| 3 | **Workshop fact-checking** — fact-checked and validated **workshop pages 5.1–5.6** against the codebase and the FCJ sample template (sensor counts, schedules, resource counts, names, outputs, response formats); added the `architecture.yaml` diagram (awslabs diagram-as-code) and fixed an XSS issue in the dashboard. | 16/04/2026 | 16/04/2026 | [Workshop](../../5-workshop/) |
-| 4 | **Well-Architected & reproducibility** — applied Well-Architected improvements (arm64, X-Ray, right-sizing, reliability); added the QuickSight workshop section and S3 static-website infrastructure; fixed two reproduction blockers found during inspection. | 17/04/2026 | 17/04/2026 | [docs/WELL-ARCHITECTED.md](https://github.com/thanhtrung102/vietnam-air-quality-pipeline/blob/main/docs/WELL-ARCHITECTED.md) |
-| 5 | **Correctness & live verification** — fixed a `mart_daily_air_quality` GROUP BY bug and updated the workshop docs with **live-verified** values. | 18/04/2026 | 18/04/2026 | [Workshop 5.3](../../5-workshop/5.3-storage-catalog/) |
+| 1 | **QuickSight BI** — deployed QuickSight Phase 1+2 (IAM, Athena data source, 9 SPICE datasets), then Phase 3+4 (analysis, dashboard, DIRECT_QUERY); wired the **daily dbt build** and fixed the EventBridge → CodeBuild target. | 10/04/2026 | 14/04/2026 | [`911006e`], [`a3c50a0`], [`701b3de`] |
+| 2 | **Dashboard expansion & code health** — expanded dashboards using previously unused raw fields; code-health pass (dead imports, boolean naming, mart de-duplication); fixed broken tests; FCJ doc sections and navigation. | 15/04/2026 | 15/04/2026 | [`7709676`], [`0532e99`], [`d04a071`] |
+| 3 | **Workshop fact-checking** — fact-checked and validated **workshop pages 5.1–5.6** against the codebase and the FCJ sample template (sensor counts, schedules, resource counts, names, outputs, response formats); added the `architecture.yaml` diagram (diagram-as-code) and fixed an XSS issue in the dashboard. | 16/04/2026 | 16/04/2026 | [`b58fbc3`], [`3c1c407`], [`e9a3323`] |
+| 4 | **Well-Architected & reproducibility** — applied Well-Architected improvements (arm64, X-Ray, right-sizing, reliability); added the QuickSight workshop section and S3 static-website infrastructure; fixed two reproduction blockers found during inspection. | 17/04/2026 | 17/04/2026 | [`0230a1f`], [`f70888c`], [`74e919a`] |
+| 5 | **Correctness & live verification** — fixed a `mart_daily_air_quality` GROUP BY bug and updated the workshop docs with **live-verified** values. | 18/04/2026 | 18/04/2026 | [`c69c412`] |
 
 ### Week 3 Achievements
 
@@ -35,3 +38,17 @@ pre = " <b> 1.3. </b> "
 
 👉 **Outcome:** By the end of Week 3 the project had a BI layer, an automated daily build, and a
 workshop runbook whose every claim had been checked against the running system.
+
+[`911006e`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/911006e
+[`a3c50a0`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/a3c50a0
+[`701b3de`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/701b3de
+[`7709676`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/7709676
+[`0532e99`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/0532e99
+[`d04a071`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/d04a071
+[`b58fbc3`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/b58fbc3
+[`3c1c407`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/3c1c407
+[`e9a3323`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/e9a3323
+[`0230a1f`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/0230a1f
+[`f70888c`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/f70888c
+[`74e919a`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/74e919a
+[`c69c412`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/c69c412

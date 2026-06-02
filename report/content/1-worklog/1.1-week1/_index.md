@@ -5,6 +5,9 @@ chapter = false
 pre = " <b> 1.1. </b> "
 +++
 
+**Project:** Vietnam Air Quality pipeline ·
+[vietnam-air-quality-pipeline](https://github.com/thanhtrung102/vietnam-air-quality-pipeline)
+
 ### Week 1 Objectives (25–29 Mar 2026)
 
 - Establish the repository, problem statement, architecture, and the Vietnamese station roster.
@@ -16,13 +19,13 @@ pre = " <b> 1.1. </b> "
 
 ### Tasks carried out this week
 
-| Day | Task | Start | Completion | Reference |
+| Day | Task | Start | Completion | Commits |
 | :-- | :--- | :--- | :--- | :--- |
-| 1 | **Project foundation & IaC** — repository structure, problem statement, architecture doc + ADRs, Vietnamese station IDs/archive exploration; first Terraform stack for S3, Glue, Athena, Kinesis, IAM, CloudWatch; historical S3 sync + daily incremental sync scripts; Kinesis producer for OpenAQ API v3. | 25/03/2026 | 25/03/2026 | [Repository](https://github.com/thanhtrung102/vietnam-air-quality-pipeline) |
-| 2 | **Orchestration & first marts** — replaced a Kestra/Docker plan with **EventBridge Scheduler + Lambda** (Docker unavailable); `batch_sync` rewritten to use **boto3**; Athena external table with **partition projection** + OpenCSVSerde; dbt staging → intermediate → mart models with station metadata seed; AQI metrics + exceedance flags; Leaflet map, SNS event-driven sync, and the `aqi_api` endpoint. | 26/03/2026 | 26/03/2026 | [docs/PIPELINE-REPORT.md](https://github.com/thanhtrung102/vietnam-air-quality-pipeline/blob/main/docs/PIPELINE-REPORT.md) |
-| 3 | **Dashboard storytelling & optimisation** — cigarette-equivalent, WHO-compliance and health-summary views; a correctness/cost/test-coverage optimisation pass; warehouse and dbt-format tuning. | 27/03/2026 | 27/03/2026 | [Proposal](../../2-proposal/) |
-| 4 | **Defect cleanup & docs** — fixed critical code defects and dead code; resolved dbt build blockers; validated mart S3 placement; completed the README; added early QuickSight dashboard enhancements and the first architecture diagram. | 28/03/2026 | 28/03/2026 | — |
-| 5 | **Data-accuracy hardening** — rendered the dashboard surfaces as static images and corrected data-accuracy errors found by cross-checking against real OpenAQ statistics (including filtering a sentinel value from an HCMC station). | 29/03/2026 | 29/03/2026 | [docs/DATA-QUALITY.md](https://github.com/thanhtrung102/vietnam-air-quality-pipeline/blob/main/docs/DATA-QUALITY.md) |
+| 1 | **Project foundation & IaC** — repository structure, problem statement, architecture doc + ADRs, Vietnamese station IDs/archive exploration; first Terraform stack for S3, Glue, Athena, Kinesis, IAM, CloudWatch; historical S3 sync + daily incremental sync scripts; Kinesis producer for OpenAQ API v3. | 25/03/2026 | 25/03/2026 | [`649b096`], [`4e65a5a`], [`c452e9c`] |
+| 2 | **Orchestration & first marts** — replaced a Kestra/Docker plan with **EventBridge Scheduler + Lambda**; `batch_sync` rewritten to use **boto3**; Athena external table with **partition projection** + OpenCSVSerde; dbt staging → intermediate → mart models with station-metadata seed; AQI metrics + exceedance flags; Leaflet map, SNS event-driven sync, and the `aqi_api` endpoint. | 26/03/2026 | 26/03/2026 | [`7048c9a`], [`19523f7`], [`f6069eb`] |
+| 3 | **Dashboard storytelling & optimisation** — cigarette-equivalent, WHO-compliance and health-summary views; a correctness/cost/test-coverage optimisation pass; warehouse and dbt-format tuning. | 27/03/2026 | 27/03/2026 | [`971fae0`], [`4e4fbe5`] |
+| 4 | **Defect cleanup & docs** — fixed critical code defects and dead code; resolved dbt build blockers; validated mart S3 placement; completed the README; added early QuickSight dashboard enhancements and the first architecture diagram. | 28/03/2026 | 28/03/2026 | [`1e72f8d`], [`522f39c`] |
+| 5 | **Data-accuracy hardening** — rendered the dashboard surfaces as static images and corrected data-accuracy errors found by cross-checking against real OpenAQ statistics (including filtering a sentinel value from an HCMC station). | 29/03/2026 | 29/03/2026 | [`5cdeea5`], [`fa7415c`] |
 
 ### Week 1 Achievements
 
@@ -37,4 +40,17 @@ pre = " <b> 1.1. </b> "
 ---
 
 👉 **Outcome:** By the end of Week 1 the pipeline produced real, health-oriented air-quality output from
-21 Vietnamese stations, end-to-end, on a fully serverless stack.
+the Vietnamese station roster, end-to-end, on a fully serverless stack.
+
+[`649b096`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/649b096
+[`4e65a5a`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/4e65a5a
+[`c452e9c`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/c452e9c
+[`7048c9a`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/7048c9a
+[`19523f7`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/19523f7
+[`f6069eb`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/f6069eb
+[`971fae0`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/971fae0
+[`4e4fbe5`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/4e4fbe5
+[`1e72f8d`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/1e72f8d
+[`522f39c`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/522f39c
+[`5cdeea5`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/5cdeea5
+[`fa7415c`]: https://github.com/thanhtrung102/vietnam-air-quality-pipeline/commit/fa7415c
