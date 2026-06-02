@@ -45,4 +45,7 @@ Workshop này xây dựng toàn bộ pipeline Vietnam Air Quality trên AWS từ
 | 4 | 5.5 Transform & Serving | dbt-on-Athena, API + dashboard, dự báo SARIMA, bảo mật |
 | 5 | 5.6 Cleanup | dọn dẹp toàn bộ |
 
+**5.7 Khắc phục sự cố** tập hợp các lỗi thường gặp (lỗi thứ tự build, diff do xác nhận SNS, từ chối do
+vượt giới hạn scan, gating dự báo) kèm cách khắc phục — hãy tham khảo nếu một bước không hoạt động như mô tả.
+
 Runbook song ngữ đầy đủ nằm trong repo dưới `docs/workshop/5.1`–`5.6`.

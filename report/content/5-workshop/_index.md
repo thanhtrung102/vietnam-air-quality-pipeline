@@ -45,4 +45,7 @@ This workshop builds the entire Vietnam Air Quality pipeline on AWS from a clean
 | 4 | 5.5 Transform & Serving | dbt-on-Athena, API + dashboard, SARIMA forecast, security |
 | 5 | 5.6 Cleanup | tear everything down |
 
+**5.7 Troubleshooting** collects the common pitfalls (build-order errors, the SNS-confirmation diff,
+scan-cap rejections, forecast gating) with fixes — consult it if a step doesn't behave as described.
+
 The full bilingual runbook lives in the repo under `docs/workshop/5.1`–`5.6`.
