@@ -153,13 +153,13 @@ Glue catalog → staging → intermediate (AQI EPA-2024) → marts (Parquet) →
 
 ## 7. Đánh giá rủi ro
 
-| Rủi ro | Biện pháp giảm thiểu |
-|---|---|
-| **Vượt chi phí** | giới hạn quét Athena 10 GB mỗi truy vấn, serverless co về không, tiering/lifecycle S3, và một **AWS Budget ($8)** kèm billing alarm `>$8/month`. |
-| **Dữ liệu lỗi thời / thiếu hụt nguồn** | `completeness_check` (`MissingStations` hàng giờ), tín hiệu chết âm thầm `DaysSinceLastNewMart`, một alarm `mart-stale`, và một cổng kiểm tra độ tươi dbt dựa trên truy vấn. |
-| **Giới hạn tần suất API OpenAQ / lộ khóa** | khóa được giữ trong **Secrets Manager** (không bao giờ nằm trong state/env), backoff trên producer, và một **DLQ** trên luồng bất đồng bộ. |
-| **Dự báo thiếu chính xác** | SARIMA theo từng trạm với **holdout-RMSE** phát lên CloudWatch + một alarm `ForecastRMSE`; dự báo được trình bày mang tính chỉ báo, không phải SLA. |
-| **Tính sẵn sàng đơn vùng** | chấp nhận cho một bản demo; stack hoàn toàn tái lập được qua Terraform và có thể triển khai lại ở vùng khác. |
+| Rủi ro | Khả năng | Tác động | Biện pháp giảm thiểu |
+|---|---|---|---|
+| **Vượt chi phí** | Thấp | Trung bình | giới hạn quét Athena 10 GB mỗi truy vấn, serverless co về không, tiering/lifecycle S3, và một **AWS Budget ($8)** kèm billing alarm `>$8/month`. |
+| **Dữ liệu lỗi thời / thiếu hụt nguồn** | Trung bình | Trung bình | `completeness_check` (`MissingStations` hàng giờ), tín hiệu chết âm thầm `DaysSinceLastNewMart`, một alarm `mart-stale`, và một cổng kiểm tra độ tươi dbt dựa trên truy vấn. |
+| **Giới hạn tần suất API OpenAQ / lộ khóa** | Thấp | Cao | khóa được giữ trong **Secrets Manager** (không bao giờ nằm trong state/env), backoff trên producer, và một **DLQ** trên luồng bất đồng bộ. |
+| **Dự báo thiếu chính xác** | Trung bình | Thấp | SARIMA theo từng trạm với **holdout-RMSE** phát lên CloudWatch + một alarm `ForecastRMSE`; dự báo được trình bày mang tính chỉ báo, không phải SLA. |
+| **Tính sẵn sàng đơn vùng** | Thấp | Thấp | chấp nhận cho một bản demo; stack hoàn toàn tái lập được qua Terraform và có thể triển khai lại ở vùng khác. |
 
 ## 8. Kết quả kỳ vọng & Đội ngũ
 

@@ -152,13 +152,13 @@ data projects; see the worklog landing.)*
 
 ## 7. Risk Assessment
 
-| Risk | Mitigation |
-|---|---|
-| **Cost overrun** | 10 GB Athena per-query scan cap, scale-to-zero serverless, S3 tiering/lifecycle, and an **AWS Budget ($8)** with a `>$8/month` billing alarm. |
-| **Data staleness / source gaps** | `completeness_check` (hourly `MissingStations`), a `DaysSinceLastNewMart` silent-death signal, a `mart-stale` alarm, and a query-based dbt freshness gate. |
-| **OpenAQ API rate-limit / key exposure** | key held in **Secrets Manager** (never in state/env), backoff on the producer, and a **DLQ** on the async path. |
-| **Forecast inaccuracy** | per-station SARIMA with **holdout-RMSE** emitted to CloudWatch + a `ForecastRMSE` alarm; forecast presented as indicative, not an SLA. |
-| **Single-region availability** | accepted for a demo; the stack is fully reproducible via Terraform and can be redeployed in another region. |
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| **Cost overrun** | Low | Medium | 10 GB Athena per-query scan cap, scale-to-zero serverless, S3 tiering/lifecycle, and an **AWS Budget ($8)** with a `>$8/month` billing alarm. |
+| **Data staleness / source gaps** | Medium | Medium | `completeness_check` (hourly `MissingStations`), a `DaysSinceLastNewMart` silent-death signal, a `mart-stale` alarm, and a query-based dbt freshness gate. |
+| **OpenAQ API rate-limit / key exposure** | Low | High | key held in **Secrets Manager** (never in state/env), backoff on the producer, and a **DLQ** on the async path. |
+| **Forecast inaccuracy** | Medium | Low | per-station SARIMA with **holdout-RMSE** emitted to CloudWatch + a `ForecastRMSE` alarm; forecast presented as indicative, not an SLA. |
+| **Single-region availability** | Low | Low | accepted for a demo; the stack is fully reproducible via Terraform and can be redeployed in another region. |
 
 ## 8. Expected Results & Team
 
